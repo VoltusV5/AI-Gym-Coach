@@ -1,0 +1,55 @@
+# Общие
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+*.bak
+.vscode/
+.idea/
+
+# AI (Python)
+ai/__pycache__/
+ai/*.pyc
+ai/*.pyo
+ai/*.pyd
+ai/.pytest_cache/
+ai/.venv/
+ai/venv/
+ai/env/
+ai/*.egg-info/
+ai/.env
+ai/.env.local
+
+# Go (backend)
+backend/vendor/
+backend/.env
+backend/.env.local
+backend/debug.test
+backend/*.exe
+backend/*.exe~
+backend/*.dll
+backend/*.so
+backend/*.dylib
+backend/testdata/
+backend/cover.out
+backend/*.test
+
+# Frontend (Vue + Capacitor)
+frontend/node_modules/
+frontend/dist/
+frontend/.quasar/
+frontend/.capacitor/
+frontend/.env
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/.DS_Store
+frontend/.gitkeep
+frontend/capacitor.config.ts.bak
+frontend/android/
+frontend/ios/
+frontend/www/
