@@ -6,6 +6,7 @@ Thumbs.db
 *.bak
 .vscode/
 .idea/
+.gitignore
 
 # AI (Python)
 ai/__pycache__/
@@ -53,3 +54,9 @@ frontend/capacitor.config.ts.bak
 frontend/android/
 frontend/ios/
 frontend/www/
+
+
+#Tg Bot (Ниче не трогаем!)
+TgBotEditData/.env
+TgBotEditData/client_secret.json
+TgBotEditData/.venv

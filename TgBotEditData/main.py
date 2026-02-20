@@ -70,6 +70,16 @@ def format_request(input_json):
             parts.append(f"ур: {data['уровень_подготовки']}")
         if 'дни_тренировок' in data:
             parts.append(f"дни: {len(data['дни_тренировок'])}")
+        if "вес" in data:
+            parts.append(f"вес: {data["вес"]}")
+        if "рост" in data:
+            parts.append(f"рост {data["рост"]}")
+        if "тип_активности" in data:
+            parts.append(f"тип активности: {data["тип_активности"]}")
+        if "травмы_или_болезни" in data:
+            parts.append(f"травмы_или_болезни {data["травмы_или_болезни"]}")
+        
+        
         
         return " | ".join(parts)
     
