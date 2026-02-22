@@ -1,0 +1,6 @@
+{
+  "appId": "com.sportapp.frontend",
+  "appName": "Sport App Frontend",
+  "webDir": "dist",
+  "bundledWebRuntime": false
+}
