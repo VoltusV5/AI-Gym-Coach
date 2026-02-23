@@ -29,7 +29,7 @@ func CreateTableProfile(ctx context.Context, conn *pgx.Conn) error {
 	CREATE TABLE IF NOT EXISTS profile (
 		id SERIAL PRIMARY KEY,
 		user_id INTEGER NOT NULL,
-		date DATE,
+		birth_date DATE,
 		gender VARCHAR(100) NOT NULL,
 		height_cm INTEGER NOT NULL,
 		weight_kg INTEGER NOT NULL,
@@ -37,7 +37,7 @@ func CreateTableProfile(ctx context.Context, conn *pgx.Conn) error {
 		injuries_notes VARCHAR(200) NOT NULL,
 		goal VARCHAR(200) NOT NULL,
 		fitness_level VARCHAR(200) NOT NULL,
-		training_days_map JSONB NOT NULL,
+		training_days_map TEXT[] NOT NULL,
 		created_at TIMESTAMP NOT NULL,
 		updated_at TIMESTAMP
 	);

@@ -1,4 +1,4 @@
-package main
+package profile
 
 import (
 	"encoding/json"
@@ -19,7 +19,7 @@ type Days struct {
 	Rest      string   `json:"rest"`
 }
 
-func main() {
+func StartHTTPServer() {
 	http.HandleFunc("/json", JsonInStructHandler)
 	if err := http.ListenAndServe(":9091", nil); err != nil {
 		fmt.Println("Ошибка при работе сервера:", err)
