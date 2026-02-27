@@ -1,9 +1,12 @@
-package profile
+package handlers
 
 import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sport_app/auth"
+	simpleconnection "sport_app/models/simple_connection"
+	simplesql "sport_app/models/simple_sql"
 )
 
 type Plan struct {
@@ -17,13 +20,6 @@ type Days struct {
 	Sets      []int    `json:"sets"`
 	Reps      string   `json:"reps"`
 	Rest      string   `json:"rest"`
-}
-
-func StartHTTPServer() {
-	http.HandleFunc("/json", JsonInStructHandler)
-	if err := http.ListenAndServe(":9091", nil); err != nil {
-		fmt.Println("Ошибка при работе сервера:", err)
-	}
 }
 
 func JsonInStructHandler(w http.ResponseWriter, r *http.Request) {
@@ -47,4 +43,24 @@ func (d Days) PrintStruct() {
 	fmt.Println("Кол-во подходов:", d.Sets)
 	fmt.Println("Кол-во повторений", d.Reps)
 	fmt.Println("Отдых:", d.Rest)
+}
+
+func GuestHandler(w http.ResponseWriter, r *http.Request) {
+	user_id, err := simplesql.InsertRowsUsers(
+		simpleconnection.Ctx,
+		simpleconnection.Conn,
+		true,
+		"free",
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	jwt_token, err := auth.CreateToken(user_id, true)
+	if err != nil {
+		panic(err)
+	}
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(jwt_token))
 }

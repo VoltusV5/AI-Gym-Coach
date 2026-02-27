@@ -10,11 +10,11 @@ func CreateTableUsers(ctx context.Context, conn *pgx.Conn) error {
 	sqlQuery := `
 	CREATE TABLE IF NOT EXISTS users (
 		id SERIAL PRIMARY KEY,
-		is_anonimous BOOLEAN NOT NULL,
-		email VARCHAR(200) NOT NULL,
-		password_hash VARCHAR(200) NOT NULL,
+		is_anonymous BOOLEAN NOT NULL,
+		email VARCHAR(200),
+		password_hash VARCHAR(200),
 		oauth_provider VARCHAR(200),
-		oauth_id INTEGER NOT NULL,
+		oauth_id INTEGER,
 		created_at TIMESTAMP NOT NULL,
 		updated_at TIMESTAMP,
 		subscription_status VARCHAR(200)
