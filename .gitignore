@@ -52,4 +52,4 @@ frontend/.gitkeep
 frontend/capacitor.config.ts.bak
 frontend/android/
 frontend/ios/
-frontend/www/
+frontend/www/TgBotEditData/client_secret.json
