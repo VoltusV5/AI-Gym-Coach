@@ -53,3 +53,4 @@ frontend/capacitor.config.ts.bak
 frontend/android/
 frontend/ios/
 frontend/www/TgBotEditData/client_secret.json
+TgBotEditData/.env
