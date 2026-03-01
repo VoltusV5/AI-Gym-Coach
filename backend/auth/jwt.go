@@ -6,7 +6,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var secretKey = []byte("JWT_SECRET")
+var SecretKey = []byte("JWT_SECRET")
 
 func CreateToken(user_id string, is_anonymous bool) (string, error) {
 	iat := time.Now()
@@ -17,7 +17,7 @@ func CreateToken(user_id string, is_anonymous bool) (string, error) {
 		"exp":          iat.AddDate(0, 0, 90).Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString(secretKey)
+	tokenString, err := token.SignedString(SecretKey)
 	if err != nil {
 		return "", err
 	}
