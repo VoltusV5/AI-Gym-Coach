@@ -43,11 +43,11 @@ func Protect(next http.HandlerFunc) http.HandlerFunc {
 			http.Error(w, "Missing field token", http.StatusBadRequest)
 			return
 		}
-		tokenString, ok = tokenInterface.(string)
-		if !ok {
-			http.Error(w, "The token field must be a string.", http.StatusBadRequest)
-			return
-		}
+		// tokenString, ok = tokenInterface.(string)
+		// if !ok {
+		// 	http.Error(w, "The token field must be a string.", http.StatusBadRequest)
+		// 	return
+		// }
 
 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (any, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
