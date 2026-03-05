@@ -6,6 +6,7 @@ Thumbs.db
 *.bak
 .vscode/
 .idea/
+client_secret.json
 
 # AI (Python)
 ai/__pycache__/
