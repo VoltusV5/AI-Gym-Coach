@@ -4,12 +4,12 @@ import (
 	"context"
 	"time"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func InsertRowsUsers(
 	ctx context.Context,
-	conn *pgx.Conn,
+	conn *pgxpool.Pool,
 	is_anonymous bool,
 	subscription_status string,
 ) (string, error) {

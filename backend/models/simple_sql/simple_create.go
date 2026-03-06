@@ -3,10 +3,10 @@ package simplesql
 import (
 	"context"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func CreateTableUsers(ctx context.Context, conn *pgx.Conn) error {
+func CreateTableUsers(ctx context.Context, conn *pgxpool.Pool) error {
 	sqlQuery := `
     CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
@@ -24,7 +24,7 @@ func CreateTableUsers(ctx context.Context, conn *pgx.Conn) error {
 	return err
 }
 
-func CreateTableProfile(ctx context.Context, conn *pgx.Conn) error {
+func CreateTableProfile(ctx context.Context, conn *pgxpool.Pool) error {
 	sqlQuery := `
     CREATE TABLE IF NOT EXISTS profile (
         id SERIAL PRIMARY KEY,
