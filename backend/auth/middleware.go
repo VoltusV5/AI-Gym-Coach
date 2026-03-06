@@ -1,11 +1,9 @@
 package auth
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"io"
 	"net/http"
+	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -19,37 +17,20 @@ const (
 
 func Protect(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		bodyBytes, err := io.ReadAll(r.Body)
-		if err != nil {
-			http.Error(w, "Error HTTP request body", http.StatusBadRequest)
+		authHeader := r.Header.Get("Authorization")
+		if authHeader == "" {
+			http.Error(w, "Header missing Authorization", http.StatusUnauthorized)
 			return
 		}
 
-		r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
-
-		var data map[string]any
-		if err := json.Unmarshal(bodyBytes, &data); err != nil {
-			http.Error(w, "Invalid format JSON", http.StatusBadRequest)
+		parts := strings.Split(authHeader, " ")
+		if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
+			http.Error(w, "Invalid header format. Expected 'Bearer <token>'", http.StatusUnauthorized)
 			return
 		}
+		tokenString := parts[1]
 
-		tokenInterface, ok := data["token"]
-		if !ok {
-			http.Error(w, "Missing field token", http.StatusBadRequest)
-			return
-		}
-		tokenString, ok := tokenInterface.(string)
-		if !ok {
-			http.Error(w, "Missing field token", http.StatusBadRequest)
-			return
-		}
-		// tokenString, ok = tokenInterface.(string)
-		// if !ok {
-		// 	http.Error(w, "The token field must be a string.", http.StatusBadRequest)
-		// 	return
-		// }
-
-		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (any, error) {
+		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, jwt.ErrSignatureInvalid
 			}
@@ -60,8 +41,9 @@ func Protect(next http.HandlerFunc) http.HandlerFunc {
 			http.Error(w, "Token is invalid or expired: "+err.Error(), http.StatusUnauthorized)
 			return
 		}
+
 		if !token.Valid {
-			http.Error(w, "Token invalid", http.StatusUnauthorized)
+			http.Error(w, "Token is invalid", http.StatusUnauthorized)
 			return
 		}
 
@@ -78,6 +60,7 @@ func Protect(next http.HandlerFunc) http.HandlerFunc {
 		}
 
 		isAnonymous, _ := claims["is_anonymous"].(bool)
+
 		ctx := context.WithValue(r.Context(), UserIDKey, sub)
 		ctx = context.WithValue(ctx, IsAnonymousKey, isAnonymous)
 		r = r.WithContext(ctx)
