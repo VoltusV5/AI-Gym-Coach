@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Profile struct {
@@ -25,7 +25,7 @@ type Profile struct {
 	UpdatedAt       *time.Time `json:"updated_at"`
 }
 
-func GetProfile(ctx context.Context, conn *pgx.Conn, userID string) (*Profile, error) {
+func GetProfile(ctx context.Context, conn *pgxpool.Pool, userID string) (*Profile, error) {
 	var p Profile
 	err := conn.QueryRow(ctx, `
         SELECT id, user_id, birth_date, gender, height_cm, weight_kg,
@@ -44,7 +44,7 @@ func GetProfile(ctx context.Context, conn *pgx.Conn, userID string) (*Profile, e
 	return &p, nil
 }
 
-func UpdateProfile(ctx context.Context, conn *pgx.Conn, userID string, updates map[string]any) error {
+func UpdateProfile(ctx context.Context, conn *pgxpool.Pool, userID string, updates map[string]any) error {
 	if len(updates) == 0 {
 		return nil
 	}
