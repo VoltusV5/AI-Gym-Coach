@@ -7,9 +7,7 @@ PATH = "models/model"
 
 
 generate = pipeline("text-classification")
-
 app = FastAPI()
-
 
 @app.post("/plan/user")
 async def genetate_plan(user: dict):
