@@ -6,8 +6,10 @@ Thumbs.db
 *.bak
 .vscode/
 .idea/
+client_secret.json
 
 # AI (Python)
+ai/generateData/dataset*
 ai/__pycache__/
 ai/*.pyc
 ai/*.pyo
@@ -52,4 +54,6 @@ frontend/.gitkeep
 frontend/capacitor.config.ts.bak
 frontend/android/
 frontend/ios/
-frontend/www/
+frontend/www/TgBotEditData/client_secret.json
+TgBotEditData/.env
+TgBotEditData/client_secret.json
