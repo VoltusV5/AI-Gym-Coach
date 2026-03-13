@@ -71,9 +71,9 @@ def generate_user():
         elif 16 <= age <= 19:
             level = weighted_choice(["новичок", "любитель", "продвинутый"], [60, 30, 10])
         elif 20 <= age <= 29:
-            level = weighted_choice(["новичок", "любитель", "продвинутый"], [40, 40, 20])
+            level = weighted_choice(["новичок", "любитель", "продвинутый"], [40, 40, 30])
         elif 30 <= age <= 39:
-            level = weighted_choice(["новичок", "любитель", "продвинутый"], [50, 35, 15])
+            level = weighted_choice(["новичок", "любитель", "продвинутый"], [50, 35, 25])
         elif 40 <= age <= 49:
             level = weighted_choice(["новичок", "любитель", "продвинутый"], [60, 30, 10])
         else:

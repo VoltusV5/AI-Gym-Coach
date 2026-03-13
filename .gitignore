@@ -9,6 +9,7 @@ Thumbs.db
 client_secret.json
 
 # AI (Python)
+ai/generateData/dataset*
 ai/__pycache__/
 ai/*.pyc
 ai/*.pyo
