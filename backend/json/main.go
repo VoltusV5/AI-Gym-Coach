@@ -7,11 +7,11 @@ import (
 )
 
 type Plan struct {
-	Plan_template map[string]Days   `json:"plan_template"`
-	Weights       map[string]string `json:"weights"`
+	Plan_template map[string]Daysgggggggggg `json:"plan_template"`
+	Weights       map[string]string         `json:"weights"`
 }
 
-type Days struct {
+type Daysgggggggggg struct {
 	Groupe    []string `json:"groupe"`
 	Exercises []string `json:"exercises"`
 	Sets      []int    `json:"sets"`
@@ -41,7 +41,7 @@ func JsonInStructHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (d Days) PrintStruct() {
+func (d Daysgggggggggg) PrintStruct() {
 	fmt.Println("Группа мышц:", d.Groupe)
 	fmt.Println("Упражнения:", d.Exercises)
 	fmt.Println("Кол-во подходов:", d.Sets)

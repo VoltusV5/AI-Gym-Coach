@@ -12,7 +12,7 @@ import (
 type Profile struct {
 	ID              int        `json:"id"`
 	UserID          int        `json:"user_id"`
-	BirthDate       *time.Time `json:"birth_date"`
+	Age             int        `json:"age"`
 	Gender          *string    `json:"gender"`
 	HeightCm        *int       `json:"height_cm"`
 	WeightKg        *int       `json:"weight_kg"`
@@ -28,13 +28,13 @@ type Profile struct {
 func GetProfile(ctx context.Context, conn *pgxpool.Pool, userID string) (*Profile, error) {
 	var p Profile
 	err := conn.QueryRow(ctx, `
-        SELECT id, user_id, birth_date, gender, height_cm, weight_kg,
+        SELECT id, user_id, age, gender, height_cm, weight_kg,
                activity_level, injuries_notes, goal, fitness_level,
                training_days_map, created_at, updated_at
         FROM profile
         WHERE user_id = $1
     `, userID).Scan(
-		&p.ID, &p.UserID, &p.BirthDate, &p.Gender, &p.HeightCm, &p.WeightKg,
+		&p.ID, &p.UserID, &p.Age, &p.Gender, &p.HeightCm, &p.WeightKg,
 		&p.ActivityLevel, &p.InjuriesNotes, &p.Goal, &p.FitnessLevel,
 		&p.TrainingDaysMap, &p.CreatedAt, &p.UpdatedAt,
 	)
@@ -50,7 +50,7 @@ func UpdateProfile(ctx context.Context, conn *pgxpool.Pool, userID string, updat
 	}
 
 	allowed := map[string]bool{
-		"birth_date": true, "gender": true, "height_cm": true, "weight_kg": true,
+		"age": true, "gender": true, "height_cm": true, "weight_kg": true,
 		"activity_level": true, "injuries_notes": true, "goal": true,
 		"fitness_level": true, "training_days_map": true,
 	}

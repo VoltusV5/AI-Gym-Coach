@@ -18,6 +18,19 @@ func main() {
 	if err := simplesql.CreateTableProfile(simpleconnection.Ctx, simpleconnection.Conn); err != nil {
 		panic(err)
 	}
+
+	if err := simplesql.CreateTableData(simpleconnection.Ctx, simpleconnection.Conn); err != nil {
+		panic(err)
+	}
+
+	if err := simplesql.CreateTableExercises(simpleconnection.Ctx, simpleconnection.Conn); err != nil {
+		panic(err)
+	}
+
+	if err := simplesql.CreateTableProgram(simpleconnection.Ctx, simpleconnection.Conn); err != nil {
+		panic(err)
+	}
+
 	fmt.Println("Успешно!")
 	if err := handlers.StartHTTPServer(); err != nil {
 		fmt.Println("Failed to start HTTP server")

@@ -10,14 +10,24 @@ import (
 )
 
 type Plan struct {
-	Muscle_group string
-	Area         string
-	exercises    string
+	Split_type string `json:"тип_сплита"`
+	Plan_week  []Days `json:"еженедельный_план"`
 }
 
-func GeneratePlan(ctx context.Context, reqBody interface{}) (*Plan, error) {
+type Days struct {
+	Day       string     `json:"день"`
+	Type_day  string     `json:"тип_дня"`
+	Exercises []Muscules `json:"упражнения"`
+}
+
+type Muscules struct {
+	Group     string `json:"группа"`
+	Sub_group string `json:"подгруппа"`
+}
+
+func GeneratePlan(ctx context.Context, reqBody any) (*Plan, error) {
 	url_string := os.Getenv("ML_BASE_URL")
-	url := url_string + "/generate"
+	url := url_string + "/plan/user"
 	data, err := json.Marshal(reqBody)
 	if err != nil {
 		return nil, err

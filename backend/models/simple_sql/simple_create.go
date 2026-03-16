@@ -29,7 +29,7 @@ func CreateTableProfile(ctx context.Context, conn *pgxpool.Pool) error {
     CREATE TABLE IF NOT EXISTS profile (
         id SERIAL PRIMARY KEY,
         user_id INTEGER NOT NULL UNIQUE,
-        birth_date DATE,
+        age INTEGER,
         gender VARCHAR(100),
         height_cm INTEGER,
         weight_kg INTEGER,
@@ -43,6 +43,61 @@ func CreateTableProfile(ctx context.Context, conn *pgxpool.Pool) error {
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     );
     `
+	_, err := conn.Exec(ctx, sqlQuery)
+	return err
+}
+
+func CreateTableData(ctx context.Context, conn *pgxpool.Pool) error {
+	sqlQuery := `
+    CREATE TABLE IF NOT EXISTS user_data (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL UNIQUE,
+        working_weights JSONB,
+        completed_workouts JSONB,
+        created_at TIMESTAMP NOT NULL,
+        updated_at TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+    `
+
+	_, err := conn.Exec(ctx, sqlQuery)
+	return err
+}
+
+func CreateTableExercises(ctx context.Context, conn *pgxpool.Pool) error {
+	sqlQuery := `
+    CREATE TABLE IF NOT EXISTS exercises (
+        id SERIAL PRIMARY KEY,
+        exercises_name VARCHAR(100),
+        muscular_group VARCHAR(100),
+        muscular_subgroup VARCHAR(100),
+        working_weights INTEGER,
+        safe_for_injuries BOOLEAN,
+        level VARCHAR(50),
+        equipment VARCHAR(100),
+        video_url VARCHAR(100),
+        image_url VARCHAR(100)
+    );
+    `
+
+	_, err := conn.Exec(ctx, sqlQuery)
+	return err
+}
+
+func CreateTableProgram(ctx context.Context, conn *pgxpool.Pool) error {
+	sqlQuery := `
+    CREATE TABLE IF NOT EXISTS user_programs (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL UNIQUE,
+        started_at TIMESTAMP,
+        planned_end_at TIMESTAMP,
+        is_active BOOLEAN,
+        plan_template JSONB,
+        plan_exercises JSONB,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+    `
+
 	_, err := conn.Exec(ctx, sqlQuery)
 	return err
 }
