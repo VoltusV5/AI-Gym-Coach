@@ -17,12 +17,18 @@ import '@ionic/vue/css/text-transformation.css'
 import '@ionic/vue/css/flex-utils.css'
 import '@ionic/vue/css/display.css'
 
+// Инициализация Mock API
+import '@/api/mock'
+
 // Создание приложения
 const app = createApp(App)
 
 // Подключение Ionic и роутинга
 app.use(IonicVue)
-app.use(router)
 app.use(createPinia())
+app.use(router)
 
-app.mount('#app')
+// Ionic + ion-router-outlet
+router.isReady().then(() => {
+  app.mount('#app')
+})

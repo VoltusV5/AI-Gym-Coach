@@ -1,5 +1,3 @@
-// здесь будет axios с базовым URL и перехватчиком ошибок
-
 import axios from 'axios'
 
 const api = axios.create({
@@ -7,10 +5,16 @@ const api = axios.create({
   timeout: 10000,
 })
 
-// Заполнение токена из auth store
-// ...
-
-// Обработка 401 (токен истёк)
-// ...
+/**
+ * Установка токена в заголовок Authorization
+ * @param {string|null} token
+ */
+export function setAuthHeader(token) {
+  if (token) {
+    api.defaults.headers.common['Authorization'] = `Bearer ${token}`
+  } else {
+    delete api.defaults.headers.common['Authorization']
+  }
+}
 
 export default api
