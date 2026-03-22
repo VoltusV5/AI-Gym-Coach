@@ -1,4 +1,4 @@
-package handlers
+package mlclient
 
 import (
 	"bytes"
@@ -55,5 +55,42 @@ func GeneratePlan(ctx context.Context, reqBody any) (*Plan, error) {
 		return nil, err
 	}
 
-	return &plan, nil
+	modificated_plan := replaceExercises(plan)
+
+	return &modificated_plan, nil
+}
+
+func replaceExercises(plan Plan) Plan {
+	newPlan := Plan{
+		Split_type: plan.Split_type,
+		Plan_week:  make([]Days, len(plan.Plan_week)),
+	}
+
+	for i, day := range plan.Plan_week {
+		newDay := Days{
+			Day:       day.Day,
+			Type_day:  day.Type_day,
+			Exercises: make([]Muscules, len(day.Exercises)),
+		}
+
+		for j, ex := range day.Exercises {
+			newEx := Muscules{
+				Group:     ex.Group,
+				Sub_group: ex.Sub_group,
+			}
+
+			switch newEx.Sub_group {
+			case "Верх спины":
+				newEx.Sub_group = "тяга перед собой широким хватом"
+			case "Широчайшие спины":
+				newEx.Sub_group = "тяга сверху узким хватом"
+			}
+
+			newDay.Exercises[j] = newEx
+		}
+
+		newPlan.Plan_week[i] = newDay
+	}
+
+	return newPlan
 }

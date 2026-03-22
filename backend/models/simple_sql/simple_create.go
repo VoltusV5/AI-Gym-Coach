@@ -15,8 +15,8 @@ func CreateTableUsers(ctx context.Context, conn *pgxpool.Pool) error {
         password_hash VARCHAR(200),
         oauth_provider VARCHAR(200),
         oauth_id INTEGER,
-        created_at TIMESTAMP NOT NULL,
-        updated_at TIMESTAMP,
+        created_at TIMESTAMPTZ NOT NULL,
+        updated_at TIMESTAMPTZ,
         subscription_status VARCHAR(200)
     );
     `
@@ -34,12 +34,12 @@ func CreateTableProfile(ctx context.Context, conn *pgxpool.Pool) error {
         height_cm INTEGER,
         weight_kg INTEGER,
         activity_level VARCHAR(200),
-        injuries_notes VARCHAR(200),
+        injuries_notes BOOLEAN,
         goal VARCHAR(200),
         fitness_level VARCHAR(200),
         training_days_map TEXT[],
-        created_at TIMESTAMP NOT NULL,
-        updated_at TIMESTAMP,
+        created_at TIMESTAMPTZ NOT NULL,
+        updated_at TIMESTAMPTZ,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     );
     `
@@ -54,8 +54,8 @@ func CreateTableData(ctx context.Context, conn *pgxpool.Pool) error {
         user_id INTEGER NOT NULL UNIQUE,
         working_weights JSONB,
         completed_workouts JSONB,
-        created_at TIMESTAMP NOT NULL,
-        updated_at TIMESTAMP,
+        created_at TIMESTAMPTZ NOT NULL,
+        updated_at TIMESTAMPTZ,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     );
     `
@@ -73,7 +73,6 @@ func CreateTableExercises(ctx context.Context, conn *pgxpool.Pool) error {
         muscular_subgroup VARCHAR(100),
         working_weights INTEGER,
         safe_for_injuries BOOLEAN,
-        level VARCHAR(50),
         equipment VARCHAR(100),
         video_url VARCHAR(100),
         image_url VARCHAR(100)
@@ -90,7 +89,7 @@ func CreateTableProgram(ctx context.Context, conn *pgxpool.Pool) error {
         id SERIAL PRIMARY KEY,
         user_id INTEGER NOT NULL UNIQUE,
         started_at TIMESTAMP,
-        planned_end_at TIMESTAMP,
+        planned_end_at TIMESTAMPTZ,
         is_active BOOLEAN,
         plan_template JSONB,
         plan_exercises JSONB,

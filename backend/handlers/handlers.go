@@ -7,10 +7,16 @@ import (
 	"log"
 	"net/http"
 	"sport_app/auth"
+	"sport_app/mlclient"
 	simpleconnection "sport_app/models/simple_connection"
 	simplesql "sport_app/models/simple_sql"
 	"time"
 )
+
+type Result struct {
+	plan mlclient.Plan
+	err  error
+}
 
 func GuestHandler(w http.ResponseWriter, r *http.Request) {
 	user_id, err := simplesql.InsertRowsUsers(
@@ -87,22 +93,18 @@ func ResponceGenerateHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), time.Second*52)
 	defer cancel()
 
-	type result struct {
-		plan *Plan
-		err  error
-	}
-	ch := make(chan result, 1)
+	ch := make(chan Result, 1)
 
 	start := time.Now()
 
 	go func() {
-		plan, err := GeneratePlan(ctx, profile)
-		ch <- result{plan, err}
+		plan, err := mlclient.GeneratePlan(ctx, profile)
+		ch <- Result{*plan, err}
 	}()
 
 	duration := time.Since(start)
 
-	var res result
+	var res Result
 	select {
 	case <-ctx.Done():
 		http.Error(w, "Request timeout or cancelled", http.StatusGatewayTimeout)
@@ -116,9 +118,37 @@ func ResponceGenerateHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	exercises_plan_weight, exercises_plan := simplesql.GetExercises(r.Context(), simpleconnection.Conn, res.plan, userID)
+	err2 := simplesql.InsertRowsPrograms(userID, true, res.plan, exercises_plan, r.Context(), simpleconnection.Conn)
+	if err2 != nil {
+		http.Error(w, "Error inserting plan into database", http.StatusInternalServerError)
+		return
+	}
+
+	workingWeightsMap := make(map[int]*int)
+	for _, day := range exercises_plan_weight.Plan {
+		for _, exerciseList := range day.Exercises {
+			for _, ex := range exerciseList {
+				workingWeightsMap[ex.ID] = ex.Weight
+			}
+		}
+	}
+
+	workingWeightsJSON, err3 := json.Marshal(workingWeightsMap)
+	if err3 != nil {
+		http.Error(w, "Failed to marshal working weights", http.StatusInternalServerError)
+		return
+	}
+
+	err4 := simplesql.InsertRowsData(r.Context(), simpleconnection.Conn, userID, workingWeightsJSON)
+	if err4 != nil {
+		http.Error(w, "Failed to save working weights", http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(res.plan); err != nil {
+	if err := json.NewEncoder(w).Encode(exercises_plan_weight); err != nil {
 		log.Printf("Error writing response: %v: %v", duration, err)
 	}
 
