@@ -13,13 +13,14 @@
     "format": "prettier --write --experimental-cli src/"
   },
   "dependencies": {
+    "@aparajita/capacitor-secure-storage": "^8.0.0",
     "@capacitor/android": "^8.1.0",
     "@capacitor/cli": "^8.1.0",
     "@capacitor/core": "^8.1.0",
     "@ionic/vue": "^8.7.17",
     "@ionic/vue-router": "^8.7.17",
     "axios": "^1.13.5",
-    "capacitor-secure-storage": "^1.1.0",
+    "axios-mock-adapter": "^2.1.0",
     "pinia": "^3.0.4",
     "vue": "^3.5.28",
     "vue-router": "^5.0.2"

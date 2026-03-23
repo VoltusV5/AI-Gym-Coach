@@ -8,13 +8,9 @@ import Components from 'unplugin-vue-components/vite'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
-    vue({
-      template: {
-        compilerOptions: {
-          isCustomElement: (tag) => tag.startsWith('ion-')
-        }
-      }
-    }),
+    // Не помечать ion-* как native custom elements: в @ionic/vue это Vue-компоненты.
+    // isCustomElement: ion-* ломает шаблоны — <ion-page> не связывается с IonPage → пустой экран.
+    vue(),
 
     vueDevTools(),
 
