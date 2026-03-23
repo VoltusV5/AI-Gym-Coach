@@ -32,11 +32,11 @@ export async function getToken() {
  * Удалить токен из secure-storage
  */
 export async function removeToken() {
+  // Всегда чистим localStorage (fallback при сохранении и в браузере без плагина)
+  localStorage.removeItem(TOKEN_KEY);
   try {
     await SecureStorage.remove({ key: TOKEN_KEY });
-    localStorage.removeItem(TOKEN_KEY);
   } catch (error) {
-    console.warn('Error removing token:', error);
-    localStorage.removeItem(TOKEN_KEY);
+    console.warn('Error removing token from secure storage:', error);
   }
 }

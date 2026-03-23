@@ -2,13 +2,16 @@ package simplesql
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"math"
 	"sport_app/mlclient"
+	"strconv"
 	"strings"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -150,15 +153,32 @@ func GetExercises(ctx context.Context, conn *pgxpool.Pool, plan mlclient.Plan, u
 		}
 
 		for j, ex := range day.Exercises {
-			rows, err := conn.Query(ctx, `
-				SELECT id, exercises_name, working_weights
-				FROM exercises
-				WHERE muscular_group = $1 AND muscular_subgroup = $2
-				ORDER BY id
-				LIMIT 5
-			`, ex.Group, ex.Sub_group)
+			var rows pgx.Rows
+			var err error
+			// подгруппа null в JSON (пресс и т.п.) → в БД muscular_subgroup IS NULL
+			if ex.Sub_group == nil {
+				rows, err = conn.Query(ctx, `
+					SELECT id, exercises_name, working_weights
+					FROM exercises
+					WHERE muscular_group = $1 AND muscular_subgroup IS NULL
+					ORDER BY id
+					LIMIT 5
+				`, ex.Group)
+			} else {
+				rows, err = conn.Query(ctx, `
+					SELECT id, exercises_name, working_weights
+					FROM exercises
+					WHERE muscular_group = $1 AND muscular_subgroup = $2
+					ORDER BY id
+					LIMIT 5
+				`, ex.Group, *ex.Sub_group)
+			}
 			if err != nil {
-				log.Printf("Error request for  %s/%s: %v", ex.Group, ex.Sub_group, err)
+				sub := "<nil>"
+				if ex.Sub_group != nil {
+					sub = *ex.Sub_group
+				}
+				log.Printf("Error request for %s/%s: %v", ex.Group, sub, err)
 				edayWithWeight.Exercises[j] = []ExWithWeight{}
 				edayNoWeight.Exercises[j] = []ExNoWeight{}
 				continue
@@ -228,5 +248,94 @@ func countWeight(ctx context.Context, conn *pgxpool.Pool, weight *int, userID st
 		k *= 0.9
 	}
 
-	*weight = int(math.Floor(float64(*weight) * k))
+	kg := float64(*weight) * k
+	*weight = roundWeightDownToGymStep(kg)
+}
+
+// Шаг дисков: для больших весов — 5 кг, иначе 2.5 кг (ТЗ: округление вниз до шага тренажёра)
+const gymPlateStepSmallKG = 2.5
+const gymPlateStepLargeKG = 5.0
+const gymPlateStepLargeFromKG = 50 // от этого «сырого» веса считаем шаг 5 кг
+
+func roundWeightDownToGymStep(kg float64) int {
+	if kg <= 0 {
+		return 0
+	}
+	step := gymPlateStepSmallKG
+	if kg >= gymPlateStepLargeFromKG {
+		step = gymPlateStepLargeKG
+	}
+	steps := math.Floor(kg / step)
+	return int(steps * step)
+}
+
+// GetUserWorkingWeightsMap читает JSONB working_weights из user_data (ключи — строковые id упражнений).
+func GetUserWorkingWeightsMap(ctx context.Context, conn *pgxpool.Pool, userID string) (map[string]int, error) {
+	var raw []byte
+	err := conn.QueryRow(ctx, `
+		SELECT working_weights FROM user_data WHERE user_id = $1
+	`, userID).Scan(&raw)
+	if err != nil {
+		return nil, err
+	}
+	if len(raw) == 0 || string(raw) == "null" {
+		return map[string]int{}, nil
+	}
+	var m map[string]any
+	if err := json.Unmarshal(raw, &m); err != nil {
+		return map[string]int{}, nil
+	}
+	out := make(map[string]int, len(m))
+	for k, v := range m {
+		switch val := v.(type) {
+		case float64:
+			out[k] = int(val)
+		case int:
+			out[k] = val
+		case int64:
+			out[k] = int(val)
+		}
+	}
+	return out, nil
+}
+
+// ApplyExistingWeightsToPlan подставляет сохранённые веса в ответ (не пересчитываем то, что уже есть в БД).
+func ApplyExistingWeightsToPlan(plan *EPlanWithWeight, existing map[string]int) {
+	if len(existing) == 0 {
+		return
+	}
+	for i := range plan.Plan {
+		for j := range plan.Plan[i].Exercises {
+			for k := range plan.Plan[i].Exercises[j] {
+				ex := &plan.Plan[i].Exercises[j][k]
+				key := strconv.Itoa(ex.ID)
+				if w, ok := existing[key]; ok {
+					wCopy := w
+					ex.Weight = &wCopy
+				}
+			}
+		}
+	}
+}
+
+// MergeWorkingWeightsJSON: старые пары id→вес + только новые id из плана (уже с учётом отображаемых весов).
+func MergeWorkingWeightsJSON(existing map[string]int, plan EPlanWithWeight) ([]byte, error) {
+	merged := make(map[string]int, len(existing)+64)
+	for k, v := range existing {
+		merged[k] = v
+	}
+	for _, day := range plan.Plan {
+		for _, list := range day.Exercises {
+			for _, ex := range list {
+				if ex.Weight == nil {
+					continue
+				}
+				key := strconv.Itoa(ex.ID)
+				if _, ok := merged[key]; !ok {
+					merged[key] = *ex.Weight
+				}
+			}
+		}
+	}
+	return json.Marshal(merged)
 }

@@ -1,26 +1,51 @@
 <template>
-  <ion-page>
-    <ion-header class="ion-no-border">
-      <ion-toolbar>
-        <ion-buttons slot="start">
-          <ion-back-button default-href="/"></ion-back-button>
-        </ion-buttons>
-        <ion-title v-if="title">{{ title }}</ion-title>
-        <slot name="header-right"></slot>
+  <ion-page class="sportik-page">
+    <ion-header class="sportik-header ion-no-border">
+      <ion-toolbar class="sportik-toolbar">
+        <template #start>
+          <ion-buttons>
+            <ion-back-button default-href="/" text="" color="dark"></ion-back-button>
+          </ion-buttons>
+        </template>
       </ion-toolbar>
     </ion-header>
 
-    <ion-content class="ion-padding">
-      <div class="onboarding-container">
-        <div class="progress-info" v-if="progress > 0">
+    <ion-content class="sportik-onboarding-content" fullscreen>
+      <div class="onboarding-stack">
+        <div v-if="progress > 0" class="sportik-progress-strip">
           <ion-progress-bar :value="progress / 100"></ion-progress-bar>
         </div>
-        <slot></slot>
+
+        <div class="onboarding-inner ion-padding">
+          <p v-if="stepHint" class="sportik-step-hint">{{ stepHint }}</p>
+          <h1 v-if="question" class="sportik-question">{{ question }}</h1>
+          <slot></slot>
+
+          <!-- Декор сразу под контентом шага, крупнее и плотнее -->
+          <div
+            v-if="showBottomIllustration && (bottomQuestionUrl || bottomExclamUrl)"
+            class="onboarding-deco-row"
+          >
+            <img
+              v-if="bottomQuestionUrl"
+              class="onboarding-deco-img onboarding-deco-img--q"
+              :src="bottomQuestionUrl"
+              alt=""
+            />
+            <img
+              v-if="bottomExclamUrl"
+              class="onboarding-deco-img onboarding-deco-img--e"
+              :src="bottomExclamUrl"
+              alt=""
+            />
+          </div>
+        </div>
       </div>
     </ion-content>
 
-    <ion-footer class="ion-no-border ion-padding" v-if="hasFooter">
+    <ion-footer class="ion-no-border ion-padding sportik-footer" v-if="hasFooter">
       <ion-button
+        class="sportik-footer-btn"
         expand="block"
         :disabled="disabled"
         :loading="loading"
@@ -39,15 +64,28 @@ import {
   IonToolbar,
   IonButtons,
   IonBackButton,
-  IonTitle,
   IonContent,
   IonFooter,
   IonButton,
   IonProgressBar
 } from '@ionic/vue'
+import {
+  getOnboardingBottomIllustrationUrl,
+  getOnboardingExclamationIllustrationUrl
+} from '@/utils/localImages'
+
+const bottomQuestionUrl = getOnboardingBottomIllustrationUrl()
+const bottomExclamUrl = getOnboardingExclamationIllustrationUrl()
 
 defineProps({
-  title: String,
+  question: {
+    type: String,
+    default: ''
+  },
+  stepHint: {
+    type: String,
+    default: 'Ответьте на вопрос'
+  },
   progress: {
     type: Number,
     default: 0
@@ -67,6 +105,10 @@ defineProps({
   hasFooter: {
     type: Boolean,
     default: true
+  },
+  showBottomIllustration: {
+    type: Boolean,
+    default: true
   }
 })
 
@@ -74,18 +116,50 @@ defineEmits(['next'])
 </script>
 
 <style scoped>
-.onboarding-container {
+.onboarding-stack {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.onboarding-inner {
   display: flex;
   flex-direction: column;
   width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+  padding-bottom: 1rem;
+  position: relative;
+  z-index: 1;
+  flex: 0 0 auto;
 }
 
-.progress-info {
-  margin-bottom: 2rem;
-  width: 100%;
+.onboarding-deco-row {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 2px;
+  margin-top: 0.75rem;
+  max-width: 100%;
 }
 
-ion-progress-bar {
-  border-radius: 4px;
+.onboarding-deco-img {
+  display: block;
+  height: min(42vw, 200px);
+  width: auto;
+  max-width: 48%;
+  object-fit: contain;
+  object-position: center bottom;
+}
+
+.onboarding-deco-img--e {
+  height: min(36vw, 168px);
+  max-width: 40%;
+}
+
+.sportik-footer {
+  --background: transparent;
+  background: linear-gradient(to top, rgba(255, 255, 255, 0.95), transparent);
 }
 </style>

@@ -1,49 +1,60 @@
 <template>
-  <onboarding-layout 
-    title="Твой пол" 
-    :progress="10" 
+  <onboarding-layout
+    question="Ваш пол?"
+    :progress="22"
     :disabled="!gender"
     :loading="isSubmitting"
     @next="submit"
   >
-    <div class="gender-selection">
-      <h2>Кто ты?</h2>
-      <p>Это поможет нам точнее рассчитать твои показатели.</p>
-      
-      <ion-list lines="none">
-        <ion-radio-group v-model="gender">
-          <ion-item class="radio-item ion-margin-bottom">
-            <ion-radio value="male" justify="space-between">Мужчина</ion-radio>
-          </ion-item>
-          <ion-item class="radio-item">
-            <ion-radio value="female" justify="space-between">Женщина</ion-radio>
-          </ion-item>
-        </ion-radio-group>
-      </ion-list>
+    <div class="gender-tiles">
+      <button
+        type="button"
+        class="gender-tile"
+        :class="{ selected: gender === 'Мужчина' }"
+        @click="gender = 'Мужчина'"
+      >
+        <span class="gender-letter">М</span>
+        <span class="gender-caption">Мужской</span>
+      </button>
+      <button
+        type="button"
+        class="gender-tile"
+        :class="{ selected: gender === 'Женщина' }"
+        @click="gender = 'Женщина'"
+      >
+        <span class="gender-letter">Ж</span>
+        <span class="gender-caption">Женский</span>
+      </button>
     </div>
   </onboarding-layout>
 </template>
 
 <script setup>
 import { ref } from 'vue'
-import { IonList, IonRadioGroup, IonItem, IonRadio } from '@ionic/vue'
 import OnboardingLayout from '@/components/layout/OnboardingLayout.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
 
+function normalizeGenderFromProfile(g) {
+  if (g == null || g === '') return null
+  if (g === 'Мужчина' || g === 'male' || g === 'м') return 'Мужчина'
+  if (g === 'Женщина' || g === 'female' || g === 'ж') return 'Женщина'
+  return null
+}
+
 const authStore = useAuthStore()
 const router = useRouter()
 
-const gender = ref(authStore.profile?.gender || null)
+const gender = ref(normalizeGenderFromProfile(authStore.profile?.gender))
 const isSubmitting = ref(false)
 
 const submit = async () => {
   if (!gender.value) return
-  
+
   isSubmitting.value = true
   try {
     await authStore.updateProfile({ gender: gender.value })
-    router.push('/birth-year')
+    router.push('/age')
   } catch (error) {
     console.error('Submit error:', error)
   } finally {
@@ -53,31 +64,57 @@ const submit = async () => {
 </script>
 
 <style scoped>
-.gender-selection h2 {
-  font-size: 24px;
-  font-weight: 700;
-  margin-bottom: 8px;
+.gender-tiles {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1.25rem;
+  margin-top: 0.5rem;
 }
 
-.gender-selection p {
-  color: var(--ion-color-medium);
-  margin-bottom: 2rem;
+.gender-tile {
+  flex: 1 1 140px;
+  max-width: 200px;
+  min-height: 168px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1.25rem;
+  border: 3px solid transparent;
+  border-radius: var(--sportik-radius-pill);
+  background: var(--sportik-cream);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.07);
+  cursor: pointer;
+  font-family: 'Roboto', sans-serif;
+  transition:
+    border-color 0.2s,
+    transform 0.2s,
+    box-shadow 0.2s;
 }
 
-.radio-item {
-  --background: var(--ion-color-light);
-  --border-radius: 12px;
-  --padding-start: 16px;
-  --padding-end: 16px;
-  border: 1px solid transparent;
+.gender-tile:active {
+  transform: scale(0.98);
 }
 
-ion-item::part(native) {
-  border-radius: 12px;
+.gender-tile.selected {
+  border-color: var(--sportik-cyan);
+  box-shadow:
+    0 6px 24px rgba(102, 255, 255, 0.35),
+    0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
-ion-radio {
-  --color-checked: var(--ion-color-primary);
-  width: 100%;
+.gender-letter {
+  font-size: clamp(3.5rem, 12vw, 5rem);
+  font-weight: 600;
+  line-height: 1;
+  color: var(--sportik-text);
+}
+
+.gender-caption {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--sportik-text-muted);
 }
 </style>

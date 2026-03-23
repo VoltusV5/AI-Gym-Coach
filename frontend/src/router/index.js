@@ -2,14 +2,14 @@
 import { createRouter, createWebHistory } from '@ionic/vue-router'
 import Welcome from '@/views/Welcome.vue'
 
-// Онбординг страницы
-import Gender from '@/views/onboarding/Gender.vue'
-import BirthYear from '@/views/onboarding/BirthYear.vue'
+// Онбординг: рост/вес → пол → возраст → активность → травмы → цель → уровень → дни
 import BodyMetrics from '@/views/onboarding/BodyMetrics.vue'
+import Gender from '@/views/onboarding/Gender.vue'
+import Age from '@/views/onboarding/Age.vue'
 import ActivityType from '@/views/onboarding/ActivityType.vue'
-import FitnessLevel from '@/views/onboarding/FitnessLevel.vue'
 import HealthRestrictions from '@/views/onboarding/HealthRestrictions.vue'
 import GoalSelection from '@/views/onboarding/GoalSelection.vue'
+import FitnessLevel from '@/views/onboarding/FitnessLevel.vue'
 import TrainingDays from '@/views/onboarding/TrainingDays.vue'
 import PlanGenerating from '@/views/onboarding/PlanGenerating.vue'
 
@@ -20,29 +20,24 @@ const routes = [
     component: Welcome
   },
   {
-    path: '/gender',
-    name: 'Gender',
-    component: Gender
-  },
-  {
-    path: '/birth-year',
-    name: 'BirthYear',
-    component: BirthYear
-  },
-  {
     path: '/body-metrics',
     name: 'BodyMetrics',
     component: BodyMetrics
   },
   {
+    path: '/gender',
+    name: 'Gender',
+    component: Gender
+  },
+  {
+    path: '/age',
+    name: 'Age',
+    component: Age
+  },
+  {
     path: '/activity-type',
     name: 'ActivityType',
     component: ActivityType
-  },
-  {
-    path: '/fitness-level',
-    name: 'FitnessLevel',
-    component: FitnessLevel
   },
   {
     path: '/health-restrictions',
@@ -53,6 +48,11 @@ const routes = [
     path: '/goal-selection',
     name: 'GoalSelection',
     component: GoalSelection
+  },
+  {
+    path: '/fitness-level',
+    name: 'FitnessLevel',
+    component: FitnessLevel
   },
   {
     path: '/training-days',

@@ -125,18 +125,16 @@ func ResponceGenerateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	workingWeightsMap := make(map[int]*int)
-	for _, day := range exercises_plan_weight.Plan {
-		for _, exerciseList := range day.Exercises {
-			for _, ex := range exerciseList {
-				workingWeightsMap[ex.ID] = ex.Weight
-			}
-		}
+	existingWeights, errW := simplesql.GetUserWorkingWeightsMap(r.Context(), simpleconnection.Conn, userID)
+	if errW != nil {
+		http.Error(w, "Failed to load working weights: "+errW.Error(), http.StatusInternalServerError)
+		return
 	}
+	simplesql.ApplyExistingWeightsToPlan(&exercises_plan_weight, existingWeights)
 
-	workingWeightsJSON, err3 := json.Marshal(workingWeightsMap)
+	workingWeightsJSON, err3 := simplesql.MergeWorkingWeightsJSON(existingWeights, exercises_plan_weight)
 	if err3 != nil {
-		http.Error(w, "Failed to marshal working weights", http.StatusInternalServerError)
+		http.Error(w, "Failed to merge working weights", http.StatusInternalServerError)
 		return
 	}
 

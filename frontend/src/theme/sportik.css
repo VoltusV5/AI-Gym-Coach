@@ -1,0 +1,136 @@
+/**
+ * Токены макета Figma «Спортик» (файл design/ZtI4KKg8saHQad6rQhZ4Qe)
+ * Градиент фона, акцент #66FFFF, кремовые карточки, Roboto
+ */
+
+:root {
+  --sportik-mint: #aef3e5;
+  --sportik-mint-soft: #d4f5ec;
+  --sportik-cyan: #66ffff;
+  --sportik-cyan-rgb: 102, 255, 255;
+  --sportik-cream: #fff9e3;
+  --sportik-warm-pink: #fff6f6;
+  --sportik-brown: #cb9c6f;
+  --sportik-text: #000000;
+  --sportik-text-muted: rgba(0, 0, 0, 0.6);
+  --sportik-text-soft: #4b3c3c;
+  --sportik-card-gray: #d9d9d9;
+  --sportik-radius-lg: 20px;
+  --sportik-radius-xl: 30px;
+  --sportik-radius-pill: 60px;
+  --ion-font-family: 'Roboto', system-ui, sans-serif;
+
+  /* Primary = кнопка «Далее» / акцент из макета */
+  --ion-color-primary: #66ffff;
+  --ion-color-primary-rgb: 102, 255, 255;
+  --ion-color-primary-contrast: #000000;
+  --ion-color-primary-contrast-rgb: 0, 0, 0;
+  --ion-color-primary-shade: #52cccc;
+  --ion-color-primary-tint: #7dffff;
+}
+
+ion-back-button {
+  --color: var(--sportik-text);
+}
+
+/* Фон онбординга — упрощённый аналог conic-gradient из Figma */
+.sportik-onboarding-content {
+  --background: linear-gradient(
+    165deg,
+    #ffffff 0%,
+    #f4fdf9 35%,
+    var(--sportik-mint-soft) 70%,
+    var(--sportik-mint) 100%
+  );
+}
+
+.sportik-welcome-content {
+  --background: linear-gradient(
+    165deg,
+    #ffffff 0%,
+    #f4fdf9 40%,
+    var(--sportik-mint-soft) 100%
+  );
+}
+
+.sportik-header ion-toolbar {
+  --background: transparent;
+  --border-width: 0;
+}
+
+.sportik-progress-strip {
+  background: var(--sportik-warm-pink);
+  padding: 0.5rem 1rem 0.75rem;
+  margin: 0;
+}
+
+.sportik-progress-strip ion-progress-bar {
+  --background: rgba(203, 156, 111, 0.35);
+  --progress-background: var(--sportik-brown);
+  height: 6px;
+  border-radius: 4px;
+}
+
+.sportik-step-hint {
+  font-family: 'Roboto', sans-serif;
+  font-weight: 600;
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  color: var(--sportik-text-muted);
+  text-align: center;
+  margin: 0 0 0.75rem;
+}
+
+.sportik-question {
+  font-family: 'Roboto', sans-serif;
+  font-weight: 600;
+  font-size: clamp(2.25rem, 7vw, 3.75rem);
+  line-height: 1.15;
+  text-align: center;
+  color: var(--sportik-text);
+  margin: 0 0 1.5rem;
+}
+
+.sportik-footer-btn {
+  --background: var(--sportik-cyan);
+  --background-activated: #52e0e0;
+  --color: #000000;
+  --border-radius: var(--sportik-radius-lg);
+  font-weight: 700;
+  font-size: 1.1rem;
+  min-height: 52px;
+  text-transform: none;
+  letter-spacing: 0.02em;
+}
+
+.sportik-footer-btn[disabled] {
+  opacity: 0.45;
+}
+
+.sportik-card-option {
+  --background: var(--sportik-cream);
+  --border-radius: 16px;
+  --padding-start: 16px;
+  --padding-end: 16px;
+  margin-bottom: 12px;
+  border: 2px solid transparent;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.sportik-card-option.item-radio-checked {
+  border-color: var(--sportik-cyan);
+  --background: #f0fffe;
+}
+
+ion-radio {
+  --color: var(--sportik-text-soft);
+  --color-checked: var(--sportik-text);
+}
+
+.sportik-generating-content {
+  --background: linear-gradient(
+    165deg,
+    #ffffff 0%,
+    var(--sportik-mint-soft) 50%,
+    var(--sportik-mint) 100%
+  );
+}

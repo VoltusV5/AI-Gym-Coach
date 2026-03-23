@@ -1,29 +1,26 @@
 <template>
-  <onboarding-layout 
-    title="Цель" 
-    :progress="80" 
+  <onboarding-layout
+    question="Твоя цель"
+    :progress="62"
     :disabled="!goal"
     :loading="isSubmitting"
     @next="submit"
   >
-    <div class="goal-step">
-      <h2>Какая твоя цель?</h2>
-      <p>Мы составим план, который поможет её достичь быстрее.</p>
-      
-      <ion-list lines="none">
-        <ion-radio-group v-model="goal">
-          <ion-item 
-            v-for="item in goals" 
-            :key="item.value"
-            class="radio-item ion-margin-bottom"
-          >
-            <ion-radio :value="item.value" justify="space-between">
-              {{ item.label }}
-            </ion-radio>
-          </ion-item>
-        </ion-radio-group>
-      </ion-list>
-    </div>
+    <ion-list lines="none" class="options-list">
+      <ion-radio-group v-model="goal">
+        <ion-item
+          v-for="item in goals"
+          :key="item.value"
+          lines="none"
+          class="option-card"
+          :class="{ 'option-card--checked': goal === item.value }"
+        >
+          <ion-radio :value="item.value" justify="space-between" label-placement="end">
+            {{ item.label }}
+          </ion-radio>
+        </ion-item>
+      </ion-radio-group>
+    </ion-list>
   </onboarding-layout>
 </template>
 
@@ -41,19 +38,19 @@ const goal = ref(authStore.profile?.goal || null)
 const isSubmitting = ref(false)
 
 const goals = [
-  { value: 'weight_loss', label: 'Похудеть (сбросить лишний жир)' },
-  { value: 'muscle_gain', label: 'Набрать мышечную массу' },
-  { value: 'keep_fit', label: 'Поддерживать форму и здоровье' },
-  { value: 'increase_stamina', label: 'Увеличить выносливость' }
+  { value: 'Сбросить вес', label: 'Скинуть вес' },
+  { value: 'Сжечь жир', label: 'Сжечь жир' },
+  { value: 'Набрать мышцы', label: 'Набрать мышцы' },
+  { value: 'Набрать мышцы и сжечь жир', label: 'Набрать мышцы и сжечь жир' }
 ]
 
 const submit = async () => {
   if (!goal.value) return
-  
+
   isSubmitting.value = true
   try {
     await authStore.updateProfile({ goal: goal.value })
-    router.push('/training-days')
+    router.push('/fitness-level')
   } catch (error) {
     console.error('Submit error:', error)
   } finally {
@@ -63,23 +60,30 @@ const submit = async () => {
 </script>
 
 <style scoped>
-.goal-step h2 {
-  font-size: 24px;
-  font-weight: 700;
-  margin-bottom: 8px;
+.options-list {
+  background: transparent;
+  padding: 0;
 }
 
-.goal-step p {
-  color: var(--ion-color-medium);
-  margin-bottom: 2rem;
+.option-card {
+  --background: var(--sportik-cream);
+  --border-radius: var(--sportik-radius-lg);
+  margin-bottom: 12px;
+  --padding-start: 16px;
+  --padding-end: 12px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+  border: 2px solid transparent;
 }
 
-.radio-item {
-  --background: var(--ion-color-light);
-  --border-radius: 12px;
+.option-card--checked {
+  border-color: var(--sportik-cyan);
+  --background: #f0fffe;
 }
 
 ion-radio {
   width: 100%;
+  font-family: 'Roboto', sans-serif;
+  font-weight: 600;
+  font-size: 1.05rem;
 }
 </style>

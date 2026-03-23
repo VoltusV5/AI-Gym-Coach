@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import api, { setAuthHeader } from '@/api/api'
 import { saveToken, getToken, removeToken } from '@/utils/auth'
+import { isTrainingDaysComplete } from '@/utils/trainingDays'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -15,16 +16,23 @@ export const useAuthStore = defineStore('auth', {
     nextOnboardingStep: (state) => {
       if (!state.profile) return 'Welcome'
 
-      if (state.profile.gender === null) return 'Gender'
-      if (state.profile.age === null) return 'BirthYear'
-      if (state.profile.height_cm === null || state.profile.weight_kg === null) return 'BodyMetrics'
-      if (state.profile.activity_level === null) return 'ActivityType'
-      if (state.profile.fitness_level === null) return 'FitnessLevel'
-      if (state.profile.injuries_notes === null) return 'HealthRestrictions'
-      if (state.profile.goal === null) return 'GoalSelection'
-      if (state.profile.training_days_map === null) return 'TrainingDays'
+      // Порядок: рост/вес → пол → возраст → активность → травмы → цель → уровень → дни
+      if (state.profile.height_cm == null || state.profile.weight_kg == null) return 'BodyMetrics'
+      if (state.profile.gender == null || state.profile.gender === '') return 'Gender'
+      if (state.profile.age == null || state.profile.age === 0) return 'Age'
+      if (state.profile.activity_level == null || state.profile.activity_level === '') {
+        return 'ActivityType'
+      }
+      if (state.profile.injuries_notes === null || state.profile.injuries_notes === undefined) {
+        return 'HealthRestrictions'
+      }
+      if (state.profile.goal == null || state.profile.goal === '') return 'GoalSelection'
+      if (state.profile.fitness_level == null || state.profile.fitness_level === '') {
+        return 'FitnessLevel'
+      }
+      if (!isTrainingDaysComplete(state.profile.training_days_map)) return 'TrainingDays'
 
-      return 'Home' // Всё заполнено
+      return 'Home'
     }
   },
 
@@ -129,6 +137,19 @@ export const useAuthStore = defineStore('auth', {
         console.error('Plan generation error:', err)
         throw err
       }
+    },
+
+    /**
+     * Сброс для тестов: новый гостевой токен и чистый профиль в сторе.
+     * Не полагается на reload — токен снимается и сразу выдаётся новый.
+     */
+    async restartSessionForTesting() {
+      await removeToken()
+      this.token = null
+      this.profile = null
+      this.error = null
+      setAuthHeader(null)
+      await this.guestLogin()
     }
   }
 })

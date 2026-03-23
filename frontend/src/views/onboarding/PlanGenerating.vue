@@ -1,6 +1,12 @@
 <template>
   <ion-page>
-    <ion-content class="ion-padding ion-text-center">
+    <ion-content class="sportik-generating-content ion-padding ion-text-center" fullscreen>
+      <div
+        v-if="workoutBgUrl"
+        class="generating-bg"
+        :style="{ backgroundImage: `url(${workoutBgUrl})` }"
+        aria-hidden="true"
+      ></div>
       <div class="generating-container">
         <!-- Анимация загрузки -->
         <div class="animation-wrapper">
@@ -33,9 +39,12 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { IonPage, IonContent, IonSpinner, IonProgressBar } from '@ionic/vue'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
+import { getWorkoutBackgroundImageUrl } from '@/utils/localImages'
 
 const authStore = useAuthStore()
 const router = useRouter()
+
+const workoutBgUrl = getWorkoutBackgroundImageUrl()
 
 const progress = ref(0)
 const currentQuoteIndex = ref(0)
@@ -86,12 +95,24 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.generating-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background-size: cover;
+  background-position: center top;
+  opacity: 0.22;
+  pointer-events: none;
+}
+
 .generating-container {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 100%;
+  min-height: 100%;
   padding: 2rem;
   gap: 2rem;
 }

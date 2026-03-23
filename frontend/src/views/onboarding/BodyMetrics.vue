@@ -1,43 +1,46 @@
 <template>
   <onboarding-layout
-    title="Вес и рост"
-    :progress="30"
+    question="Рост и вес"
+    :progress="12"
     :disabled="!height || !weight"
     :loading="isSubmitting"
     @next="submit"
   >
-    <div class="metrics-step">
-      <h2>Твои параметры</h2>
-      <p>Они необходимы для расчёта индекса массы тела (ИМТ).</p>
-
-      <ion-item fill="outline" mode="md" class="input-item ion-margin-bottom">
-        <ion-label position="stacked">Рост (см)</ion-label>
-        <ion-input
-          v-model="height"
-          type="number"
-          placeholder="Напр: 178"
-          min="50"
-          max="300"
-        ></ion-input>
-      </ion-item>
-
-      <ion-item fill="outline" mode="md" class="input-item">
-        <ion-label position="stacked">Вес (кг)</ion-label>
-        <ion-input
-          v-model="weight"
-          type="number"
-          placeholder="Напр: 75"
-          min="20"
-          max="300"
-        ></ion-input>
-      </ion-item>
+    <p class="hint">Сначала рост, затем вес — так удобнее сверяться с макетом.</p>
+    <div class="metrics-row">
+      <div class="metric-card">
+        <label class="metric-label">Рост</label>
+        <div class="metric-field">
+          <ion-input
+            v-model.number="height"
+            type="number"
+            inputmode="numeric"
+            placeholder="180"
+            class="metric-input"
+          ></ion-input>
+          <span class="metric-unit">см</span>
+        </div>
+      </div>
+      <div class="metric-card">
+        <label class="metric-label">Вес</label>
+        <div class="metric-field">
+          <ion-input
+            v-model.number="weight"
+            type="number"
+            inputmode="decimal"
+            placeholder="75"
+            class="metric-input"
+          ></ion-input>
+          <span class="metric-unit">кг</span>
+        </div>
+      </div>
     </div>
   </onboarding-layout>
 </template>
 
 <script setup>
 import { ref } from 'vue'
-import { IonItem, IonLabel, IonInput } from '@ionic/vue'
+import { IonInput } from '@ionic/vue'
 import OnboardingLayout from '@/components/layout/OnboardingLayout.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
@@ -45,8 +48,8 @@ import { useRouter } from 'vue-router'
 const authStore = useAuthStore()
 const router = useRouter()
 
-const height = ref(authStore.profile?.height_cm || null)
-const weight = ref(authStore.profile?.weight_kg || null)
+const height = ref(authStore.profile?.height_cm ?? null)
+const weight = ref(authStore.profile?.weight_kg ?? null)
 const isSubmitting = ref(false)
 
 const submit = async () => {
@@ -55,10 +58,10 @@ const submit = async () => {
   isSubmitting.value = true
   try {
     await authStore.updateProfile({
-      height_cm: parseFloat(height.value),
-      weight_kg: parseFloat(weight.value)
+      height_cm: Math.round(Number(height.value)),
+      weight_kg: Math.round(Number(weight.value))
     })
-    router.push('/activity-type')
+    router.push('/gender')
   } catch (error) {
     console.error('Submit error:', error)
   } finally {
@@ -68,18 +71,66 @@ const submit = async () => {
 </script>
 
 <style scoped>
-.metrics-step h2 {
-  font-size: 24px;
-  font-weight: 700;
-  margin-bottom: 8px;
+.hint {
+  font-family: 'Roboto', sans-serif;
+  font-size: 1rem;
+  color: var(--sportik-text-muted);
+  text-align: center;
+  margin: 0 0 1.5rem;
+  line-height: 1.4;
 }
 
-.metrics-step p {
-  color: var(--ion-color-medium);
-  margin-bottom: 2rem;
+.metrics-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  width: 100%;
 }
 
-.input-item {
-  margin-bottom: 1rem;
+.metric-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.metric-label {
+  font-family: 'Roboto', sans-serif;
+  font-weight: 600;
+  font-size: 1.25rem;
+  color: var(--sportik-text);
+  text-align: center;
+}
+
+.metric-field {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: var(--sportik-cream);
+  border-radius: var(--sportik-radius-lg);
+  padding: 8px 12px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+}
+
+.metric-input {
+  font-family: 'Roboto', sans-serif;
+  font-weight: 600;
+  font-size: 1.75rem;
+  text-align: center;
+}
+
+.metric-unit {
+  font-family: 'Roboto', sans-serif;
+  font-weight: 500;
+  color: var(--sportik-text-muted);
+  font-size: 1rem;
+  align-self: center;
+  margin-right: 4px;
+}
+
+@media (max-width: 380px) {
+  .metrics-row {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

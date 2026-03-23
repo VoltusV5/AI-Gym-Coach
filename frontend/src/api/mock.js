@@ -3,21 +3,27 @@ import api from './api'
 
 const mock = new MockAdapter(api, { delayResponse: 500 })
 
-// Временное хранилище для профиля в памяти (мок)
-let mockProfile = {
-  age: null,
-  gender: null,
-  height_cm: null,
-  weight_kg: null,
-  activity_level: null,
-  injuries_notes: null,
-  goal: null,
-  fitness_level: null,
-  training_days_map: null,
+function createEmptyMockProfile() {
+  return {
+    age: null,
+    gender: null,
+    height_cm: null,
+    weight_kg: null,
+    activity_level: null,
+    injuries_notes: null,
+    goal: null,
+    fitness_level: null,
+    training_days_map: null
+  }
 }
 
-mock.onPost('/auth/guest').reply(200, {
-  token: 'mock-jwt-token-abc-123',
+// Временное хранилище для профиля в памяти (мок) — одно на «сессию» гостя
+let mockProfile = createEmptyMockProfile()
+
+mock.onPost('/auth/guest').reply(() => {
+  // Новый гостевой вход = чистый профиль (иначе после «Заново пройти тест» опрос снова не стартует)
+  mockProfile = createEmptyMockProfile()
+  return [200, { token: `mock-jwt-${Date.now()}` }]
 })
 
 mock.onGet('/profile').reply((config) => {

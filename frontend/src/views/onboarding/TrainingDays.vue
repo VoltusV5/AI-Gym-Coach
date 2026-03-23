@@ -1,27 +1,24 @@
 <template>
   <onboarding-layout
-    title="График"
-    :progress="95"
+    question="Удобные дни?"
+    :progress="88"
     :disabled="!hasSelectedDays"
     :loading="isSubmitting"
     next-label="Завершить"
     @next="submit"
   >
-    <div class="days-step">
-      <h2>Дни для тренировок</h2>
-      <p>Выбери дни недели, когда тебе удобно заниматься.</p>
-
-      <div class="days-grid">
-        <div
-          v-for="day in days"
-          :key="day.id"
-          class="day-card"
-          :class="{ 'selected': selectedDays[day.id] }"
-          @click="toggleDay(day.id)"
-        >
-          <span class="day-label">{{ day.label }}</span>
-        </div>
-      </div>
+    <p class="hint">Выбери дни тренировок — например понедельник, среда и суббота.</p>
+    <div class="days-grid">
+      <button
+        v-for="day in days"
+        :key="day.id"
+        type="button"
+        class="day-square"
+        :class="{ selected: selectedDays[day.id] }"
+        @click="toggleDay(day.id)"
+      >
+        {{ day.label }}
+      </button>
     </div>
   </onboarding-layout>
 </template>
@@ -31,32 +28,32 @@ import { ref, computed } from 'vue'
 import OnboardingLayout from '@/components/layout/OnboardingLayout.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
+import { trainingDaysToSelection, selectionToTrainingDaysArray } from '@/utils/trainingDays'
 
 const authStore = useAuthStore()
 const router = useRouter()
 
 const days = [
-  { id: 'mon', label: 'Пн' },
-  { id: 'tue', label: 'Вт' },
-  { id: 'wed', label: 'Ср' },
-  { id: 'thu', label: 'Чт' },
-  { id: 'fri', label: 'Пт' },
-  { id: 'sat', label: 'Сб' },
-  { id: 'sun', label: 'Вс' }
+  { id: 'mon', label: 'ПН' },
+  { id: 'tue', label: 'ВТ' },
+  { id: 'wed', label: 'СР' },
+  { id: 'thu', label: 'ЧТ' },
+  { id: 'fri', label: 'ПТ' },
+  { id: 'sat', label: 'СБ' },
+  { id: 'sun', label: 'ВС' }
 ]
 
-const selectedDays = ref(authStore.profile?.training_days_map || {
-  mon: false, tue: false, wed: false, thu: false, fri: false, sat: false, sun: false
-})
+const selectedDays = ref(trainingDaysToSelection(authStore.profile?.training_days_map))
 
 const isSubmitting = ref(false)
 
-const hasSelectedDays = computed(() => {
-  return Object.values(selectedDays.value).some(val => !!val)
-})
+const hasSelectedDays = computed(() => Object.values(selectedDays.value).some(Boolean))
 
 const toggleDay = (id) => {
-  selectedDays.value[id] = !selectedDays.value[id]
+  selectedDays.value = {
+    ...selectedDays.value,
+    [id]: !selectedDays.value[id]
+  }
 }
 
 const submit = async () => {
@@ -64,9 +61,8 @@ const submit = async () => {
 
   isSubmitting.value = true
   try {
-    await authStore.updateProfile({ training_days_map: selectedDays.value })
-
-    // Переходим на страницу генерации плана
+    const arr = selectionToTrainingDaysArray(selectedDays.value)
+    await authStore.updateProfile({ training_days_map: arr })
     router.replace('/plan-generating')
   } catch (error) {
     console.error('Submit error:', error)
@@ -77,43 +73,55 @@ const submit = async () => {
 </script>
 
 <style scoped>
-.days-step h2 {
-  font-size: 24px;
-  font-weight: 700;
-  margin-bottom: 8px;
-}
-
-.days-step p {
-  color: var(--ion-color-medium);
-  margin-bottom: 2rem;
+.hint {
+  font-family: 'Roboto', sans-serif;
+  font-size: 0.95rem;
+  color: var(--sportik-text-muted);
+  text-align: center;
+  margin: 0 0 1.5rem;
 }
 
 .days-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(4px, 2vw, 12px);
+  width: 100%;
+  max-width: min(100%, 299px);
+  margin: 0 auto;
 }
 
-.day-card {
+/* 7-й элемент (ВС) — по центру третьей строки */
+.days-grid .day-square:nth-child(7) {
+  grid-column: 2;
+}
+
+/* Ещё −10% */
+.day-square {
   aspect-ratio: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--ion-color-light);
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border: 2px solid transparent;
-}
-
-.day-card.selected {
-  background: var(--ion-color-primary-contrast);
-  border-color: var(--ion-color-primary);
-  color: var(--ion-color-primary);
+  width: 100%;
+  min-width: 0;
+  min-height: clamp(56px, 15vw, 77px);
+  border-radius: 9px;
+  border: 3px solid var(--sportik-card-gray);
+  background: var(--sportik-cream);
+  font-family: 'Roboto', sans-serif;
   font-weight: 700;
+  font-size: clamp(0.7rem, 2.43vw, 0.9rem);
+  color: var(--sportik-text);
+  cursor: pointer;
+  transition:
+    border-color 0.2s,
+    background 0.2s,
+    transform 0.15s;
 }
 
-.day-label {
-  font-size: 1.1rem;
+.day-square:active {
+  transform: scale(0.97);
+}
+
+.day-square.selected {
+  border-color: var(--sportik-cyan);
+  background: #e6ffff;
+  box-shadow: 0 0 0 2px rgba(102, 255, 255, 0.35);
 }
 </style>

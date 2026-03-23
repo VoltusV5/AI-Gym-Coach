@@ -1,77 +1,226 @@
 <template>
   <ion-page>
-    <ion-content
-      fullscreen
-      class="ion-padding"
-    >
-      <div class="welcome-container">
-        <h1>Добро пожаловать в Спортик!</h1>
-        <p>Создай свой план тренировок за 2 минуты</p>
+    <ion-content fullscreen class="sportik-welcome-content welcome-ion-content">
+      <div class="welcome-bg" aria-hidden="true">
+        <img
+          v-if="apolloLeftUrl"
+          class="welcome-bg-apollo"
+          :src="apolloLeftUrl"
+          alt=""
+        />
+      </div>
 
-        <ion-button expand="block" color="primary" @click="startOnboarding">
-          Начать
-        </ion-button>
+      <div class="welcome-wrap ion-padding">
+        <div class="welcome-zone welcome-zone--top">
+          <div class="welcome-badge">
+            <span class="welcome-badge-text">Твой ИИ-тренер в зале</span>
+          </div>
+
+          <div v-if="heroPhotoUrl" class="welcome-hero-photo">
+            <img class="welcome-hero-photo-img" :src="heroPhotoUrl" alt="" />
+          </div>
+        </div>
+
+        <div class="welcome-zone welcome-zone--mid">
+          <p class="welcome-lead">
+            Персональный AI-план: веса и нагрузка автоматически подстраиваются под тебя
+          </p>
+        </div>
+
+        <div class="welcome-zone welcome-zone--bot">
+          <ion-button class="sportik-footer-btn welcome-cta" expand="block" @click="startOnboarding">
+            Далее
+          </ion-button>
+
+          <p class="welcome-sub">Займёт меньше минуты</p>
+
+          <ion-button
+            fill="clear"
+            size="small"
+            class="welcome-reset-test"
+            @click="newTestSession"
+          >
+            Новая тестовая сессия
+          </ion-button>
+        </div>
       </div>
     </ion-content>
   </ion-page>
 </template>
 
 <script setup>
+defineOptions({ name: 'WelcomePage' })
+
 import { IonPage, IonContent, IonButton } from '@ionic/vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { getWelcomeApolloLeftUrl, getWelcomeHeroPhotoUrl } from '@/utils/localImages'
 
 const router = useRouter()
 const authStore = useAuthStore()
 
+const apolloLeftUrl = getWelcomeApolloLeftUrl()
+const heroPhotoUrl = getWelcomeHeroPhotoUrl()
+
 const startOnboarding = () => {
   const step = authStore.nextOnboardingStep
-  if (step === 'Welcome') {
-    router.push('/gender')
-  } else if (step === 'Home') {
+  if (step === 'Home') {
     router.push('/home')
-  } else {
-    const resolvedRoute = router.resolve({ name: step })
-    router.push(resolvedRoute.path)
+    return
+  }
+  const name = step === 'Welcome' ? 'BodyMetrics' : step
+  router.push(router.resolve({ name }).path)
+}
+
+const newTestSession = async () => {
+  try {
+    await authStore.restartSessionForTesting()
+    await router.replace('/')
+  } catch (e) {
+    console.error(e)
   }
 }
 </script>
 
 <style scoped>
-ion-content {
-  --background: var(--ion-color-light);
+.welcome-ion-content {
+  --overflow: hidden;
 }
 
-.welcome-container {
+.welcome-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* Аполлон справа, компактный; якорь — правый нижний угол */
+.welcome-bg-apollo {
+  position: absolute;
+  right: 0;
+  left: auto;
+  bottom: 0;
+  width: min(95vw, 400px);
+  max-height: 90%;
+  object-fit: contain;
+  object-position: right bottom;
+  opacity: 0.48;
+  filter: saturate(1.05);
+  /* было 0.6; +~22% ≈ 0.73 */
+  transform: scale(0.73);
+  transform-origin: right bottom;
+}
+
+.welcome-wrap {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+  padding-top: max(0.25rem, env(safe-area-inset-top, 0px));
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
+}
+
+/* Верх: бейдж + фото ≈ 4/10 экрана */
+.welcome-zone--top {
+  flex: 4 1 0;
+  min-height: min(42dvh, 40svh);
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: flex-start;
+  padding-top: 0.25rem;
+}
+
+.welcome-zone--mid {
+  flex: 3 1 0;
+  min-height: 0;
+  display: flex;
+  align-items: center;
   justify-content: center;
-  text-align: center;
-  height: 100%;
-  padding: 2.5rem;
-  gap: 1.5rem;
+  padding: 0.5rem 0;
 }
 
-h1 {
-  font-size: 2rem;
-  font-weight: 800;
-  margin-bottom: 0.5rem;
-  color: var(--ion-color-dark);
+.welcome-zone--bot {
+  flex: 3 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.35rem;
+  padding-bottom: 0.25rem;
 }
 
-p {
-  font-size: 1.1rem;
-  color: var(--ion-color-medium);
-  margin-bottom: 2rem;
+.welcome-badge {
+  background: var(--sportik-cream);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: var(--sportik-radius-pill);
+  padding: 0.8rem 1.85rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
 }
 
-ion-button {
-  width: 100%;
-  max-width: 320px;
-  --border-radius: 12px;
-  --padding-top: 1.25rem;
-  --padding-bottom: 1.25rem;
+.welcome-badge-text {
+  font-family: 'Roboto', sans-serif;
   font-weight: 700;
+  font-size: clamp(1.05rem, 3.2vw, 1.2rem);
+  color: var(--sportik-text);
+}
+
+.welcome-hero-photo {
+  width: 100%;
+  max-width: min(94vw, 420px);
+  margin: 0.5rem 0 0;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.welcome-hero-photo-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: min(30vh, 280px);
+  object-fit: contain;
+  object-position: center;
+  border-radius: 18px;
+}
+
+.welcome-lead {
+  font-family: 'Roboto', sans-serif;
+  font-weight: 700;
+  font-size: clamp(1.15rem, 3.5vw, 1.4rem);
+  line-height: 1.35;
+  color: var(--sportik-text-muted);
+  margin: 0;
+  max-width: 22rem;
+  text-align: center;
+}
+
+.welcome-sub {
+  font-family: 'Roboto', sans-serif;
+  font-weight: 500;
+  font-size: 0.95rem;
+  color: var(--sportik-text-muted);
+  margin: 0;
+  text-align: center;
+}
+
+.welcome-cta {
+  width: 100%;
+  max-width: 340px;
+  margin: 0;
+}
+
+.welcome-reset-test {
+  --color: var(--sportik-text-muted);
+  font-size: 0.85rem;
+  margin: 0;
+  text-transform: none;
 }
 </style>

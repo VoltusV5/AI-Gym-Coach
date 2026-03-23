@@ -21,8 +21,8 @@ type Days struct {
 }
 
 type Muscules struct {
-	Group     string `json:"группа"`
-	Sub_group string `json:"подгруппа"`
+	Group     string  `json:"группа"`
+	Sub_group *string `json:"подгруппа"` // null в JSON (например пресс) → nil
 }
 
 func GeneratePlan(ctx context.Context, reqBody any) (*Plan, error) {
@@ -79,11 +79,15 @@ func replaceExercises(plan Plan) Plan {
 				Sub_group: ex.Sub_group,
 			}
 
-			switch newEx.Sub_group {
-			case "Верх спины":
-				newEx.Sub_group = "тяга перед собой широким хватом"
-			case "Широчайшие спины":
-				newEx.Sub_group = "тяга сверху узким хватом"
+			if newEx.Sub_group != nil {
+				switch *newEx.Sub_group {
+				case "Верх спины":
+					s := "тяга перед собой широким хватом"
+					newEx.Sub_group = &s
+				case "Широчайшие спины":
+					s := "тяга сверху узким хватом"
+					newEx.Sub_group = &s
+				}
 			}
 
 			newDay.Exercises[j] = newEx
