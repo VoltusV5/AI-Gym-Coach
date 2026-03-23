@@ -7,6 +7,17 @@ import Components from 'unplugin-vue-components/vite'
 
 // https://vite.dev/config/
 export default defineConfig({
+  server: {
+    host: true,
+    port: 5173,
+    strictPort: true,
+    // В dev фронт ходит на тот же origin (пустой baseURL в api.js) — прокси на Go, без CORS.
+    proxy: {
+      '/auth': { target: 'http://127.0.0.1:8080', changeOrigin: true },
+      '/profile': { target: 'http://127.0.0.1:8080', changeOrigin: true },
+      '/api': { target: 'http://127.0.0.1:8080', changeOrigin: true }
+    }
+  },
   plugins: [
     // Не помечать ion-* как native custom elements: в @ionic/vue это Vue-компоненты.
     // isCustomElement: ion-* ломает шаблоны — <ion-page> не связывается с IonPage → пустой экран.

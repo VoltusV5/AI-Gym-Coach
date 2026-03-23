@@ -27,18 +27,41 @@ func GuestHandler(w http.ResponseWriter, r *http.Request) {
 	)
 
 	if err != nil {
-		panic(err)
+		log.Printf("Guest InsertRowsUsers: %v", err)
+		http.Error(w, "Failed to create guest user", http.StatusInternalServerError)
+		return
 	}
 
 	jwt_token, err := auth.CreateToken(user_id, true)
-	fmt.Println(jwt_token)
 	if err != nil {
-		panic(err)
+		log.Printf("Guest CreateToken: %v", err)
+		http.Error(w, "Failed to issue token", http.StatusInternalServerError)
+		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Authorization", fmt.Sprintf("Bearer %s", jwt_token))
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Logged is successfully"))
+	_ = json.NewEncoder(w).Encode(map[string]string{"token": jwt_token})
+}
+
+// ProfileGetHandler — GET /profile (только чтение).
+func ProfileGetHandler(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(auth.UserIDKey).(string)
+	if !ok {
+		http.Error(w, "Failed to get user id", http.StatusInternalServerError)
+		return
+	}
+
+	profile, err := simplesql.GetProfile(r.Context(), simpleconnection.Conn, userID)
+	if err != nil {
+		http.Error(w, "Failed to load profile: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(profile)
 }
 
 func ProfileHandler(w http.ResponseWriter, r *http.Request) {
@@ -99,7 +122,11 @@ func ResponceGenerateHandler(w http.ResponseWriter, r *http.Request) {
 
 	go func() {
 		plan, err := mlclient.GeneratePlan(ctx, profile)
-		ch <- Result{*plan, err}
+		if err != nil {
+			ch <- Result{err: err}
+			return
+		}
+		ch <- Result{plan: *plan, err: nil}
 	}()
 
 	duration := time.Since(start)

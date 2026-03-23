@@ -34,7 +34,7 @@ mock.onGet('/profile').reply((config) => {
   return [200, { ...mockProfile }]
 })
 
-mock.onPatch('/profile').reply((config) => {
+mock.onPost('/profile').reply((config) => {
   if (!config.headers.Authorization) {
     return [401, { message: 'Unauthorized' }]
   }
@@ -59,7 +59,24 @@ mock.onPost('/api/v1/plans/generate').reply((config) => {
   // Имитируем долгий процесс
   return new Promise((resolve) => {
     setTimeout(() => {
-      resolve([200, { success: true }])
+      resolve([
+        200,
+        {
+          split: 'Мок',
+          plan: [
+            {
+              day: '1',
+              day_name: 'День 1',
+              exercises: [
+                [
+                  { id: 1, exercise_name: 'Жим штанги', weight: 20 },
+                  { id: 2, exercise_name: 'Присед', weight: 40 }
+                ]
+              ]
+            }
+          ]
+        }
+      ])
     }, 2000)
   })
 })

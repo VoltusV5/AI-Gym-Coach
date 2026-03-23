@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 )
 
 type Plan struct {
@@ -26,8 +27,11 @@ type Muscules struct {
 }
 
 func GeneratePlan(ctx context.Context, reqBody any) (*Plan, error) {
-	url_string := os.Getenv("ML_BASE_URL")
-	url := url_string + "/plan/user"
+	base := strings.TrimSuffix(strings.TrimSpace(os.Getenv("ML_BASE_URL")), "/")
+	if base == "" {
+		return nil, fmt.Errorf("ML_BASE_URL is not set")
+	}
+	url := base + "/plan/user"
 	data, err := json.Marshal(reqBody)
 	if err != nil {
 		return nil, err

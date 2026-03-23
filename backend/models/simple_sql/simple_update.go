@@ -18,12 +18,12 @@ import (
 type Profile struct {
 	ID              int        `json:"id"`
 	UserID          int        `json:"user_id"`
-	Age             int        `json:"age"`
+	Age             *int       `json:"age"` // NULL у нового профиля — нельзя сканировать в int
 	Gender          *string    `json:"gender"`
 	HeightCm        *int       `json:"height_cm"`
 	WeightKg        *int       `json:"weight_kg"`
 	ActivityLevel   *string    `json:"activity_level"`
-	InjuriesNotes   bool       `json:"injuries_notes"`
+	InjuriesNotes   *bool      `json:"injuries_notes"` // NULL в БД до онбординга
 	Goal            *string    `json:"goal"`
 	FitnessLevel    *string    `json:"fitness_level"`
 	TrainingDaysMap []string   `json:"training_days_map"`
@@ -236,11 +236,11 @@ func countWeight(ctx context.Context, conn *pgxpool.Pool, weight *int, userID st
 		k *= 0.7
 	}
 
-	if profile.Age < 20 || profile.Age > 50 {
+	if profile.Age != nil && (*profile.Age < 20 || *profile.Age > 50) {
 		k *= 0.8
 	}
 
-	if profile.InjuriesNotes == true {
+	if profile.InjuriesNotes != nil && *profile.InjuriesNotes {
 		k *= 0.7
 	}
 

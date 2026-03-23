@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import api, { setAuthHeader } from '@/api/api'
+import { useWorkoutPlanStore } from '@/stores/workoutPlan'
 import { saveToken, getToken, removeToken } from '@/utils/auth'
 import { isTrainingDaysComplete } from '@/utils/trainingDays'
 
@@ -70,7 +71,11 @@ export const useAuthStore = defineStore('auth', {
         }
       } catch (err) {
         console.error('Auth initialization failed:', err)
-        this.error = 'Connection error'
+        const msg = err?.message || ''
+        const noResponse = err?.code === 'ERR_NETWORK' || !err?.response
+        this.error = noResponse
+          ? 'Не удаётся связаться с API. Запустите backend (go run) на порту 8080 и перезапустите npm run dev.'
+          : msg || 'Connection error'
       } finally {
         this.isLoading = false
       }
@@ -81,8 +86,14 @@ export const useAuthStore = defineStore('auth', {
      */
     async guestLogin() {
       try {
-        const { data } = await api.post('/auth/guest', {})
-        const token = data.token
+        const res = await api.post('/auth/guest', {})
+        const token =
+          res.data?.token ||
+          (typeof res.headers?.authorization === 'string' &&
+          res.headers.authorization.startsWith('Bearer ')
+            ? res.headers.authorization.slice(7)
+            : null)
+        if (!token) throw new Error('No token in guest response')
         this.token = token
         await saveToken(token)
         setAuthHeader(token)
@@ -108,12 +119,12 @@ export const useAuthStore = defineStore('auth', {
     },
 
     /**
-     * Обновление профиля (PATCH /profile)
+     * Обновление профиля (POST /profile)
      * @param {Object} fields
      */
     async updateProfile(fields) {
       try {
-        const { data } = await api.patch('/profile', fields)
+        const { data } = await api.post('/profile', fields)
         this.profile = data
         return data
       } catch (err) {
@@ -144,6 +155,7 @@ export const useAuthStore = defineStore('auth', {
      * Не полагается на reload — токен снимается и сразу выдаётся новый.
      */
     async restartSessionForTesting() {
+      useWorkoutPlanStore().clearPlan()
       await removeToken()
       this.token = null
       this.profile = null

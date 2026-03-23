@@ -1,8 +1,20 @@
 import axios from 'axios'
 
+function resolveApiBaseURL() {
+  const raw = import.meta.env.VITE_API_URL
+  if (raw != null && String(raw).trim() !== '') {
+    return String(raw).trim()
+  }
+  // В dev без явного URL — относительные пути → прокси в vite.config.js (нет проблем с CORS).
+  if (import.meta.env.DEV) {
+    return ''
+  }
+  return 'http://localhost:8080'
+}
+
 const api = axios.create({
-  baseURL: 'http://localhost:9091', // бэкенд
-  timeout: 10000,
+  baseURL: resolveApiBaseURL(),
+  timeout: 120000 // генерация плана ждёт ML до ~52 с на бэкенде
 })
 
 /**

@@ -11,24 +11,33 @@
           <div class="home-sheet">
             <div class="home-sheet-inner ion-padding">
               <p class="home-hero-title">Упражнения</p>
+              <p v-if="splitLabel" class="home-split-hint">{{ splitLabel }}</p>
 
               <div class="home-stats">
                 <div class="stat-pill">
                   <span class="stat-label">Упражнения</span>
-                  <span class="stat-value">n</span>
+                  <span class="stat-value">{{ exerciseCount || '—' }}</span>
                 </div>
                 <div class="stat-pill">
-                  <span class="stat-label">Длительность</span>
-                  <span class="stat-value">n мин.</span>
+                  <span class="stat-label">Длительность (оценка)</span>
+                  <span class="stat-value">{{ durationLabel }}</span>
                 </div>
               </div>
 
+              <p v-if="!hasPlan" class="home-empty-hint">
+                Пройдите онбординг и сгенерируйте план — здесь появятся упражнения из ответа сервера.
+              </p>
+
               <div class="exercise-list">
-                <article v-for="i in 3" :key="i" class="exercise-row">
+                <article
+                  v-for="(ex, idx) in exercises"
+                  :key="`${ex.id}-${ex.day}-${idx}`"
+                  class="exercise-row"
+                >
                   <div class="exercise-thumb" aria-hidden="true"></div>
                   <div class="exercise-meta">
-                    <p class="exercise-name">Название упражнения</p>
-                    <p class="exercise-time">n min</p>
+                    <p class="exercise-name">{{ ex.exercise_name }}</p>
+                    <p class="exercise-time">{{ formatRowMeta(ex) }}</p>
                   </div>
                 </article>
               </div>
@@ -66,14 +75,36 @@
 <script setup>
 defineOptions({ name: 'HomePage' })
 
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { IonPage, IonContent, IonButton } from '@ionic/vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useWorkoutPlanStore } from '@/stores/workoutPlan'
 import { getWorkoutBackgroundImageUrl, getHomeTabIconUrls } from '@/utils/localImages'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const workoutPlanStore = useWorkoutPlanStore()
+
+onMounted(() => {
+  workoutPlanStore.hydrateFromStorage()
+})
+
+const exercises = computed(() => workoutPlanStore.flatExercises)
+const exerciseCount = computed(() => workoutPlanStore.exerciseCount)
+const hasPlan = computed(() => exerciseCount.value > 0)
+const splitLabel = computed(() => workoutPlanStore.splitLabel)
+
+const durationLabel = computed(() => {
+  const m = workoutPlanStore.estimatedMinutes
+  return m > 0 ? `${m} мин.` : '—'
+})
+
+function formatRowMeta(ex) {
+  const day = ex.day_name || (ex.day != null ? `День ${ex.day}` : '')
+  const w = ex.weight != null ? `${ex.weight} кг` : 'вес из плана'
+  return [day, w].filter(Boolean).join(' · ')
+}
 
 const workoutApolloImg = getWorkoutBackgroundImageUrl()
 const tabIcons = getHomeTabIconUrls()
@@ -171,6 +202,23 @@ const resetSession = async () => {
   margin: 0 0 1rem;
   text-align: center;
   color: var(--sportik-text);
+}
+
+.home-split-hint {
+  font-family: 'Roboto', sans-serif;
+  font-size: 0.95rem;
+  color: var(--sportik-text-soft);
+  text-align: center;
+  margin: -0.5rem 0 1rem;
+}
+
+.home-empty-hint {
+  font-family: 'Roboto', sans-serif;
+  font-size: 0.95rem;
+  color: var(--sportik-text-muted);
+  text-align: center;
+  margin: 0 0 1rem;
+  line-height: 1.4;
 }
 
 .home-stats {

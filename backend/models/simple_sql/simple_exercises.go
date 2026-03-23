@@ -99,6 +99,18 @@ func InsertExercises(ctx context.Context, conn *pgxpool.Pool) error {
 	return err
 }
 
+// EnsureExercisesSeeded вставляет сид упражнений, если таблица пуста (идемпотентно).
+func EnsureExercisesSeeded(ctx context.Context, conn *pgxpool.Pool) error {
+	var n int64
+	if err := conn.QueryRow(ctx, `SELECT COUNT(*) FROM exercises`).Scan(&n); err != nil {
+		return err
+	}
+	if n > 0 {
+		return nil
+	}
+	return InsertExercises(ctx, conn)
+}
+
 func String(s string) *string {
 	return &s
 }

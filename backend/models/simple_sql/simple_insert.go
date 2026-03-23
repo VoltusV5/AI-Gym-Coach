@@ -2,6 +2,7 @@ package simplesql
 
 import (
 	"context"
+	"strconv"
 	"sport_app/mlclient"
 	"time"
 
@@ -15,7 +16,8 @@ func InsertRowsUsers(
 	subscription_status string,
 ) (string, error) {
 	created_at := time.Now()
-	var userID string
+	// RETURNING user_id — INTEGER; скан в string у pgx часто даёт ошибку → 500 на /auth/guest
+	var userID int
 	sqlQuery := `
 	WITH inserted_row AS (
 		INSERT INTO users (is_anonymous, subscription_status, created_at)
@@ -35,7 +37,10 @@ func InsertRowsUsers(
 	RETURNING user_id;
 	`
 	err := conn.QueryRow(ctx, sqlQuery, is_anonymous, subscription_status, created_at, created_at, created_at).Scan(&userID)
-	return userID, err
+	if err != nil {
+		return "", err
+	}
+	return strconv.Itoa(userID), nil
 }
 
 func InsertRowsPrograms(

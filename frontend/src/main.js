@@ -19,18 +19,20 @@ import '@ionic/vue/css/display.css'
 
 import '@/theme/sportik.css'
 
-// Инициализация Mock API
-import '@/api/mock'
+async function bootstrap() {
+  if (import.meta.env.VITE_USE_MOCK === 'true') {
+    await import('@/api/mock')
+  }
 
-// Создание приложения
-const app = createApp(App)
+  const app = createApp(App)
+  app.use(IonicVue)
+  app.use(createPinia())
+  app.use(router)
 
-// Подключение Ionic и роутинга
-app.use(IonicVue)
-app.use(createPinia())
-app.use(router)
-
-// Ionic + ion-router-outlet
-router.isReady().then(() => {
+  await router.isReady()
   app.mount('#app')
+}
+
+bootstrap().catch((e) => {
+  console.error('Bootstrap failed:', e)
 })

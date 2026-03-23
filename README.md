@@ -1,22 +1,48 @@
-# Fitness App
+# Fitness App (Спортик)
 
-Мобильное приложение с ИИ-тренером для тренировок в зале.
+## Запуск (корень репозитория)
 
-## Структура проекта
+**1. Postgres**
 
-- **backend/** — Go API (GORM + PostgreSQL)
-- **ai/** — Python часть (FastAPI + ИИ-генерация планов и чат)
-- **frontend/** — Vue 3 + Capacitor (мобильное приложение)
+```powershell
+docker compose up -d postgres
+```
 
-## Быстрый старт (локально)
+**2. ML (FastAPI, порт 5050)**
 
-...
+```powershell
+cd ai
+python -m pip install -r requirements-ml-api.txt
+python -m uvicorn main:app --host 127.0.0.1 --port 5050
+```
 
-## Технологии
+**3. Backend**
 
-- Backend: Go + GORM
-- AI: Python + FastAPI + SQLAlchemy
-- Frontend: Vue 3 + Pinia + Capacitor
-- БД: PostgreSQL
+```powershell
+cd backend
+$env:MY_KEY="postgres://sport:sport@localhost:5433/sport?sslmode=disable"
+$env:ML_BASE_URL="http://localhost:5050"
+go run .
+```
 
-Лицензия: MIT
+**4. Frontend**
+
+```powershell
+cd frontend
+npm install
+npm run dev
+```
+
+→ **http://localhost:5173/**
+
+---
+
+## БД посмотреть
+
+```powershell
+docker compose exec postgres psql -U sport -d sport
+```
+
+В psql: `\dt` — таблицы, `SELECT * FROM users LIMIT 5;`, `\q` — выход.
+
+
