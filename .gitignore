@@ -22,20 +22,6 @@ ai/*.egg-info/
 ai/.env
 ai/.env.local
 
-# Go (backend)
-backend/vendor/
-backend/.env
-backend/.env.local
-backend/debug.test
-backend/*.exe
-backend/*.exe~
-backend/*.dll
-backend/*.so
-backend/*.dylib
-backend/testdata/
-backend/cover.out
-backend/*.test
-
 # Frontend (Vue + Capacitor)
 frontend/node_modules/
 frontend/dist/

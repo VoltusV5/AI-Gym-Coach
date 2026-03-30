@@ -1,48 +1,38 @@
 # Fitness App (Спортик)
 
-## Запуск (корень репозитория)
+## Запуск 
 
-**1. Postgres**
+**1. Из корня**
 
-```powershell
-docker compose up -d postgres
+```запуск всех сервисов одним таргетом
+make up
 ```
 
-**2. ML (FastAPI, порт 5050)**
+**2. Запуск по отдельности(перейти в 3-х терминалах в соответствующие папки)**
 
-```powershell
-cd ai
-python -m pip install -r requirements-ml-api.txt
-python -m uvicorn main:app --host 127.0.0.1 --port 5050
+```для ml, backend, frontend
+make sportapp-deploy
+make env-up (для postgresql в папке backend)
+make env-port-forward (в папке backend, чтобы в pgdmin смотреть бд)
 ```
 
-**3. Backend**
+**3. Порты**
 
-```powershell
-cd backend
-$env:MY_KEY="postgres://sport:sport@localhost:5433/sport?sslmode=disable"
-$env:ML_BASE_URL="http://localhost:5050"
-go run .
+```
+backend - 5050
+ml - 8000
+frontend - 3000
 ```
 
-**4. Frontend**
+**4. Примечание**
 
-```powershell
-cd frontend
-npm install
-npm run dev
+```Docker
+У меня запускалось всё только при открытом docker desktop.
+Все работает в контейнерах, не падая.
 ```
 
-→ **http://localhost:5173/**
+## Проблема frontend
 
----
-
-## БД посмотреть
-
-```powershell
-docker compose exec postgres psql -U sport -d sport
 ```
-
-В psql: `\dt` — таблицы, `SELECT * FROM users LIMIT 5;`, `\q` — выход.
-
-
+Сайт в браузере открывается, но там просто белое окно, где ничего нельзя делать. Имитируя frontend запросами на backend через postman у меня с ml все работало правильно во всех смыслах.
+```

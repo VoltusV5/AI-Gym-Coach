@@ -7,9 +7,8 @@ import (
 	"log"
 	"net/http"
 	"sport_app/auth"
+	simplesql "sport_app/core/models/simple_sql"
 	"sport_app/mlclient"
-	simpleconnection "sport_app/models/simple_connection"
-	simplesql "sport_app/models/simple_sql"
 	"time"
 )
 
@@ -20,8 +19,8 @@ type Result struct {
 
 func GuestHandler(w http.ResponseWriter, r *http.Request) {
 	user_id, err := simplesql.InsertRowsUsers(
-		simpleconnection.Ctx,
-		simpleconnection.Conn,
+		r.Context(),
+		dbpool.Pool,
 		true,
 		"free",
 	)
@@ -45,7 +44,6 @@ func GuestHandler(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(map[string]string{"token": jwt_token})
 }
 
-// ProfileGetHandler — GET /profile (только чтение).
 func ProfileGetHandler(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(auth.UserIDKey).(string)
 	if !ok {
@@ -53,7 +51,7 @@ func ProfileGetHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	profile, err := simplesql.GetProfile(r.Context(), simpleconnection.Conn, userID)
+	profile, err := simplesql.GetProfile(r.Context(), dbpool.Pool, userID)
 	if err != nil {
 		http.Error(w, "Failed to load profile: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -84,12 +82,12 @@ func ProfileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := simplesql.UpdateProfile(r.Context(), simpleconnection.Conn, userID, requestData); err != nil {
+	if err := simplesql.UpdateProfile(r.Context(), dbpool.Pool, userID, requestData); err != nil {
 		http.Error(w, "Error profile update: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	profile, err := simplesql.GetProfile(r.Context(), simpleconnection.Conn, userID)
+	profile, err := simplesql.GetProfile(r.Context(), dbpool.Pool, userID)
 	if err != nil {
 		http.Error(w, "The profile has been updated, but the current data could not be loaded.", http.StatusInternalServerError)
 		return
@@ -107,7 +105,7 @@ func ResponceGenerateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	profile, err := simplesql.GetProfile(r.Context(), simpleconnection.Conn, userID)
+	profile, err := simplesql.GetProfile(r.Context(), dbpool.Pool, userID)
 	if err != nil {
 		http.Error(w, "The profile has been updated, but the current data could not be loaded.", http.StatusInternalServerError)
 		return
@@ -145,14 +143,14 @@ func ResponceGenerateHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	exercises_plan_weight, exercises_plan := simplesql.GetExercises(r.Context(), simpleconnection.Conn, res.plan, userID)
-	err2 := simplesql.InsertRowsPrograms(userID, true, res.plan, exercises_plan, r.Context(), simpleconnection.Conn)
+	exercises_plan_weight, exercises_plan := simplesql.GetExercises(r.Context(), dbpool.Pool, res.plan, userID)
+	err2 := simplesql.InsertRowsPrograms(userID, true, res.plan, exercises_plan, r.Context(), dbpool.Pool)
 	if err2 != nil {
 		http.Error(w, "Error inserting plan into database", http.StatusInternalServerError)
 		return
 	}
 
-	existingWeights, errW := simplesql.GetUserWorkingWeightsMap(r.Context(), simpleconnection.Conn, userID)
+	existingWeights, errW := simplesql.GetUserWorkingWeightsMap(r.Context(), dbpool.Pool, userID)
 	if errW != nil {
 		http.Error(w, "Failed to load working weights: "+errW.Error(), http.StatusInternalServerError)
 		return
@@ -165,7 +163,7 @@ func ResponceGenerateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err4 := simplesql.InsertRowsData(r.Context(), simpleconnection.Conn, userID, workingWeightsJSON)
+	err4 := simplesql.InsertRowsData(r.Context(), dbpool.Pool, userID, workingWeightsJSON)
 	if err4 != nil {
 		http.Error(w, "Failed to save working weights", http.StatusInternalServerError)
 		return
