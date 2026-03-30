@@ -11,9 +11,12 @@ MUSCLES = {
     "Плечи": ["передняя дельта", "средняя дельта", "задняя дельта"],
     "Руки": ["трицепс", "бицепс"],
     "Грудь": ["грудные верх", "грудные середина", "грудные низ"],
-    "Спина": ["Широчайшие спины", "Верх спины"],
+    "Спина": ["тяга перед собой широким хватом", 
+              "тяга перед собой узким хватом",
+              "тяга сверху широким хватом",
+              "тяга сверху узким хватом"],
     "Пресс": [None],
-    "Ноги": ["ягодицы", "бицепс бедра", "квадрицепс", "икры"]
+    "Ноги": ["ягодицы", "бицепс бедра", "квадрицепс", "икры", "приводящие"]
 }
 
 
@@ -297,7 +300,7 @@ def generate_plan(user):
 # ОСНОВНОЙ КОД
 # ------------------------------------------------
 
-with open("ai/generateData/users.json", "r",encoding="utf-8") as f:
+with open("ai/generateData/dataset_users.json", "r",encoding="utf-8") as f:
     users = json.load(f)
 
 dataset = []
@@ -313,4 +316,7 @@ for user in users:
 
 with jsonlines.open("dataset_with_targets.jsonlines",mode="w") as f:
     f.write_all(dataset)
+
+with open("dataset_with_targets.json", "w", encoding="utf-8") as f:
+    json.dump(dataset, f, ensure_ascii=False, indent=2)
     

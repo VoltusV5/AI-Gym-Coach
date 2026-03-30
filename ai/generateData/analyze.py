@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 # открываем JSONL и читаем построчно
 sp = []
-with open("ai/generateData/dataset.jsonlines", "r", encoding="utf-8") as f:
+with open("ai/dataset/dataset.jsonlines", "r", encoding="utf-8") as f:
     for line in f:
         example = json.loads(line)
         sp.append(example["output"]["тип_сплита"])
@@ -16,9 +16,10 @@ data = {i: sp.count(i) for i in set(sp)}
 plt.bar(list(data.keys()), [v / sum(data.values()) * 100 for v in data.values()])
 plt.title("Распределение сплитов")
 plt.ylabel("Процент (%)")
+plt.savefig("ai/dataset/Распределение типов тренировок")
 plt.show()
 
-with open("ai/generateData/dataset_users.json", "r",encoding="utf-8") as f:
+with open("ai/dataset/dataset_users.json", "r",encoding="utf-8") as f:
     users = json.load(f)
 
 sp = []
@@ -40,5 +41,6 @@ for i in users:
 data = {i:(sp.count(i)) for i in sp}
 
 ax[1].bar(list(data.keys()), list(data.values()))
+plt.savefig("ai/dataset/Распределение возраста и уровня")
 plt.show()
 
