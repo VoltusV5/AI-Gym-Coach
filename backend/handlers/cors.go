@@ -6,7 +6,6 @@ import (
 	"strings"
 )
 
-// isAllowedDevOrigin — localhost / 127.0.0.1 с любым портом + типичные LAN-хосты (Vite --host).
 func isAllowedDevOrigin(origin string) bool {
 	if origin == "" {
 		return false
@@ -33,7 +32,6 @@ func isAllowedDevOrigin(origin string) bool {
 	return false
 }
 
-// corsMiddleware разрешает запросы с локального фронтенда (Vite / Ionic / сеть).
 func corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		origin := r.Header.Get("Origin")

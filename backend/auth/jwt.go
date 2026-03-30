@@ -7,10 +7,8 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// SecretKey по умолчанию для локальной разработки; переопределяется InitJWTFromEnv().
 var SecretKey = []byte("JWT_SECRET")
 
-// InitJWTFromEnv подхватывает JWT_SECRET из окружения (если задан).
 func InitJWTFromEnv() {
 	if s := os.Getenv("JWT_SECRET"); s != "" {
 		SecretKey = []byte(s)

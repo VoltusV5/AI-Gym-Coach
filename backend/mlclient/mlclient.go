@@ -23,7 +23,7 @@ type Days struct {
 
 type Muscules struct {
 	Group     string  `json:"группа"`
-	Sub_group *string `json:"подгруппа"` // null в JSON (например пресс) → nil
+	Sub_group *string `json:"подгруппа"`
 }
 
 func GeneratePlan(ctx context.Context, reqBody any) (*Plan, error) {

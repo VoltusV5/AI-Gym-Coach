@@ -18,12 +18,12 @@ import (
 type Profile struct {
 	ID              int        `json:"id"`
 	UserID          int        `json:"user_id"`
-	Age             *int       `json:"age"` // NULL у нового профиля — нельзя сканировать в int
+	Age             *int       `json:"age"`
 	Gender          *string    `json:"gender"`
 	HeightCm        *int       `json:"height_cm"`
 	WeightKg        *int       `json:"weight_kg"`
 	ActivityLevel   *string    `json:"activity_level"`
-	InjuriesNotes   *bool      `json:"injuries_notes"` // NULL в БД до онбординга
+	InjuriesNotes   *bool      `json:"injuries_notes"`
 	Goal            *string    `json:"goal"`
 	FitnessLevel    *string    `json:"fitness_level"`
 	TrainingDaysMap []string   `json:"training_days_map"`
@@ -70,7 +70,7 @@ func GetProfile(ctx context.Context, conn *pgxpool.Pool, userID string) (*Profil
         SELECT id, user_id, age, gender, height_cm, weight_kg,
                activity_level, injuries_notes, goal, fitness_level,
                training_days_map, created_at, updated_at
-        FROM profile
+        FROM sportapp.profile
         WHERE user_id = $1
     `, userID).Scan(
 		&p.ID, &p.UserID, &p.Age, &p.Gender, &p.HeightCm, &p.WeightKg,
@@ -115,7 +115,7 @@ func UpdateProfile(ctx context.Context, conn *pgxpool.Pool, userID string, updat
 
 	args = append(args, userID)
 	query := fmt.Sprintf(`
-        UPDATE profile
+        UPDATE sportapp.profile
         SET %s
         WHERE user_id = $%d
     `, strings.Join(setParts, ", "), idx)
@@ -155,11 +155,10 @@ func GetExercises(ctx context.Context, conn *pgxpool.Pool, plan mlclient.Plan, u
 		for j, ex := range day.Exercises {
 			var rows pgx.Rows
 			var err error
-			// подгруппа null в JSON (пресс и т.п.) → в БД muscular_subgroup IS NULL
 			if ex.Sub_group == nil {
 				rows, err = conn.Query(ctx, `
 					SELECT id, exercises_name, working_weights
-					FROM exercises
+					FROM sportapp.exercises
 					WHERE muscular_group = $1 AND muscular_subgroup IS NULL
 					ORDER BY id
 					LIMIT 5
@@ -167,7 +166,7 @@ func GetExercises(ctx context.Context, conn *pgxpool.Pool, plan mlclient.Plan, u
 			} else {
 				rows, err = conn.Query(ctx, `
 					SELECT id, exercises_name, working_weights
-					FROM exercises
+					FROM sportapp.exercises
 					WHERE muscular_group = $1 AND muscular_subgroup = $2
 					ORDER BY id
 					LIMIT 5
@@ -252,10 +251,9 @@ func countWeight(ctx context.Context, conn *pgxpool.Pool, weight *int, userID st
 	*weight = roundWeightDownToGymStep(kg)
 }
 
-// Шаг дисков: для больших весов — 5 кг, иначе 2.5 кг (ТЗ: округление вниз до шага тренажёра)
 const gymPlateStepSmallKG = 2.5
 const gymPlateStepLargeKG = 5.0
-const gymPlateStepLargeFromKG = 50 // от этого «сырого» веса считаем шаг 5 кг
+const gymPlateStepLargeFromKG = 50
 
 func roundWeightDownToGymStep(kg float64) int {
 	if kg <= 0 {
@@ -269,11 +267,10 @@ func roundWeightDownToGymStep(kg float64) int {
 	return int(steps * step)
 }
 
-// GetUserWorkingWeightsMap читает JSONB working_weights из user_data (ключи — строковые id упражнений).
 func GetUserWorkingWeightsMap(ctx context.Context, conn *pgxpool.Pool, userID string) (map[string]int, error) {
 	var raw []byte
 	err := conn.QueryRow(ctx, `
-		SELECT working_weights FROM user_data WHERE user_id = $1
+		SELECT working_weights FROM sportapp.user_data WHERE user_id = $1
 	`, userID).Scan(&raw)
 	if err != nil {
 		return nil, err
@@ -299,7 +296,6 @@ func GetUserWorkingWeightsMap(ctx context.Context, conn *pgxpool.Pool, userID st
 	return out, nil
 }
 
-// ApplyExistingWeightsToPlan подставляет сохранённые веса в ответ (не пересчитываем то, что уже есть в БД).
 func ApplyExistingWeightsToPlan(plan *EPlanWithWeight, existing map[string]int) {
 	if len(existing) == 0 {
 		return
@@ -318,7 +314,6 @@ func ApplyExistingWeightsToPlan(plan *EPlanWithWeight, existing map[string]int) 
 	}
 }
 
-// MergeWorkingWeightsJSON: старые пары id→вес + только новые id из плана (уже с учётом отображаемых весов).
 func MergeWorkingWeightsJSON(existing map[string]int, plan EPlanWithWeight) ([]byte, error) {
 	merged := make(map[string]int, len(existing)+64)
 	for k, v := range existing {

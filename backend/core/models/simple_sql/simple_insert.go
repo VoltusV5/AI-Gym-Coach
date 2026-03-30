@@ -2,8 +2,8 @@ package simplesql
 
 import (
 	"context"
-	"strconv"
 	"sport_app/mlclient"
+	"strconv"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -16,23 +16,22 @@ func InsertRowsUsers(
 	subscription_status string,
 ) (string, error) {
 	created_at := time.Now()
-	// RETURNING user_id — INTEGER; скан в string у pgx часто даёт ошибку → 500 на /auth/guest
 	var userID int
 	sqlQuery := `
 	WITH inserted_row AS (
-		INSERT INTO users (is_anonymous, subscription_status, created_at)
+		INSERT INTO sportapp.users (is_anonymous, subscription_status, created_at)
 		VALUES ($1, $2, $3)
 		RETURNING id
 	),
 	inserted_rows AS (
-		INSERT INTO profile (user_id, created_at)
+		INSERT INTO sportapp.profile (user_id, created_at)
 		SELECT id, $4 FROM inserted_row
 	),
 	inserted_rrows AS (
-		INSERT INTO user_programs (user_id)
+		INSERT INTO sportapp.user_programs (user_id)
 		SELECT id FROM inserted_row
 	)
-	INSERT INTO user_data (user_id, created_at)
+	INSERT INTO sportapp.user_data (user_id, created_at)
 	SELECT id, $5 FROM inserted_row
 	RETURNING user_id;
 	`
@@ -52,7 +51,7 @@ func InsertRowsPrograms(
 	conn *pgxpool.Pool,
 ) error {
 	sqlQuery := `
-	UPDATE user_programs
+	UPDATE sportapp.user_programs
 	SET started_at = $1, planned_end_at = $2, is_active = $3, plan_template = $4, plan_exercises = $5
 	WHERE user_id = $6;
 	`
@@ -65,7 +64,7 @@ func InsertRowsPrograms(
 
 func InsertRowsData(ctx context.Context, conn *pgxpool.Pool, userID string, working_weights []byte) error {
 	sqlQuery := `
-	UPDATE user_data
+	UPDATE sportapp.user_data
 	SET working_weights = $1, updated_at = $2
 	WHERE user_id = $3;
 	`

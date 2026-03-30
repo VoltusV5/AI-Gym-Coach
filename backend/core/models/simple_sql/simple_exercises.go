@@ -3,6 +3,7 @@ package simplesql
 import (
 	"context"
 	"fmt"
+	simpleconnection "sport_app/core/models/simple_connection"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -84,7 +85,7 @@ func InsertExercises(ctx context.Context, conn *pgxpool.Pool) error {
 		{"Пуловер", "Спина", String("тяга сверху широким хватом"), Integer(5), false},
 	}
 
-	sqlQuery := `INSERT INTO exercises (exercises_name, muscular_group, muscular_subgroup, working_weights, safe_for_injuries) VALUES `
+	sqlQuery := `INSERT INTO sportapp.exercises (exercises_name, muscular_group, muscular_subgroup, working_weights, safe_for_injuries) VALUES `
 	args := []any{}
 	for i, u := range exercises {
 		if i > 0 {
@@ -99,16 +100,15 @@ func InsertExercises(ctx context.Context, conn *pgxpool.Pool) error {
 	return err
 }
 
-// EnsureExercisesSeeded вставляет сид упражнений, если таблица пуста (идемпотентно).
-func EnsureExercisesSeeded(ctx context.Context, conn *pgxpool.Pool) error {
+func EnsureExercisesSeeded(ctx context.Context, conn *simpleconnection.ConnectionPool) error {
 	var n int64
-	if err := conn.QueryRow(ctx, `SELECT COUNT(*) FROM exercises`).Scan(&n); err != nil {
+	if err := conn.QueryRow(ctx, `SELECT COUNT(*) FROM sportapp.exercises`).Scan(&n); err != nil {
 		return err
 	}
 	if n > 0 {
 		return nil
 	}
-	return InsertExercises(ctx, conn)
+	return InsertExercises(ctx, conn.Pool)
 }
 
 func String(s string) *string {
