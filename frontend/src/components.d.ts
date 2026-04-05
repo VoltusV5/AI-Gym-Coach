@@ -15,5 +15,6 @@ declare module 'vue' {
     OnboardingLayout: typeof import('./components/layout/OnboardingLayout.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    WorkoutChrome: typeof import('./components/workout/WorkoutChrome.vue')['default']
   }
 }

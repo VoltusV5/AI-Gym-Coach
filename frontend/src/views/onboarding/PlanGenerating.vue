@@ -39,11 +39,13 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { IonPage, IonContent, IonSpinner, IonProgressBar } from '@ionic/vue'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkoutPlanStore } from '@/stores/workoutPlan'
+import { useWorkoutSessionStore } from '@/stores/workoutSession'
 import { useRouter } from 'vue-router'
 import { getWorkoutBackgroundImageUrl } from '@/utils/localImages'
 
 const authStore = useAuthStore()
 const workoutPlanStore = useWorkoutPlanStore()
+const workoutSessionStore = useWorkoutSessionStore()
 const router = useRouter()
 
 const workoutBgUrl = getWorkoutBackgroundImageUrl()
@@ -77,6 +79,7 @@ onMounted(async () => {
   try {
     const planPayload = await authStore.generatePlan()
     workoutPlanStore.setPlanFromApi(planPayload)
+    workoutSessionStore.buildFromApiPlan(planPayload)
 
     // Дождемся пока прогресс дойдет до 100% для красоты
     progress.value = 1

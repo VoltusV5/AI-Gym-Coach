@@ -3,7 +3,9 @@ import { defineStore } from 'pinia'
 const STORAGE_KEY = 'sportik_workout_plan'
 
 /**
- * Ответ бэкенда после ML: { split, plan: [{ day, day_name, exercises: [[{ id, exercise_name, weight }]] }] }
+ * Ответ POST /api/v1/plans/generate (ТЗ):
+ * { split, plan: [{ day, day_name, exercises: [[вариации...]] }] }
+ * exercises[j] — слот; внутри вариации { id, exercise_name, weight }.
  */
 export const useWorkoutPlanStore = defineStore('workoutPlan', {
   state: () => ({
@@ -11,23 +13,27 @@ export const useWorkoutPlanStore = defineStore('workoutPlan', {
   }),
 
   getters: {
-    /** Плоский список упражнений с подписью дня */
+    /** День A: по одному «главному» упражнению на слот (первая вариация). */
     flatExercises(state) {
       if (!state.plan?.plan?.length) return []
+      const dayA = state.plan.plan.find(
+        (d) => String(d?.day ?? '').toUpperCase() === 'A'
+      )
+      if (!dayA) return []
       const out = []
-      for (const day of state.plan.plan) {
-        const blocks = day.exercises || []
-        for (const block of blocks) {
-          for (const ex of block) {
-            out.push({
-              id: ex.id,
-              exercise_name: ex.exercise_name,
-              weight: ex.weight,
-              day: day.day,
-              day_name: day.day_name
-            })
-          }
-        }
+      const blocks = dayA.exercises || []
+      for (let j = 0; j < blocks.length; j++) {
+        const vars = blocks[j]
+        if (!Array.isArray(vars) || !vars.length) continue
+        const ex = vars[0]
+        out.push({
+          id: ex.id,
+          exercise_name: ex.exercise_name,
+          weight: ex.weight,
+          day: dayA.day,
+          day_name: dayA.day_name,
+          slot_index: j
+        })
       }
       return out
     },
@@ -52,7 +58,7 @@ export const useWorkoutPlanStore = defineStore('workoutPlan', {
     setPlanFromApi(data) {
       this.plan = data
       try {
-        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data))
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
       } catch (_) {
         /* ignore */
       }
@@ -60,7 +66,7 @@ export const useWorkoutPlanStore = defineStore('workoutPlan', {
 
     hydrateFromStorage() {
       try {
-        const raw = sessionStorage.getItem(STORAGE_KEY)
+        const raw = localStorage.getItem(STORAGE_KEY)
         if (raw) this.plan = JSON.parse(raw)
       } catch (_) {
         this.plan = null
@@ -70,7 +76,7 @@ export const useWorkoutPlanStore = defineStore('workoutPlan', {
     clearPlan() {
       this.plan = null
       try {
-        sessionStorage.removeItem(STORAGE_KEY)
+        localStorage.removeItem(STORAGE_KEY)
       } catch (_) {
         /* ignore */
       }

@@ -1,5 +1,6 @@
 import MockAdapter from 'axios-mock-adapter'
 import api from './api'
+import { getMockPlanGenerateResponse } from '@/mocks/planGenerate.mock'
 
 const mock = new MockAdapter(api, { delayResponse: 500 })
 
@@ -50,35 +51,30 @@ mock.onPost('/profile').reply((config) => {
   }
 })
 
-// Генерация плана
+// Генерация плана (контракт ТЗ: день A — слоты с массивами вариаций)
 mock.onPost('/api/v1/plans/generate').reply((config) => {
   if (!config.headers.Authorization) {
     return [401, { message: 'Unauthorized' }]
   }
 
-  // Имитируем долгий процесс
   return new Promise((resolve) => {
     setTimeout(() => {
-      resolve([
-        200,
-        {
-          split: 'Мок',
-          plan: [
-            {
-              day: '1',
-              day_name: 'День 1',
-              exercises: [
-                [
-                  { id: 1, exercise_name: 'Жим штанги', weight: 20 },
-                  { id: 2, exercise_name: 'Присед', weight: 40 }
-                ]
-              ]
-            }
-          ]
-        }
-      ])
+      resolve([200, getMockPlanGenerateResponse()])
     }, 2000)
   })
+})
+
+mock.onPost('/api/v1/workouts/complete').reply((config) => {
+  if (!config.headers.Authorization) {
+    return [401, { message: 'Unauthorized' }]
+  }
+  try {
+    const body = config.data ? JSON.parse(config.data) : {}
+    console.log('[mock] workouts/complete', body)
+  } catch (_) {
+    /* ignore */
+  }
+  return [200, { ok: true, saved_id: `mock-${Date.now()}` }]
 })
 
 console.log('Mock API initialized')

@@ -68,6 +68,17 @@ const routes = [
     path: '/home',
     name: 'Home',
     component: () => import('@/views/Home.vue')
+  },
+  {
+    path: '/workout/session',
+    name: 'WorkoutSession',
+    component: () => import('@/views/workout/WorkoutExerciseScreen.vue')
+  },
+  {
+    path: '/workout/alternatives/:slotIndex',
+    name: 'WorkoutAlternatives',
+    component: () => import('@/views/workout/WorkoutAlternativesScreen.vue'),
+    props: true
   }
 ]
 

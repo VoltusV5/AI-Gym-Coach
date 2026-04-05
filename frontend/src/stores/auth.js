@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import api, { setAuthHeader } from '@/api/api'
 import { useWorkoutPlanStore } from '@/stores/workoutPlan'
+import { useWorkoutSessionStore } from '@/stores/workoutSession'
 import { saveToken, getToken, removeToken } from '@/utils/auth'
 import { isTrainingDaysComplete } from '@/utils/trainingDays'
 
@@ -156,6 +157,7 @@ export const useAuthStore = defineStore('auth', {
      */
     async restartSessionForTesting() {
       useWorkoutPlanStore().clearPlan()
+      useWorkoutSessionStore().clear()
       await removeToken()
       this.token = null
       this.profile = null

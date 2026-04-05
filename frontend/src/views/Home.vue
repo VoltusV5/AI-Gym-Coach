@@ -24,14 +24,24 @@
                 </div>
               </div>
 
-              <p v-if="!hasPlan" class="home-empty-hint">
-                Пройдите онбординг и сгенерируйте план — здесь появятся упражнения из ответа сервера.
+              <p v-if="!hasPlan && mocksOn" class="home-empty-hint">
+                Пройдите онбординг и сгенерируйте план — здесь появятся упражнения из ответа сервера. Пока плана
+                нет, показан демо-список (моки включены).
+              </p>
+              <p v-else-if="!hasPlan && !mocksOn" class="home-empty-hint">
+                Сгенерируйте план после онбординга. Демо-план отключён
+                <code class="home-code">VITE_USE_WORKOUT_MOCKS=false</code>
+                — без ответа API список пуст.
+              </p>
+              <p v-else-if="isDemoPlan" class="home-empty-hint">
+                Сейчас показан демо-план (мок) для превью экрана тренировки. После генерации плана с сервера
+                список обновится.
               </p>
 
               <div class="exercise-list">
                 <article
                   v-for="(ex, idx) in exercises"
-                  :key="`${ex.id}-${ex.day}-${idx}`"
+                  :key="`row-${idx}`"
                   class="exercise-row"
                 >
                   <div class="exercise-thumb" aria-hidden="true"></div>
@@ -48,7 +58,13 @@
 
       <div class="home-footer-stack">
         <div class="home-bottom ion-padding">
-          <ion-button class="sportik-footer-btn start-btn" expand="block" @click="onStart">
+          <ion-button
+            class="sportik-footer-btn start-btn"
+            expand="block"
+            :disabled="!canStartWorkout"
+            :title="startButtonTitle"
+            @click="onStart"
+          >
             Начать тренировку
           </ion-button>
           <ion-button fill="clear" size="small" class="logout-btn" @click="resetSession">
@@ -80,24 +96,39 @@ import { IonPage, IonContent, IonButton } from '@ionic/vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkoutPlanStore } from '@/stores/workoutPlan'
+import { useWorkoutSessionStore } from '@/stores/workoutSession'
+import { workoutMocksEnabled } from '@/config/workoutMocks'
 import { getWorkoutBackgroundImageUrl, getHomeTabIconUrls } from '@/utils/localImages'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const workoutPlanStore = useWorkoutPlanStore()
+const workoutSessionStore = useWorkoutSessionStore()
 
 onMounted(() => {
   workoutPlanStore.hydrateFromStorage()
+  workoutSessionStore.hydrate()
+  workoutSessionStore.syncWithPlanStore(workoutPlanStore)
 })
 
-const exercises = computed(() => workoutPlanStore.flatExercises)
-const exerciseCount = computed(() => workoutPlanStore.exerciseCount)
+const exercises = computed(() => workoutSessionStore.homeRows)
+const exerciseCount = computed(() => workoutSessionStore.slotCount)
 const hasPlan = computed(() => exerciseCount.value > 0)
-const splitLabel = computed(() => workoutPlanStore.splitLabel)
+const mocksOn = computed(() => workoutMocksEnabled())
+const isDemoPlan = computed(() => mocksOn.value && workoutSessionStore.source === 'mock')
+const splitLabel = computed(() => workoutSessionStore.split || workoutPlanStore.splitLabel)
+
+const canStartWorkout = computed(() => workoutSessionStore.slotCount > 0)
+const startButtonTitle = computed(() =>
+  canStartWorkout.value
+    ? 'Открыть экран тренировки: упражнения, подходы, смена варианта'
+    : 'Нет упражнений в сессии — сгенерируйте план или включите моки (VITE_USE_WORKOUT_MOCKS=true)'
+)
 
 const durationLabel = computed(() => {
-  const m = workoutPlanStore.estimatedMinutes
-  return m > 0 ? `${m} мин.` : '—'
+  const n = workoutSessionStore.slotCount
+  if (n === 0) return '—'
+  return `${Math.max(20, Math.round(n * 6))} мин.`
 })
 
 function formatRowMeta(ex) {
@@ -119,12 +150,15 @@ const tabItems = computed(() => [
 ])
 
 const onStart = () => {
-  /* заглушка под будущий экран тренировки */
+  if (!canStartWorkout.value) return
+  workoutSessionStore.setCurrentIndex(0)
+  router.push({ name: 'WorkoutSession' })
 }
 
 const resetSession = async () => {
   try {
     await authStore.restartSessionForTesting()
+    workoutSessionStore.clear()
     await router.replace('/')
   } catch (e) {
     console.error(e)
@@ -363,5 +397,16 @@ const resetSession = async () => {
 .logout-btn {
   --color: var(--sportik-text-muted);
   font-size: 0.85rem;
+}
+
+.home-code {
+  font-size: 0.8em;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.start-btn[disabled] {
+  opacity: 0.55;
 }
 </style>
