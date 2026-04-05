@@ -69,7 +69,7 @@ const startOnboarding = () => {
     return
   }
   const name = step === 'Welcome' ? 'BodyMetrics' : step
-  router.push(router.resolve({ name }).path)
+  router.push({ name })
 }
 
 const newTestSession = async () => {

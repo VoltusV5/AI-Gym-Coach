@@ -7,6 +7,7 @@ Thumbs.db
 .vscode/
 .idea/
 client_secret.json
+.env
 
 # AI (Python)
 ai/generateData/dataset*

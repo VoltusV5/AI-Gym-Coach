@@ -18,6 +18,10 @@ function resolveApiBaseURL() {
   return 'http://localhost:5050'
 }
 
+const api = axios.create({
+  baseURL: resolveApiBaseURL()
+})
+
 /**
  * Установка токена в заголовок Authorization
  * @param {string|null} token

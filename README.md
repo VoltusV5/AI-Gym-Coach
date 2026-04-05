@@ -36,3 +36,24 @@ frontend - 3000
 ```
 Сайт в браузере открывается, но там просто белое окно, где ничего нельзя делать. Имитируя frontend запросами на backend через postman у меня с ml все работало правильно во всех смыслах.
 ```
+
+
+
+
+Поднять весь стек (если ещё не запущен): 
+docker compose up -d
+
+Перезапустить без пересборки
+docker compose restart
+
+Перезапустить один сервис
+docker compose restart frontend (или backend, ml, sportapp-postgres)
+
+Пересобрать и поднять один сервис
+docker compose up -d --build frontend
+
+Пересобрать всё сразу
+docker compose up -d --build
+
+Остановить и убрать контейнеры
+docker compose down

@@ -74,7 +74,7 @@ export const useAuthStore = defineStore('auth', {
         const msg = err?.message || ''
         const noResponse = err?.code === 'ERR_NETWORK' || !err?.response
         this.error = noResponse
-          ? 'Не удаётся связаться с API. Запустите backend (go run) на порту 8080 и перезапустите npm run dev.'
+          ? 'Не удаётся связаться с API. Backend — порт 5050; в Docker пересоберите frontend после правок nginx (docker compose up -d --build frontend).'
           : msg || 'Connection error'
       } finally {
         this.isLoading = false

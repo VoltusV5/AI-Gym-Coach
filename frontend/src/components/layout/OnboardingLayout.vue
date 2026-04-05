@@ -2,11 +2,9 @@
   <ion-page class="sportik-page">
     <ion-header class="sportik-header ion-no-border">
       <ion-toolbar class="sportik-toolbar">
-        <template #start>
-          <ion-buttons>
-            <ion-back-button default-href="/" text="" color="dark"></ion-back-button>
-          </ion-buttons>
-        </template>
+        <ion-buttons slot="start">
+          <ion-back-button default-href="/" text="" color="dark"></ion-back-button>
+        </ion-buttons>
       </ion-toolbar>
     </ion-header>
 
