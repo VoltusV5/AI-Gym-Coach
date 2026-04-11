@@ -1,8 +1,8 @@
-package simplesql
+package core_models_simplesql
 
 import (
 	"context"
-	"sport_app/mlclient"
+	"sport_app/internal/features/mlclient"
 	"strconv"
 	"time"
 

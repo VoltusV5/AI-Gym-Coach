@@ -3,10 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
-	"sport_app/auth"
-	simpleconnection "sport_app/core/models/simple_connection"
-	simplesql "sport_app/core/models/simple_sql"
-	"sport_app/handlers"
+	auth "sport_app/internal/core/auth"
+	simpleconnection "sport_app/internal/core/models/simple_connection"
+	simplesql "sport_app/internal/core/models/simple_sql"
+	"sport_app/internal/features/handlers"
 )
 
 func main() {

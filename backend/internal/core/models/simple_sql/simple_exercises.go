@@ -1,9 +1,9 @@
-package simplesql
+package core_models_simplesql
 
 import (
 	"context"
 	"fmt"
-	simpleconnection "sport_app/core/models/simple_connection"
+	simpleconnection "sport_app/internal/core/models/simple_connection"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
