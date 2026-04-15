@@ -1,5 +1,5 @@
 <template>
-  <workout-chrome>
+  <workout-chrome :show-apollo="false">
     <ion-header class="ion-no-border session-header">
       <ion-toolbar class="session-toolbar">
         <ion-buttons slot="start">
@@ -81,13 +81,6 @@
           >
             Закончить тренировку (временная кнопка для отладки API)
           </ion-button>
-          <p v-if="!canFinish" class="finish-hint">
-            Заполните вес и повторы хотя бы в одном подходе — на сервер уйдут только заполненные подходы
-            (<code class="finish-code">POST /api/v1/workouts/complete</code>).
-          </p>
-          <p v-else class="finish-hint finish-hint--ok">
-            Отправятся только упражнения с заполненными подходами; незаполненные слоты в JSON не попадут.
-          </p>
         </div>
 
         <div class="dots-col" aria-label="Прогресс по упражнениям">
@@ -313,14 +306,28 @@ async function onFinishWorkoutTemp() {
 
 .nav-row {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: stretch;
   gap: 10px;
 }
 
 .nav-btn {
-  margin: 0;
+  margin: 0 !important;
+  flex: 1 1 0;
   font-family: 'Roboto', sans-serif;
   font-size: 0.9rem;
+}
+
+.nav-btn--primary {
+  order: 2;
+}
+
+.nav-row .nav-btn:first-child {
+  order: 1;
+}
+
+.nav-row .nav-btn:last-child {
+  order: 3;
 }
 
 .nav-btn--primary {
@@ -332,24 +339,6 @@ async function onFinishWorkoutTemp() {
   margin-top: 1rem;
   font-family: 'Roboto', sans-serif;
   font-size: 0.82rem;
-}
-
-.finish-hint {
-  font-family: 'Roboto', sans-serif;
-  font-size: 0.75rem;
-  color: var(--sportik-text-muted);
-  text-align: center;
-  margin: 0.5rem 0 0;
-  line-height: 1.4;
-}
-
-.finish-hint--ok {
-  color: var(--sportik-text-soft);
-}
-
-.finish-code {
-  font-size: 0.7rem;
-  word-break: break-all;
 }
 
 .swap-hint {
@@ -402,14 +391,9 @@ async function onFinishWorkoutTemp() {
   transform: scale(1.15);
 }
 
-@media (min-width: 400px) {
-  .nav-row {
-    flex-direction: row;
-    flex-wrap: wrap;
-  }
-
+@media (max-width: 420px) {
   .nav-btn {
-    flex: 1 1 30%;
+    font-size: 0.82rem;
   }
 }
 </style>

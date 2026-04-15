@@ -87,7 +87,13 @@ export const useAuthStore = defineStore('auth', {
      */
     async guestLogin() {
       try {
-        const res = await api.post('/auth/guest', {})
+        let res
+        try {
+          res = await api.post('/api/v1/auth/guest', {})
+        } catch (_) {
+          // Backward compatibility with older backend route
+          res = await api.post('/auth/guest', {})
+        }
         const token =
           res.data?.token ||
           (typeof res.headers?.authorization === 'string' &&
@@ -111,7 +117,12 @@ export const useAuthStore = defineStore('auth', {
      */
     async fetchProfile() {
       try {
-        const { data } = await api.get('/profile')
+        let data
+        try {
+          data = (await api.get('/api/v1/profile')).data
+        } catch (_) {
+          data = (await api.get('/profile')).data
+        }
         this.profile = data
         return data
       } catch (err) {
@@ -125,7 +136,12 @@ export const useAuthStore = defineStore('auth', {
      */
     async updateProfile(fields) {
       try {
-        const { data } = await api.post('/profile', fields)
+        let data
+        try {
+          data = (await api.patch('/api/v1/profile', fields)).data
+        } catch (_) {
+          data = (await api.post('/profile', fields)).data
+        }
         this.profile = data
         return data
       } catch (err) {
@@ -149,6 +165,39 @@ export const useAuthStore = defineStore('auth', {
         console.error('Plan generation error:', err)
         throw err
       }
+    },
+
+    async register({ email, password, name }) {
+      const { data } = await api.post('/api/v1/auth/register', { email, password, name })
+      const token = data?.token ?? null
+      if (token) {
+        this.token = token
+        await saveToken(token)
+        setAuthHeader(token)
+      }
+      this.profile = data?.user ?? null
+      return data
+    },
+
+    async login({ email, password }) {
+      const { data } = await api.post('/api/v1/auth/login', { email, password })
+      const token = data?.token ?? null
+      if (token) {
+        this.token = token
+        await saveToken(token)
+        setAuthHeader(token)
+      }
+      this.profile = data?.user ?? null
+      return data
+    },
+
+    async changePassword({ currentPassword, newPassword }) {
+      const payload = {
+        current_password: currentPassword,
+        new_password: newPassword
+      }
+      const { data } = await api.post('/api/v1/auth/change-password', payload)
+      return data
     },
 
     /**

@@ -11,8 +11,10 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    AppTabBar: typeof import('./components/navigation/AppTabBar.vue')['default']
     BaseButton: typeof import('./components/ui/BaseButton.vue')['default']
     OnboardingLayout: typeof import('./components/layout/OnboardingLayout.vue')['default']
+    ProfileAuthPanel: typeof import('./components/settings/ProfileAuthPanel.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     WorkoutChrome: typeof import('./components/workout/WorkoutChrome.vue')['default']

@@ -3,11 +3,11 @@
     <ion-content class="workout-chrome-content" fullscreen>
       <div class="chrome-scroll">
         <div class="chrome-frame">
-          <div v-if="apolloSrc" class="chrome-apollo-strip" aria-hidden="true">
+          <div v-if="showApollo && apolloSrc" class="chrome-apollo-strip" aria-hidden="true">
             <img class="chrome-apollo-strip-img" :src="apolloSrc" alt="" />
           </div>
 
-          <div class="chrome-sheet">
+          <div class="chrome-sheet" :class="{ 'chrome-sheet--full': !showApollo }">
             <div class="chrome-sheet-inner ion-padding">
               <slot />
             </div>
@@ -19,38 +19,29 @@
         <div v-if="$slots.footer" class="chrome-footer-extra ion-padding">
           <slot name="footer" />
         </div>
-        <nav class="chrome-tabbar" aria-label="Нижнее меню">
-          <button
-            v-for="item in tabItems"
-            :key="item.key"
-            type="button"
-            class="tab-btn"
-            :class="{ 'tab-btn--active': item.key === 'main' }"
-          >
-            <img v-if="item.src" class="tab-icon" :src="item.src" alt="" />
-            <span v-else class="tab-fallback" aria-hidden="true">·</span>
-          </button>
-        </nav>
+        <app-tab-bar :active-key="activeTabKey" />
       </div>
     </ion-content>
   </ion-page>
 </template>
 
 <script setup>
-import { computed } from 'vue'
 import { IonPage, IonContent } from '@ionic/vue'
-import { getWorkoutBackgroundImageUrl, getHomeTabIconUrls } from '@/utils/localImages'
+import { getWorkoutBackgroundImageUrl } from '@/utils/localImages'
+import AppTabBar from '@/components/navigation/AppTabBar.vue'
+
+defineProps({
+  activeTabKey: {
+    type: String,
+    default: 'main'
+  },
+  showApollo: {
+    type: Boolean,
+    default: true
+  }
+})
 
 const apolloSrc = getWorkoutBackgroundImageUrl()
-const tabIcons = getHomeTabIconUrls()
-
-const tabItems = computed(() => [
-  { key: 'workout', src: tabIcons.workout },
-  { key: 'notes', src: tabIcons.notes },
-  { key: 'main', src: tabIcons.main },
-  { key: 'nutrition', src: tabIcons.nutrition },
-  { key: 'settings', src: tabIcons.settings }
-])
 </script>
 
 <style scoped>
@@ -108,6 +99,12 @@ const tabItems = computed(() => [
   z-index: 1;
 }
 
+.chrome-sheet--full {
+  margin-top: 0;
+  border-radius: 0;
+  min-height: calc(100svh - env(safe-area-inset-bottom, 0px));
+}
+
 .chrome-sheet-inner {
   padding-top: 0.5rem;
   padding-bottom: 0.25rem;
@@ -131,46 +128,4 @@ const tabItems = computed(() => [
   padding-top: 0.35rem;
 }
 
-.chrome-tabbar {
-  order: 2;
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  padding: 8px 8px 10px;
-  background: var(--sportik-cream);
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
-}
-
-.tab-btn {
-  flex: 1;
-  max-width: 64px;
-  padding: 6px;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0.75;
-}
-
-.tab-btn--active {
-  opacity: 1;
-}
-
-.tab-icon {
-  width: 36px;
-  height: 36px;
-  object-fit: contain;
-  display: block;
-}
-
-.tab-fallback {
-  width: 36px;
-  height: 36px;
-  line-height: 36px;
-  text-align: center;
-  color: var(--sportik-text-muted);
-  font-size: 1.5rem;
-}
 </style>

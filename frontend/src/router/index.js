@@ -1,8 +1,8 @@
-// router/index.js
+﻿// router/index.js
 import { createRouter, createWebHistory } from '@ionic/vue-router'
 import Welcome from '@/views/Welcome.vue'
 
-// Онбординг: рост/вес → пол → возраст → активность → травмы → цель → уровень → дни
+// РћРЅР±РѕСЂРґРёРЅРі: СЂРѕСЃС‚/РІРµСЃ в†’ РїРѕР» в†’ РІРѕР·СЂР°СЃС‚ в†’ Р°РєС‚РёРІРЅРѕСЃС‚СЊ в†’ С‚СЂР°РІРјС‹ в†’ С†РµР»СЊ в†’ СѓСЂРѕРІРµРЅСЊ в†’ РґРЅРё
 import BodyMetrics from '@/views/onboarding/BodyMetrics.vue'
 import Gender from '@/views/onboarding/Gender.vue'
 import Age from '@/views/onboarding/Age.vue'
@@ -70,6 +70,11 @@ const routes = [
     component: () => import('@/views/Home.vue')
   },
   {
+    path: '/workout-tools',
+    name: 'WorkoutTools',
+    component: () => import('@/views/WorkoutToolsPage.vue')
+  },
+  {
     path: '/workout/session',
     name: 'WorkoutSession',
     component: () => import('@/views/workout/WorkoutExerciseScreen.vue')
@@ -79,6 +84,32 @@ const routes = [
     name: 'WorkoutAlternatives',
     component: () => import('@/views/workout/WorkoutAlternativesScreen.vue'),
     props: true
+  },
+  {
+    path: '/notes',
+    name: 'Notes',
+    component: () => import('@/views/notes/NotesList.vue')
+  },
+  {
+    path: '/notes/:id',
+    name: 'NoteEditor',
+    component: () => import('@/views/notes/NotesEditor.vue'),
+    props: true
+  },
+  {
+    path: '/settings',
+    name: 'Settings',
+    component: () => import('@/views/settings/SettingsPage.vue')
+  },
+  {
+    path: '/settings/profile',
+    name: 'SettingsProfile',
+    component: () => import('@/views/settings/SettingsProfilePage.vue')
+  },
+  {
+    path: '/nutrition',
+    name: 'Nutrition',
+    component: () => import('@/views/NutritionPlaceholder.vue')
   }
 ]
 
@@ -88,3 +119,4 @@ const router = createRouter({
 })
 
 export default router
+

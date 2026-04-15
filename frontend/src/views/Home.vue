@@ -72,17 +72,7 @@
           </ion-button>
         </div>
 
-        <nav class="home-tabbar" aria-label="Нижнее меню">
-          <button
-            v-for="item in tabItems"
-            :key="item.key"
-            type="button"
-            class="tab-btn"
-          >
-            <img v-if="item.src" class="tab-icon" :src="item.src" alt="" />
-            <span v-else class="tab-fallback" aria-hidden="true">·</span>
-          </button>
-        </nav>
+        <app-tab-bar active-key="main" />
       </div>
     </ion-content>
   </ion-page>
@@ -98,7 +88,8 @@ import { useAuthStore } from '@/stores/auth'
 import { useWorkoutPlanStore } from '@/stores/workoutPlan'
 import { useWorkoutSessionStore } from '@/stores/workoutSession'
 import { workoutMocksEnabled } from '@/config/workoutMocks'
-import { getWorkoutBackgroundImageUrl, getHomeTabIconUrls } from '@/utils/localImages'
+import { getWorkoutBackgroundImageUrl } from '@/utils/localImages'
+import AppTabBar from '@/components/navigation/AppTabBar.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -138,17 +129,6 @@ function formatRowMeta(ex) {
 }
 
 const workoutApolloImg = getWorkoutBackgroundImageUrl()
-const tabIcons = getHomeTabIconUrls()
-
-/** Порядок: гантелька → заметки → main → питание → настройки */
-const tabItems = computed(() => [
-  { key: 'workout', src: tabIcons.workout },
-  { key: 'notes', src: tabIcons.notes },
-  { key: 'main', src: tabIcons.main },
-  { key: 'nutrition', src: tabIcons.nutrition },
-  { key: 'settings', src: tabIcons.settings }
-])
-
 const onStart = () => {
   if (!canStartWorkout.value) return
   workoutSessionStore.setCurrentIndex(0)
@@ -179,7 +159,7 @@ const resetSession = async () => {
 
 .home-frame {
   --home-apollo-h: clamp(124px, 31vw, 176px);
-  --home-footer-pad: calc(200px + env(safe-area-inset-bottom, 0px));
+  --home-footer-pad: calc(180px + env(safe-area-inset-bottom, 0px));
   display: flex;
   flex-direction: column;
   min-height: calc(100svh - env(safe-area-inset-bottom, 0px));
@@ -348,46 +328,7 @@ const resetSession = async () => {
 }
 
 .home-bottom {
-  order: 1;
   padding-top: 0.5rem;
-}
-
-.home-tabbar {
-  order: 2;
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  padding: 8px 8px 10px;
-  background: var(--sportik-cream);
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
-}
-
-.tab-btn {
-  flex: 1;
-  max-width: 64px;
-  padding: 6px;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.tab-icon {
-  width: 36px;
-  height: 36px;
-  object-fit: contain;
-  display: block;
-}
-
-.tab-fallback {
-  width: 36px;
-  height: 36px;
-  line-height: 36px;
-  text-align: center;
-  color: var(--sportik-text-muted);
-  font-size: 1.5rem;
 }
 
 .start-btn {

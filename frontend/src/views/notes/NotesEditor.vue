@@ -1,0 +1,165 @@
+﻿<template>
+  <ion-page class="note-page">
+    <ion-content class="note-content" fullscreen>
+      <div class="note-frame ion-padding">
+        <ion-input
+          v-model="title"
+          class="note-title-input"
+          :placeholder="t.titlePlaceholder"
+          maxlength="120"
+        />
+
+        <div class="note-body-wrap">
+          <ion-textarea
+            v-model="body"
+            class="note-body-input"
+            :placeholder="t.bodyPlaceholder"
+            :auto-grow="false"
+            rows="12"
+          />
+        </div>
+      </div>
+
+      <div class="note-bottom-sheet ion-padding">
+        <p class="note-date">{{ t.created }}: {{ createdAtLabel }}</p>
+        <ion-button class="sportik-footer-btn" expand="block" @click="saveNote">
+          {{ t.save }}
+        </ion-button>
+      </div>
+
+      <div class="note-footer-stack">
+        <app-tab-bar active-key="notes" />
+      </div>
+    </ion-content>
+  </ion-page>
+</template>
+
+<script setup>
+defineOptions({ name: 'NotesEditorPage' })
+
+import { computed, onMounted, ref } from 'vue'
+import { useRoute } from 'vue-router'
+import { IonPage, IonContent, IonButton, IonInput, IonTextarea, toastController } from '@ionic/vue'
+import AppTabBar from '@/components/navigation/AppTabBar.vue'
+import { useNotesStore } from '@/stores/notes'
+
+const t = {
+  titlePlaceholder: '\u0417\u0430\u0433\u043e\u043b\u043e\u0432\u043e\u043a',
+  bodyPlaceholder: '\u0422\u0435\u043a\u0441\u0442 \u0437\u0430\u043c\u0435\u0442\u043a\u0438',
+  created: '\u0421\u043e\u0437\u0434\u0430\u043d\u043e',
+  save: '\u0421\u043e\u0445\u0440\u0430\u043d\u0438\u0442\u044c',
+  unknown: '\u043d\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043d\u043e',
+  saved: '\u0417\u0430\u043c\u0435\u0442\u043a\u0430 \u0441\u043e\u0445\u0440\u0430\u043d\u0435\u043d\u0430'
+}
+
+const route = useRoute()
+const notesStore = useNotesStore()
+
+const title = ref('')
+const body = ref('')
+const createdAt = ref('')
+
+const noteId = computed(() => String(route.params.id ?? ''))
+
+onMounted(() => {
+  notesStore.hydrate()
+  const existing = notesStore.noteById(noteId.value)
+  if (existing) {
+    title.value = existing.title || ''
+    body.value = existing.body || ''
+    createdAt.value = existing.createdAt
+    return
+  }
+
+  const draft = notesStore.upsertNote(noteId.value, '', '')
+  createdAt.value = draft?.createdAt || new Date().toISOString()
+})
+
+const createdAtLabel = computed(() => {
+  const d = new Date(createdAt.value)
+  if (Number.isNaN(d.getTime())) return t.unknown
+  return d.toLocaleString('ru-RU', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+})
+
+async function saveNote() {
+  await notesStore.saveNoteWithApi(noteId.value, title.value, body.value)
+  const toast = await toastController.create({
+    message: t.saved,
+    duration: 1300,
+    color: 'success'
+  })
+  await toast.present()
+}
+</script>
+
+<style scoped>
+.note-content {
+  --background: var(--sportik-cream);
+}
+
+.note-frame {
+  min-height: calc(100svh - 220px - env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.note-title-input {
+  --background: var(--sportik-card-gray);
+  --color: var(--sportik-text);
+  --padding-start: 14px;
+  --padding-end: 14px;
+  border-radius: 14px;
+  font-weight: 700;
+}
+
+.note-body-wrap {
+  flex: 1;
+  min-height: 0;
+}
+
+.note-body-input {
+  --background: var(--sportik-card-gray);
+  --color: var(--sportik-text);
+  --padding-top: 12px;
+  --padding-bottom: 12px;
+  --padding-start: 14px;
+  --padding-end: 14px;
+  border-radius: 16px;
+  height: 100%;
+  min-height: 100%;
+}
+
+.note-bottom-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(66px + env(safe-area-inset-bottom, 0px));
+  z-index: 9;
+  background: var(--sportik-cream);
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.note-date {
+  margin: 0 0 0.6rem;
+  font-size: 0.82rem;
+  color: var(--sportik-text-muted);
+}
+
+.note-footer-stack {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  background: var(--sportik-cream);
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.06);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+</style>
