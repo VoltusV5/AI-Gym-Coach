@@ -1,4 +1,4 @@
-package simplesql
+package core_models_simplesql
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"log"
 	"math"
-	"sport_app/mlclient"
+	"sport_app/internal/features/mlclient"
 	"strconv"
 	"strings"
 	"time"
@@ -62,6 +62,52 @@ type EDaysNoWeight struct {
 type EPlanNoWeight struct {
 	Split string          `json:"split"`
 	Plan  []EDaysNoWeight `json:"plan"`
+}
+
+type WorkoutCompleteRequest struct {
+	DayCode    string     `json:"day_code"`
+	FinishedAt time.Time  `json:"finished_at"`
+	Slots      []SlotData `json:"slots"`
+}
+
+type SlotData struct {
+	SlotIndex  int       `json:"slot_index"`
+	ExerciseID int       `json:"exercise_id"`
+	Sets       []SetData `json:"sets"`
+}
+
+type SetData struct {
+	WeightKg int `json:"weight_kg"`
+	Reps     int `json:"reps"`
+}
+
+func CompleteWorkout(
+	ctx context.Context,
+	conn *pgxpool.Pool,
+	userID string,
+	req WorkoutCompleteRequest,
+) error {
+	data, err := json.Marshal(req)
+	if err != nil {
+		return fmt.Errorf("marshal workout data: %w", err)
+	}
+
+	sqlQuery := `
+		UPDATE sportapp.user_data
+		SET completed_workouts = COALESCE(completed_workouts, '[]'::jsonb) || jsonb_build_array($1::jsonb),
+		    updated_at = NOW()
+		WHERE user_id = $2;
+	`
+
+	tag, err := conn.Exec(ctx, sqlQuery, data, userID)
+	if err != nil {
+		return fmt.Errorf("update completed_workouts: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return fmt.Errorf("user_data for user %s not found", userID)
+	}
+
+	return nil
 }
 
 func GetProfile(ctx context.Context, conn *pgxpool.Pool, userID string) (*Profile, error) {

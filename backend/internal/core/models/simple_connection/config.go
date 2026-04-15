@@ -1,4 +1,4 @@
-package simpleconnection
+package core_models_simpleconnection
 
 import (
 	"fmt"

@@ -30,7 +30,7 @@ services:
       dockerfile: Dockerfile
       args:
         VITE_API_URL: ${VITE_API_URL}
-        VITE_USE_WORKOUT_MOCKS: ${VITE_USE_WORKOUT_MOCKS:-true}
+        VITE_USE_WORKOUT_MOCKS: ${VITE_USE_WORKOUT_MOCKS}
     container_name: frontend
     env_file:
       - ./frontend/.env
@@ -45,6 +45,7 @@ services:
       - ./backend/.env
     volumes:
       - ${PROJECT_ROOT}/out/pgdata:/var/lib/postgresql
+    command: postgres -c listen_addresses='*'
     restart: always
 
   sportapp-postgres-migrate:

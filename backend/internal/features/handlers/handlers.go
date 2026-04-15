@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"sport_app/auth"
-	simplesql "sport_app/core/models/simple_sql"
-	"sport_app/mlclient"
+	simplesql "sport_app/internal/core/models/simple_sql"
+	middleware "sport_app/internal/core/transport/http/middleware"
+	"sport_app/internal/features/mlclient"
 	"time"
+
+	auth "sport_app/internal/core/auth"
 )
 
 type Result struct {
@@ -45,7 +47,7 @@ func GuestHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func ProfileGetHandler(w http.ResponseWriter, r *http.Request) {
-	userID, ok := r.Context().Value(auth.UserIDKey).(string)
+	userID, ok := r.Context().Value(middleware.UserIDKey).(string)
 	if !ok {
 		http.Error(w, "Failed to get user id", http.StatusInternalServerError)
 		return
@@ -63,7 +65,7 @@ func ProfileGetHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func ProfileHandler(w http.ResponseWriter, r *http.Request) {
-	userID, ok := r.Context().Value(auth.UserIDKey).(string)
+	userID, ok := r.Context().Value(middleware.UserIDKey).(string)
 	if !ok {
 		http.Error(w, "Failed to get user id", http.StatusInternalServerError)
 		return
@@ -99,7 +101,7 @@ func ProfileHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func ResponceGenerateHandler(w http.ResponseWriter, r *http.Request) {
-	userID, ok := r.Context().Value(auth.UserIDKey).(string)
+	userID, ok := r.Context().Value(middleware.UserIDKey).(string)
 	if !ok {
 		http.Error(w, "Failed to get user id", http.StatusInternalServerError)
 		return
@@ -176,4 +178,32 @@ func ResponceGenerateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Printf("ML request succeeded after %v", duration)
+}
+
+func WorkoutCompleteHandler(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(middleware.UserIDKey).(string)
+	if !ok {
+		http.Error(w, "Failed to get user id", http.StatusInternalServerError)
+		return
+	}
+
+	var req simplesql.WorkoutCompleteRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Error reading HTTP request body", http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+
+	if err := simplesql.CompleteWorkout(r.Context(), dbpool.Pool, userID, req); err != nil {
+		log.Printf("WorkoutCompleteHandler error: %v", err)
+		http.Error(w, "Error completing workout: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(map[string]any{
+		"ok":       true,
+		"saved_id": fmt.Sprintf("real-%d", time.Now().Unix()),
+	})
 }
