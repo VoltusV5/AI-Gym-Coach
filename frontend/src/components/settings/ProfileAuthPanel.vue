@@ -166,15 +166,15 @@ async function onChangePassword() {
 </script>
 
 <style scoped>
-.profile-panel { background: var(--sportik-card-gray); border-radius: 16px; padding: 12px; color: var(--sportik-text); }
+.profile-panel { background: var(--sportik-surface); border: 1px solid var(--sportik-border); border-radius: 16px; padding: 12px; color: var(--sportik-text); box-shadow: var(--sportik-shadow-md); }
 .profile-head { display: flex; align-items: center; gap: 10px; }
-.avatar { width: 44px; height: 44px; border-radius: 50%; background: #f2f2f2; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: 700; }
+.avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--sportik-surface-soft); border: 1px solid var(--sportik-border); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: 700; }
 .profile-title { margin: 0; font-weight: 700; }
 .profile-sub { margin: 2px 0 0; font-size: 0.8rem; color: var(--sportik-text-muted); }
 .seg-row { display: flex; gap: 6px; margin: 12px 0 10px; }
-.seg-btn { border: none; border-radius: 999px; padding: 8px 10px; font-size: 0.76rem; background: #efefef; cursor: pointer; color: var(--sportik-text); }
-.seg-btn--active { background: var(--sportik-cyan); }
+.seg-btn { border: 1px solid var(--sportik-border); border-radius: 999px; padding: 8px 10px; font-size: 0.76rem; background: var(--sportik-surface-soft); cursor: pointer; color: var(--sportik-text); }
+.seg-btn--active { background: color-mix(in srgb, var(--sportik-brand) 25%, var(--sportik-surface)); border-color: color-mix(in srgb, var(--sportik-brand) 60%, transparent); }
 .form-grid { display: flex; flex-direction: column; gap: 8px; }
-.field { --background: #f5f5f5; --color: var(--sportik-text); border-radius: 10px; }
+.field { --background: var(--sportik-surface-soft); --color: var(--sportik-text); border-radius: 10px; border: 1px solid var(--sportik-border); }
 .tracker-btn { margin-top: 8px; }
 </style>

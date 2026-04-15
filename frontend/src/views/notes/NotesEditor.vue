@@ -100,7 +100,7 @@ async function saveNote() {
 
 <style scoped>
 .note-content {
-  --background: var(--sportik-cream);
+  --background: var(--sportik-bg);
 }
 
 .note-frame {
@@ -111,10 +111,12 @@ async function saveNote() {
 }
 
 .note-title-input {
-  --background: var(--sportik-card-gray);
+  --background: var(--sportik-surface);
   --color: var(--sportik-text);
   --padding-start: 14px;
   --padding-end: 14px;
+  border: 1px solid var(--sportik-border);
+  box-shadow: var(--sportik-shadow-md);
   border-radius: 14px;
   font-weight: 700;
 }
@@ -125,12 +127,14 @@ async function saveNote() {
 }
 
 .note-body-input {
-  --background: var(--sportik-card-gray);
+  --background: var(--sportik-surface);
   --color: var(--sportik-text);
   --padding-top: 12px;
   --padding-bottom: 12px;
   --padding-start: 14px;
   --padding-end: 14px;
+  border: 1px solid var(--sportik-border);
+  box-shadow: var(--sportik-shadow-md);
   border-radius: 16px;
   height: 100%;
   min-height: 100%;
@@ -142,8 +146,9 @@ async function saveNote() {
   right: 0;
   bottom: calc(66px + env(safe-area-inset-bottom, 0px));
   z-index: 9;
-  background: var(--sportik-cream);
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  background: var(--sportik-surface-glass);
+  border-top: 1px solid var(--sportik-border);
+  backdrop-filter: blur(12px);
 }
 
 .note-date {
@@ -158,8 +163,9 @@ async function saveNote() {
   right: 0;
   bottom: 0;
   z-index: 10;
-  background: var(--sportik-cream);
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.06);
+  background: var(--sportik-surface-glass);
+  box-shadow: 0 -8px 22px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(12px);
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 </style>

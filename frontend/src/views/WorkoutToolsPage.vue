@@ -2,6 +2,10 @@
   <ion-page class="tools-page">
     <ion-content class="tools-content" fullscreen>
       <div class="tools-frame ion-padding">
+        <div class="tools-head">
+          <h1 class="sportik-title">Инструменты тренировки</h1>
+          <p class="sportik-subtitle">Соберите персональную систему тренировок</p>
+        </div>
         <div class="tools-grid">
           <button
             v-for="action in actions"
@@ -49,13 +53,20 @@ async function showSoon(title) {
 
 <style scoped>
 .tools-content {
-  --background: var(--sportik-cream);
+  --background: var(--sportik-bg);
 }
 
 .tools-frame {
   min-height: calc(100svh - 110px - env(safe-area-inset-bottom, 0px));
   display: flex;
-  align-items: stretch;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.tools-head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .tools-grid {
@@ -68,19 +79,30 @@ async function showSoon(title) {
 
 .tools-action-btn {
   border: none;
-  border-radius: 18px;
-  background: linear-gradient(165deg, #c6f8ff 0%, #a8f0f8 100%);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  border-radius: 20px;
+  background: linear-gradient(
+    165deg,
+    color-mix(in srgb, var(--sportik-brand) 22%, var(--sportik-surface)) 0%,
+    var(--sportik-surface) 100%
+  );
+  border: 1px solid color-mix(in srgb, var(--sportik-brand) 16%, var(--sportik-border));
+  box-shadow: var(--sportik-shadow-md);
   color: var(--sportik-text);
-  font-family: 'Roboto', sans-serif;
   font-size: 1rem;
   font-weight: 600;
   text-align: left;
-  padding: 16px 14px;
-  min-height: 19vh;
+  padding: 16px;
+  min-height: 18vh;
   display: flex;
   align-items: flex-end;
   cursor: pointer;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.tools-action-btn:active {
+  transform: translateY(1px) scale(0.99);
 }
 
 .tools-action-text {
@@ -93,8 +115,9 @@ async function showSoon(title) {
   right: 0;
   bottom: 0;
   z-index: 10;
-  background: var(--sportik-cream);
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.06);
+  background: var(--sportik-surface-glass);
+  box-shadow: 0 -8px 22px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(12px);
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 </style>

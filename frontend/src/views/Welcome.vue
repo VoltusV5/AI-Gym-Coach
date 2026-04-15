@@ -156,8 +156,8 @@ const newTestSession = async () => {
 }
 
 .welcome-badge {
-  background: var(--sportik-cream);
-  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: var(--sportik-surface);
+  border: 1px solid var(--sportik-border);
   border-radius: var(--sportik-radius-pill);
   padding: 0.8rem 1.85rem;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
@@ -188,7 +188,9 @@ const newTestSession = async () => {
   max-height: min(30vh, 280px);
   object-fit: contain;
   object-position: center;
-  border-radius: 18px;
+  border-radius: 20px;
+  border: 1px solid var(--sportik-border);
+  box-shadow: var(--sportik-shadow-md);
 }
 
 .welcome-lead {

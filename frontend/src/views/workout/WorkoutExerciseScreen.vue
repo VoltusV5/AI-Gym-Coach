@@ -195,7 +195,6 @@ async function onFinishWorkoutTemp() {
 }
 
 .session-title {
-  font-family: 'Roboto', sans-serif;
   font-weight: 600;
   font-size: 1rem;
   color: var(--sportik-text);
@@ -204,7 +203,6 @@ async function onFinishWorkoutTemp() {
 .empty-msg {
   text-align: center;
   padding: 2rem 0;
-  font-family: 'Roboto', sans-serif;
   color: var(--sportik-text-muted);
 }
 
@@ -220,7 +218,6 @@ async function onFinishWorkoutTemp() {
 }
 
 .ex-name {
-  font-family: 'Roboto', sans-serif;
   font-weight: 700;
   font-size: 1.35rem;
   margin: 0 0 0.5rem;
@@ -229,7 +226,6 @@ async function onFinishWorkoutTemp() {
 }
 
 .ex-desc {
-  font-family: 'Roboto', sans-serif;
   font-size: 0.92rem;
   color: var(--sportik-text-muted);
   margin: 0 0 1rem;
@@ -239,8 +235,12 @@ async function onFinishWorkoutTemp() {
 .video-placeholder {
   width: 100%;
   aspect-ratio: 16 / 9;
-  border-radius: 14px;
-  background: linear-gradient(145deg, #c4c4c4, #9e9e9e);
+  border-radius: 16px;
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--sportik-brand) 26%, var(--sportik-surface)) 0%,
+    color-mix(in srgb, var(--sportik-brand-2) 16%, var(--sportik-surface-soft)) 100%
+  );
   display: flex;
   align-items: center;
   justify-content: center;
@@ -248,7 +248,6 @@ async function onFinishWorkoutTemp() {
 }
 
 .video-placeholder span {
-  font-family: 'Roboto', sans-serif;
   font-size: 0.9rem;
   color: rgba(255, 255, 255, 0.95);
   text-align: center;
@@ -256,14 +255,14 @@ async function onFinishWorkoutTemp() {
 }
 
 .reps-hint {
-  font-family: 'Roboto', sans-serif;
   font-size: 0.88rem;
   color: var(--sportik-text-soft);
   margin: 0 0 1.25rem;
   line-height: 1.45;
-  background: var(--sportik-card-gray);
+  background: var(--sportik-surface-soft);
+  border: 1px solid var(--sportik-border);
   padding: 12px 14px;
-  border-radius: 12px;
+  border-radius: 14px;
 }
 
 .sets-block {
@@ -271,7 +270,6 @@ async function onFinishWorkoutTemp() {
 }
 
 .sets-label {
-  font-family: 'Roboto', sans-serif;
   font-weight: 600;
   font-size: 0.95rem;
   margin: 0 0 0.5rem;
@@ -287,7 +285,6 @@ async function onFinishWorkoutTemp() {
 
 .set-num {
   flex: 0 0 22px;
-  font-family: 'Roboto', sans-serif;
   font-weight: 600;
   font-size: 0.9rem;
   color: var(--sportik-text-muted);
@@ -296,11 +293,11 @@ async function onFinishWorkoutTemp() {
 
 .set-input {
   flex: 1;
-  --background: var(--sportik-card-gray);
+  --background: var(--sportik-surface-soft);
   --padding-start: 12px;
   --padding-end: 12px;
-  border-radius: 10px;
-  font-family: 'Roboto', sans-serif;
+  border-radius: 12px;
+  border: 1px solid var(--sportik-border);
   min-height: 44px;
 }
 
@@ -314,7 +311,6 @@ async function onFinishWorkoutTemp() {
 .nav-btn {
   margin: 0 !important;
   flex: 1 1 0;
-  font-family: 'Roboto', sans-serif;
   font-size: 0.9rem;
 }
 
@@ -337,12 +333,10 @@ async function onFinishWorkoutTemp() {
 
 .finish-temp-btn {
   margin-top: 1rem;
-  font-family: 'Roboto', sans-serif;
   font-size: 0.82rem;
 }
 
 .swap-hint {
-  font-family: 'Roboto', sans-serif;
   font-size: 0.82rem;
   color: var(--sportik-text-muted);
   text-align: center;
@@ -380,13 +374,13 @@ async function onFinishWorkoutTemp() {
 }
 
 .dot--current {
-  box-shadow: 0 0 0 3px var(--sportik-cyan);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--sportik-brand) 50%, transparent);
   background: #bdbdbd;
   transform: scale(1.15);
 }
 
 .dot--current-done {
-  box-shadow: 0 0 0 3px var(--sportik-cyan);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--sportik-brand) 50%, transparent);
   background: #2dd36f;
   transform: scale(1.15);
 }

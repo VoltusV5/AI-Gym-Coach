@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <ion-page class="settings-page">
     <ion-content class="settings-content" fullscreen>
       <div class="settings-frame ion-padding">
@@ -78,7 +78,7 @@ async function noActionYet(name) {
 </script>
 
 <style scoped>
-.settings-content { --background: var(--sportik-cream); }
+.settings-content { --background: var(--sportik-bg); }
 
 .settings-frame {
   min-height: calc(100svh - 96px - env(safe-area-inset-bottom, 0px));
@@ -91,11 +91,11 @@ async function noActionYet(name) {
 .subscription-btn { margin: 0; }
 
 .avatar-btn {
-  border: none;
+  border: 1px solid var(--sportik-border);
   width: 46px;
   height: 46px;
   border-radius: 50%;
-  background: var(--sportik-card-gray);
+  background: var(--sportik-surface-soft);
   color: var(--sportik-text);
   font-size: 1.1rem;
   font-weight: 700;
@@ -104,8 +104,10 @@ async function noActionYet(name) {
 .achievements-block {
   flex: 1;
   min-height: 36vh;
-  background: var(--sportik-card-gray);
+  background: var(--sportik-surface);
+  border: 1px solid var(--sportik-border);
   border-radius: 16px;
+  box-shadow: var(--sportik-shadow-md);
   padding: 12px;
 }
 
@@ -114,7 +116,7 @@ async function noActionYet(name) {
 .achievements-field {
   min-height: calc(100% - 30px);
   border-radius: 12px;
-  background: #efefef;
+  background: var(--sportik-surface-soft);
   padding: 12px;
   color: var(--sportik-text-soft);
   line-height: 1.4;
@@ -125,8 +127,10 @@ async function noActionYet(name) {
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: 10px;
-  background: var(--sportik-card-gray);
+  background: var(--sportik-surface);
+  border: 1px solid var(--sportik-border);
   border-radius: 14px;
+  box-shadow: var(--sportik-shadow-md);
   padding: 10px 12px;
 }
 
@@ -142,8 +146,9 @@ async function noActionYet(name) {
   right: 0;
   bottom: 0;
   z-index: 10;
-  background: var(--sportik-cream);
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.06);
+  background: var(--sportik-surface-glass);
+  box-shadow: 0 -8px 22px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(12px);
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 </style>

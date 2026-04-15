@@ -46,12 +46,12 @@ const apolloSrc = getWorkoutBackgroundImageUrl()
 
 <style scoped>
 .workout-chrome-content {
-  --background: var(--sportik-mint-soft);
+  --background: var(--sportik-bg);
 }
 
 .chrome-scroll {
   padding-bottom: 0;
-  background: var(--sportik-cream);
+  background: transparent;
 }
 
 .chrome-frame {
@@ -68,12 +68,7 @@ const apolloSrc = getWorkoutBackgroundImageUrl()
   width: 100%;
   overflow: hidden;
   position: relative;
-  background: linear-gradient(
-    165deg,
-    #b8fcff 0%,
-    var(--sportik-cyan) 45%,
-    #52e8e8 100%
-  );
+  background: linear-gradient(145deg, var(--sportik-brand), var(--sportik-brand-2));
 }
 
 .chrome-apollo-strip-img {
@@ -89,10 +84,10 @@ const apolloSrc = getWorkoutBackgroundImageUrl()
 .chrome-sheet {
   flex: 1 1 auto;
   width: 100%;
-  margin-top: -8px;
-  background: var(--sportik-cream);
-  border-radius: 28px 28px 0 0;
-  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.1);
+  margin-top: -16px;
+  background: var(--sportik-surface);
+  border-radius: 26px 26px 0 0;
+  box-shadow: var(--sportik-shadow-lg);
   min-height: calc(100svh - var(--chrome-apollo-h) - env(safe-area-inset-bottom, 0px) + 8px);
   padding-bottom: calc(var(--chrome-footer-pad) + 4px);
   position: relative;
@@ -106,8 +101,8 @@ const apolloSrc = getWorkoutBackgroundImageUrl()
 }
 
 .chrome-sheet-inner {
-  padding-top: 0.5rem;
-  padding-bottom: 0.25rem;
+  padding-top: 0.9rem;
+  padding-bottom: 0.5rem;
 }
 
 .chrome-footer-stack {
@@ -120,7 +115,9 @@ const apolloSrc = getWorkoutBackgroundImageUrl()
   flex-direction: column;
   padding-bottom: env(safe-area-inset-bottom, 0px);
   background: var(--sportik-cream);
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.06);
+  background: var(--sportik-surface-glass);
+  box-shadow: 0 -8px 22px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(12px);
 }
 
 .chrome-footer-extra {

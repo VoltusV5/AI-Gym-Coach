@@ -63,7 +63,6 @@ const submit = async () => {
 
 <style scoped>
 .hint {
-  font-family: 'Roboto', sans-serif;
   font-size: 0.95rem;
   color: var(--sportik-text-muted);
   text-align: center;
@@ -89,12 +88,11 @@ const submit = async () => {
   justify-content: center;
   gap: 0.35rem;
   padding: 1rem 1.25rem;
-  border: 3px solid transparent;
+  border: 1px solid var(--sportik-border);
   border-radius: var(--sportik-radius-xl);
-  background: var(--sportik-cream);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.07);
+  background: var(--sportik-surface);
+  box-shadow: var(--sportik-shadow-md);
   cursor: pointer;
-  font-family: 'Roboto', sans-serif;
   transition:
     border-color 0.2s,
     transform 0.2s;
@@ -105,10 +103,8 @@ const submit = async () => {
 }
 
 .yesno-tile.selected {
-  border-color: var(--sportik-cyan);
-  box-shadow:
-    0 6px 24px rgba(102, 255, 255, 0.35),
-    0 2px 8px rgba(0, 0, 0, 0.06);
+  border-color: color-mix(in srgb, var(--sportik-brand) 70%, transparent);
+  box-shadow: var(--sportik-shadow-lg);
 }
 
 .yesno-title {

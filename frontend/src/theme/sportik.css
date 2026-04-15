@@ -1,56 +1,80 @@
-/**
- * Токены макета Figma «Спортик» (файл design/ZtI4KKg8saHQad6rQhZ4Qe)
- * Градиент фона, акцент #66FFFF, кремовые карточки, Roboto
- */
-
 :root {
-  --sportik-mint: #aef3e5;
-  --sportik-mint-soft: #d4f5ec;
-  --sportik-cyan: #66ffff;
-  --sportik-cyan-rgb: 102, 255, 255;
-  --sportik-cream: #fff9e3;
-  --sportik-warm-pink: #fff6f6;
-  --sportik-brown: #cb9c6f;
-  --sportik-text: #000000;
-  --sportik-text-muted: rgba(0, 0, 0, 0.6);
-  --sportik-text-soft: #4b3c3c;
-  --sportik-card-gray: #d9d9d9;
-  --sportik-radius-lg: 20px;
-  --sportik-radius-xl: 30px;
-  --sportik-radius-pill: 60px;
-  --ion-font-family: 'Roboto', system-ui, sans-serif;
+  --sportik-bg: #f4f7ff;
+  --sportik-surface: #ffffff;
+  --sportik-surface-soft: #f8faff;
+  --sportik-surface-glass: rgba(255, 255, 255, 0.82);
+  --sportik-brand: #3f8cff;
+  --sportik-brand-rgb: 63, 140, 255;
+  --sportik-brand-2: #6d5bff;
+  --sportik-success: #2ec47c;
+  --sportik-warning: #ffb648;
+  --sportik-danger: #ff5c7d;
+  --sportik-text: #131a2a;
+  --sportik-text-muted: #6c768f;
+  --sportik-text-soft: #4f5973;
+  --sportik-border: #e4e9f5;
+  --sportik-shadow-md: 0 10px 24px rgba(20, 35, 80, 0.08);
+  --sportik-shadow-lg: 0 18px 40px rgba(15, 30, 70, 0.12);
+  --sportik-radius-sm: 12px;
+  --sportik-radius-md: 16px;
+  --sportik-radius-lg: 22px;
+  --sportik-radius-xl: 28px;
+  --sportik-radius-pill: 999px;
+  --sportik-space-1: 4px;
+  --sportik-space-2: 8px;
+  --sportik-space-3: 12px;
+  --sportik-space-4: 16px;
+  --sportik-space-5: 20px;
+  --sportik-space-6: 24px;
 
-  /* Primary = кнопка «Далее» / акцент из макета */
-  --ion-color-primary: #66ffff;
-  --ion-color-primary-rgb: 102, 255, 255;
-  --ion-color-primary-contrast: #000000;
-  --ion-color-primary-contrast-rgb: 0, 0, 0;
-  --ion-color-primary-shade: #52cccc;
-  --ion-color-primary-tint: #7dffff;
+  --ion-font-family: 'Roboto', system-ui, sans-serif;
+  --ion-background-color: var(--sportik-bg);
+  --ion-text-color: var(--sportik-text);
+  --ion-color-primary: var(--sportik-brand);
+  --ion-color-primary-rgb: var(--sportik-brand-rgb);
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #377be0;
+  --ion-color-primary-tint: #5799ff;
+  --ion-color-medium: #8892aa;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --sportik-bg: #0d1320;
+    --sportik-surface: #161f33;
+    --sportik-surface-soft: #1b253c;
+    --sportik-surface-glass: rgba(20, 30, 52, 0.88);
+    --sportik-brand: #6f9cff;
+    --sportik-brand-rgb: 111, 156, 255;
+    --sportik-brand-2: #8c7cff;
+    --sportik-text: #f0f4ff;
+    --sportik-text-muted: #a9b2c8;
+    --sportik-text-soft: #d8def0;
+    --sportik-border: #2d3b5c;
+    --sportik-shadow-md: 0 12px 28px rgba(0, 0, 0, 0.26);
+    --sportik-shadow-lg: 0 20px 44px rgba(0, 0, 0, 0.34);
+    --ion-background-color: var(--sportik-bg);
+    --ion-text-color: var(--sportik-text);
+  }
 }
 
 ion-back-button {
   --color: var(--sportik-text);
 }
 
-/* Фон онбординга — упрощённый аналог conic-gradient из Figma */
 .sportik-onboarding-content {
-  --background: linear-gradient(
-    165deg,
-    #ffffff 0%,
-    #f4fdf9 35%,
-    var(--sportik-mint-soft) 70%,
-    var(--sportik-mint) 100%
-  );
+  --background:
+    radial-gradient(circle at 0% 0%, rgba(var(--sportik-brand-rgb), 0.2), transparent 38%),
+    radial-gradient(circle at 100% 10%, rgba(109, 91, 255, 0.16), transparent 42%),
+    var(--sportik-bg);
 }
 
 .sportik-welcome-content {
-  --background: linear-gradient(
-    165deg,
-    #ffffff 0%,
-    #f4fdf9 40%,
-    var(--sportik-mint-soft) 100%
-  );
+  --background:
+    radial-gradient(circle at 85% 5%, rgba(109, 91, 255, 0.2), transparent 40%),
+    radial-gradient(circle at 0% 100%, rgba(var(--sportik-brand-rgb), 0.22), transparent 44%),
+    var(--sportik-bg);
 }
 
 .sportik-header ion-toolbar {
@@ -59,78 +83,100 @@ ion-back-button {
 }
 
 .sportik-progress-strip {
-  background: var(--sportik-warm-pink);
-  padding: 0.5rem 1rem 0.75rem;
+  background: transparent;
+  padding: 0.25rem 0.25rem 0.75rem;
   margin: 0;
 }
 
 .sportik-progress-strip ion-progress-bar {
-  --background: rgba(203, 156, 111, 0.35);
-  --progress-background: var(--sportik-brown);
+  --background: color-mix(in srgb, var(--sportik-brand) 18%, transparent);
+  --progress-background: linear-gradient(
+    90deg,
+    var(--sportik-brand) 0%,
+    var(--sportik-brand-2) 100%
+  );
   height: 6px;
-  border-radius: 4px;
+  border-radius: 999px;
 }
 
 .sportik-step-hint {
-  font-family: 'Roboto', sans-serif;
   font-weight: 600;
-  font-size: clamp(1.5rem, 4vw, 2rem);
+  font-size: clamp(1.2rem, 3.2vw, 1.5rem);
   color: var(--sportik-text-muted);
   text-align: center;
   margin: 0 0 0.75rem;
 }
 
 .sportik-question {
-  font-family: 'Roboto', sans-serif;
-  font-weight: 600;
-  font-size: clamp(2.25rem, 7vw, 3.75rem);
-  line-height: 1.15;
+  font-weight: 700;
+  font-size: clamp(1.8rem, 5.8vw, 2.8rem);
+  line-height: 1.2;
   text-align: center;
   color: var(--sportik-text);
-  margin: 0 0 1.5rem;
+  margin: 0 0 1.2rem;
 }
 
 .sportik-footer-btn {
-  --background: var(--sportik-cyan);
-  --background-activated: #52e0e0;
-  --color: #000000;
-  --border-radius: var(--sportik-radius-lg);
-  font-weight: 700;
-  font-size: 1.1rem;
-  min-height: 52px;
+  --background: linear-gradient(135deg, var(--sportik-brand), var(--sportik-brand-2));
+  --background-hover: linear-gradient(135deg, #4e96ff, #7a6aff);
+  --background-activated: linear-gradient(135deg, #3e82dc, #6758dd);
+  --color: #fff;
+  --border-radius: var(--sportik-radius-md);
+  --box-shadow: var(--sportik-shadow-md);
+  font-weight: 600;
+  font-size: 1rem;
+  min-height: 50px;
   text-transform: none;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
 }
 
 .sportik-footer-btn[disabled] {
-  opacity: 0.45;
+  opacity: 0.55;
 }
 
 .sportik-card-option {
-  --background: var(--sportik-cream);
-  --border-radius: 16px;
+  --background: var(--sportik-surface);
+  --border-radius: var(--sportik-radius-md);
   --padding-start: 16px;
   --padding-end: 16px;
   margin-bottom: 12px;
-  border: 2px solid transparent;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid var(--sportik-border);
+  box-shadow: var(--sportik-shadow-md);
 }
 
 .sportik-card-option.item-radio-checked {
-  border-color: var(--sportik-cyan);
-  --background: #f0fffe;
+  border-color: var(--sportik-brand);
+  --background: color-mix(in srgb, var(--sportik-brand) 10%, var(--sportik-surface));
 }
 
 ion-radio {
-  --color: var(--sportik-text-soft);
-  --color-checked: var(--sportik-text);
+  --color: var(--sportik-text-muted);
+  --color-checked: var(--sportik-brand);
 }
 
 .sportik-generating-content {
-  --background: linear-gradient(
-    165deg,
-    #ffffff 0%,
-    var(--sportik-mint-soft) 50%,
-    var(--sportik-mint) 100%
-  );
+  --background:
+    radial-gradient(circle at 50% 0%, rgba(var(--sportik-brand-rgb), 0.22), transparent 42%),
+    var(--sportik-bg);
+}
+
+.sportik-glass-card {
+  background: var(--sportik-surface-glass);
+  border: 1px solid color-mix(in srgb, var(--sportik-border) 75%, transparent);
+  border-radius: var(--sportik-radius-lg);
+  backdrop-filter: blur(10px);
+  box-shadow: var(--sportik-shadow-lg);
+}
+
+.sportik-title {
+  font-size: clamp(1.4rem, 5vw, 2rem);
+  font-weight: 700;
+  color: var(--sportik-text);
+  margin: 0;
+}
+
+.sportik-subtitle {
+  font-size: 0.92rem;
+  color: var(--sportik-text-muted);
+  margin: 0.25rem 0 0;
 }

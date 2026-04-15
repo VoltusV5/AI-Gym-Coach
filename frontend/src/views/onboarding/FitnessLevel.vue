@@ -65,23 +65,22 @@ const submit = async () => {
 }
 
 .option-card {
-  --background: var(--sportik-cream);
+  --background: var(--sportik-surface);
   --border-radius: var(--sportik-radius-lg);
   margin-bottom: 12px;
   --padding-start: 16px;
   --padding-end: 12px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
-  border: 2px solid transparent;
+  box-shadow: var(--sportik-shadow-md);
+  border: 1px solid var(--sportik-border);
 }
 
 .option-card--checked {
-  border-color: var(--sportik-cyan);
-  --background: #f0fffe;
+  border-color: color-mix(in srgb, var(--sportik-brand) 70%, transparent);
+  --background: color-mix(in srgb, var(--sportik-brand) 8%, var(--sportik-surface));
 }
 
 ion-radio {
   width: 100%;
-  font-family: 'Roboto', sans-serif;
   font-weight: 600;
   font-size: 1.15rem;
 }

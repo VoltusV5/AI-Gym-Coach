@@ -99,18 +99,18 @@ function onCreateNote() {
 </script>
 
 <style scoped>
-.notes-content { --background: var(--sportik-mint-soft); }
+.notes-content { --background: var(--sportik-bg); }
 .notes-frame { min-height: calc(100svh - env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; }
-.notes-strip { flex: 0 0 clamp(108px, 26vw, 152px); background: linear-gradient(165deg, #b8fcff 0%, var(--sportik-cyan) 50%, #52e8e8 100%); }
-.notes-sheet { flex: 1; margin-top: -8px; border-radius: 28px 28px 0 0; background: var(--sportik-cream); padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px)); color: var(--sportik-text); }
-.notes-title { margin: 0; text-align: center; font-family: 'Roboto Mono', 'Roboto', monospace; font-size: clamp(1.65rem, 5vw, 2.2rem); color: var(--sportik-text); }
+.notes-strip { flex: 0 0 clamp(108px, 26vw, 152px); background: linear-gradient(145deg, var(--sportik-brand) 0%, var(--sportik-brand-2) 100%); }
+.notes-sheet { flex: 1; margin-top: -14px; border-radius: 28px 28px 0 0; background: var(--sportik-surface); padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px)); color: var(--sportik-text); box-shadow: var(--sportik-shadow-lg); }
+.notes-title { margin: 0; text-align: center; font-size: clamp(1.5rem, 5vw, 2rem); font-weight: 700; color: var(--sportik-text); }
 .notes-subtitle { text-align: center; margin: 0.4rem 0 1rem; font-size: 0.9rem; color: var(--sportik-text-muted); }
 .notes-create { margin-bottom: 0.9rem; }
 .notes-empty { margin: 0.35rem 0 0.9rem; text-align: center; color: var(--sportik-text-muted); font-size: 0.9rem; }
 .notes-list { display: flex; flex-direction: column; gap: 10px; }
-.note-card { border: none; width: 100%; text-align: left; background: var(--sportik-card-gray); border-radius: 12px; padding: 12px; cursor: pointer; color: var(--sportik-text); }
+.note-card { border: 1px solid var(--sportik-border); width: 100%; text-align: left; background: var(--sportik-surface-soft); border-radius: 14px; padding: 12px; cursor: pointer; color: var(--sportik-text); box-shadow: var(--sportik-shadow-md); }
 .note-card-title { margin: 0; font-size: 1rem; font-weight: 700; color: var(--sportik-text); }
 .note-card-preview { margin: 6px 0 8px; font-size: 0.9rem; line-height: 1.35; color: var(--sportik-text-soft); }
 .note-card-date { margin: 0; font-size: 0.78rem; color: var(--sportik-text-muted); }
-.notes-footer-stack { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; background: var(--sportik-cream); box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.06); padding-bottom: env(safe-area-inset-bottom, 0px); }
+.notes-footer-stack { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; background: var(--sportik-surface-glass); box-shadow: 0 -8px 22px rgba(0, 0, 0, 0.1); backdrop-filter: blur(12px); padding-bottom: env(safe-area-inset-bottom, 0px); }
 </style>

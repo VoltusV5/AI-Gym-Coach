@@ -74,7 +74,6 @@ const submit = async () => {
 
 <style scoped>
 .hint {
-  font-family: 'Roboto', sans-serif;
   font-size: 0.95rem;
   color: var(--sportik-text-muted);
   text-align: center;
@@ -102,9 +101,8 @@ const submit = async () => {
   min-width: 0;
   min-height: clamp(56px, 15vw, 77px);
   border-radius: 9px;
-  border: 3px solid var(--sportik-card-gray);
-  background: var(--sportik-cream);
-  font-family: 'Roboto', sans-serif;
+  border: 1px solid var(--sportik-border);
+  background: var(--sportik-surface);
   font-weight: 700;
   font-size: clamp(0.7rem, 2.43vw, 0.9rem);
   color: var(--sportik-text);
@@ -120,8 +118,8 @@ const submit = async () => {
 }
 
 .day-square.selected {
-  border-color: var(--sportik-cyan);
-  background: #e6ffff;
-  box-shadow: 0 0 0 2px rgba(102, 255, 255, 0.35);
+  border-color: color-mix(in srgb, var(--sportik-brand) 70%, transparent);
+  background: color-mix(in srgb, var(--sportik-brand) 12%, var(--sportik-surface));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--sportik-brand) 35%, transparent);
 }
 </style>

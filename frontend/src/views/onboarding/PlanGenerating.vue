@@ -119,13 +119,13 @@ onUnmounted(() => {
   justify-content: center;
   min-height: 100%;
   padding: 2rem;
-  gap: 2rem;
+  gap: 1.4rem;
 }
 
 .animation-wrapper {
   position: relative;
-  width: 120px;
-  height: 120px;
+  width: 112px;
+  height: 112px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -153,7 +153,7 @@ onUnmounted(() => {
 }
 
 .text-content h2 {
-  font-size: 1.5rem;
+  font-size: 1.35rem;
   font-weight: 700;
   margin-bottom: 0.5rem;
   min-height: 4rem;
@@ -176,15 +176,14 @@ onUnmounted(() => {
 
 .progress-text {
   font-weight: 700;
-  color: var(--ion-color-primary);
+  color: var(--sportik-brand);
 }
 
 .footer-hint {
-  position: absolute;
-  bottom: 3rem;
   padding: 0 2rem;
-  color: var(--ion-color-medium);
+  color: var(--sportik-text-muted);
   font-size: 0.9rem;
+  text-align: center;
 }
 
 /* Анимация перехода текста */

@@ -33,7 +33,7 @@ function goBack() {
 </script>
 
 <style scoped>
-.settings-profile-content { --background: var(--sportik-cream); }
+.settings-profile-content { --background: var(--sportik-bg); }
 
 .settings-profile-frame {
   min-height: calc(100svh - 96px - env(safe-area-inset-bottom, 0px));
@@ -57,8 +57,9 @@ function goBack() {
   right: 0;
   bottom: 0;
   z-index: 10;
-  background: var(--sportik-cream);
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.06);
+  background: var(--sportik-surface-glass);
+  box-shadow: 0 -8px 22px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(12px);
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 </style>

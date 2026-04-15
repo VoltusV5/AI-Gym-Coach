@@ -112,7 +112,6 @@ function pick(alternativeId) {
 }
 
 .alt-title {
-  font-family: 'Roboto', sans-serif;
   font-weight: 700;
   font-size: 1rem;
   color: var(--sportik-text);
@@ -126,14 +125,12 @@ function pick(alternativeId) {
 }
 
 .alt-sub {
-  font-family: 'Roboto', sans-serif;
   font-size: 0.92rem;
   color: var(--sportik-text-muted);
   margin: 0 0 0.35rem;
 }
 
 .alt-hint {
-  font-family: 'Roboto', sans-serif;
   font-size: 0.85rem;
   color: var(--sportik-text-soft);
   margin: 0 0 1rem;
@@ -150,9 +147,10 @@ function pick(alternativeId) {
 .alt-card {
   text-align: left;
   border: none;
-  border-radius: 14px;
+  border-radius: 16px;
   padding: 10px;
-  background: var(--sportik-card-gray);
+  background: var(--sportik-surface-soft);
+  border: 1px solid var(--sportik-border);
   cursor: pointer;
   display: flex;
   flex-direction: column;
@@ -168,18 +166,21 @@ function pick(alternativeId) {
 }
 
 .alt-card--active {
-  box-shadow: 0 0 0 2px var(--sportik-cyan);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--sportik-brand) 60%, transparent);
 }
 
 .alt-thumb {
   width: 100%;
   aspect-ratio: 4 / 3;
   border-radius: 10px;
-  background: linear-gradient(135deg, #e0e0e0, #9e9e9e);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--sportik-brand) 28%, var(--sportik-surface)) 0%,
+    color-mix(in srgb, var(--sportik-brand-2) 20%, var(--sportik-surface)) 100%
+  );
 }
 
 .alt-card-name {
-  font-family: 'Roboto', sans-serif;
   font-weight: 700;
   font-size: 0.82rem;
   margin: 0;
@@ -192,7 +193,6 @@ function pick(alternativeId) {
 }
 
 .alt-card-desc {
-  font-family: 'Roboto', sans-serif;
   font-weight: 300;
   font-size: 0.72rem;
   margin: 0;

@@ -124,9 +124,9 @@ defineEmits(['next'])
   display: flex;
   flex-direction: column;
   width: 100%;
-  max-width: 560px;
+  max-width: 600px;
   margin: 0 auto;
-  padding-bottom: 1rem;
+  padding-bottom: 1.2rem;
   position: relative;
   z-index: 1;
   flex: 0 0 auto;
@@ -137,8 +137,8 @@ defineEmits(['next'])
   flex-direction: row;
   align-items: flex-end;
   justify-content: center;
-  gap: 2px;
-  margin-top: 0.75rem;
+  gap: 8px;
+  margin-top: 1rem;
   max-width: 100%;
 }
 
@@ -158,6 +158,11 @@ defineEmits(['next'])
 
 .sportik-footer {
   --background: transparent;
-  background: linear-gradient(to top, rgba(255, 255, 255, 0.95), transparent);
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--sportik-bg) 95%, transparent),
+    transparent
+  );
+  backdrop-filter: blur(8px);
 }
 </style>

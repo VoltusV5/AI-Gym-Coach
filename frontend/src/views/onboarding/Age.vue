@@ -64,15 +64,15 @@ const submit = async () => {
 }
 
 .age-field {
-  --background: var(--sportik-cream);
-  --border-radius: var(--sportik-radius-xl);
+  --background: var(--sportik-surface);
+  --border-radius: var(--sportik-radius-lg);
   width: 100%;
   max-width: 280px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  border: 1px solid var(--sportik-border);
+  box-shadow: var(--sportik-shadow-md);
 }
 
 .age-input {
-  font-family: 'Roboto', sans-serif;
   font-weight: 600;
   font-size: clamp(2.5rem, 10vw, 4rem);
   text-align: center;
@@ -81,7 +81,6 @@ const submit = async () => {
 }
 
 .age-hint {
-  font-family: 'Roboto', sans-serif;
   font-size: 0.95rem;
   color: var(--sportik-text-muted);
   text-align: center;

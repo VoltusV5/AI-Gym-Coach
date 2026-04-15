@@ -148,13 +148,13 @@ const resetSession = async () => {
 
 <style scoped>
 .home-content {
-  --background: var(--sportik-mint-soft);
+  --background: var(--sportik-bg);
 }
 
 /* Отступ под фикс. футер — внутри .home-sheet, чтобы лист визуально смыкался с кнопками */
 .home-scroll {
   padding-bottom: 0;
-  background: var(--sportik-cream);
+  background: transparent;
 }
 
 .home-frame {
@@ -172,12 +172,7 @@ const resetSession = async () => {
   width: 100%;
   overflow: hidden;
   position: relative;
-  background: linear-gradient(
-    165deg,
-    #b8fcff 0%,
-    var(--sportik-cyan) 45%,
-    #52e8e8 100%
-  );
+  background: linear-gradient(145deg, var(--sportik-brand), var(--sportik-brand-2));
 }
 
 .home-apollo-strip-img {
@@ -194,10 +189,10 @@ const resetSession = async () => {
 .home-sheet {
   flex: 1 1 auto;
   width: 100%;
-  margin-top: -8px;
-  background: var(--sportik-cream);
+  margin-top: -16px;
+  background: var(--sportik-surface);
   border-radius: 28px 28px 0 0;
-  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--sportik-shadow-lg);
   min-height: calc(100svh - var(--home-apollo-h) - env(safe-area-inset-bottom, 0px) + 8px);
   padding-bottom: calc(var(--home-footer-pad) + 4px);
   position: relative;
@@ -205,16 +200,14 @@ const resetSession = async () => {
 }
 
 .home-sheet-inner {
-  padding-top: 1.25rem;
+  padding-top: 1rem;
   padding-bottom: 0.25rem;
 }
 
 .home-hero-title {
-  font-family: 'Roboto Mono', 'Roboto', monospace;
-  font-weight: 500;
-  font-size: clamp(1.75rem, 6vw, 2.5rem);
-  margin: 0 0 1rem;
-  text-align: center;
+  font-weight: 700;
+  font-size: clamp(1.55rem, 5vw, 2.25rem);
+  margin: 0 0 0.8rem;
   color: var(--sportik-text);
 }
 
@@ -246,8 +239,9 @@ const resetSession = async () => {
 .stat-pill {
   flex: 1 1 140px;
   max-width: 200px;
-  background: var(--sportik-card-gray);
-  border-radius: var(--sportik-radius-xl);
+  background: var(--sportik-surface-soft);
+  border: 1px solid var(--sportik-border);
+  border-radius: var(--sportik-radius-lg);
   padding: 1rem 1.25rem;
   display: flex;
   flex-direction: column;
@@ -279,9 +273,11 @@ const resetSession = async () => {
   display: flex;
   align-items: center;
   gap: 14px;
-  background: var(--sportik-card-gray);
-  border-radius: 12px;
+  background: var(--sportik-surface-soft);
+  border: 1px solid var(--sportik-border);
+  border-radius: 14px;
   padding: 10px 12px;
+  box-shadow: var(--sportik-shadow-md);
 }
 
 .exercise-thumb {
@@ -323,8 +319,9 @@ const resetSession = async () => {
   flex-direction: column;
   padding-bottom: env(safe-area-inset-bottom, 0px);
   /* без прозрачности — иначе сверху просвечивает мятный фон ion-content */
-  background: var(--sportik-cream);
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.06);
+  background: var(--sportik-surface-glass);
+  box-shadow: 0 -8px 22px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(12px);
 }
 
 .home-bottom {

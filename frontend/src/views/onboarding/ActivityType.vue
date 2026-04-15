@@ -91,10 +91,10 @@ const submit = async () => {
   margin: 0;
   padding: 14px 16px;
   text-align: left;
-  border: 2px solid transparent;
+  border: 1px solid var(--sportik-border);
   border-radius: var(--sportik-radius-lg);
-  background: var(--sportik-cream);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+  background: var(--sportik-surface);
+  box-shadow: var(--sportik-shadow-md);
   cursor: pointer;
   font: inherit;
   color: inherit;
@@ -109,8 +109,8 @@ const submit = async () => {
 }
 
 .option-card--checked {
-  border-color: var(--sportik-cyan);
-  background: #f0fffe;
+  border-color: color-mix(in srgb, var(--sportik-brand) 70%, transparent);
+  background: color-mix(in srgb, var(--sportik-brand) 8%, var(--sportik-surface));
 }
 
 .radio-dot {
@@ -119,20 +119,19 @@ const submit = async () => {
   height: 22px;
   margin-top: 2px;
   border-radius: 50%;
-  border: 2px solid var(--sportik-card-gray);
-  background: #fff;
+  border: 2px solid var(--sportik-border);
+  background: var(--sportik-surface-soft);
   box-sizing: border-box;
 }
 
 .radio-dot--on {
-  border-color: var(--sportik-text-soft);
-  box-shadow: inset 0 0 0 5px var(--sportik-cyan);
+  border-color: var(--sportik-brand);
+  box-shadow: inset 0 0 0 5px color-mix(in srgb, var(--sportik-brand) 75%, transparent);
 }
 
 .option-label {
   flex: 1;
   min-width: 0;
-  font-family: 'Roboto', sans-serif;
   font-weight: 600;
   font-size: 0.92rem;
   line-height: 1.35;

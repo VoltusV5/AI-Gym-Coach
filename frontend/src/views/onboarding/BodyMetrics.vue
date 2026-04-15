@@ -72,7 +72,6 @@ const submit = async () => {
 
 <style scoped>
 .hint {
-  font-family: 'Roboto', sans-serif;
   font-size: 1rem;
   color: var(--sportik-text-muted);
   text-align: center;
@@ -106,21 +105,20 @@ const submit = async () => {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  background: var(--sportik-cream);
+  background: var(--sportik-surface);
+  border: 1px solid var(--sportik-border);
   border-radius: var(--sportik-radius-lg);
   padding: 8px 12px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--sportik-shadow-md);
 }
 
 .metric-input {
-  font-family: 'Roboto', sans-serif;
   font-weight: 600;
   font-size: 1.75rem;
   text-align: center;
 }
 
 .metric-unit {
-  font-family: 'Roboto', sans-serif;
   font-weight: 500;
   color: var(--sportik-text-muted);
   font-size: 1rem;

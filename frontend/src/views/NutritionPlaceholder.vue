@@ -34,7 +34,7 @@ import AppTabBar from '@/components/navigation/AppTabBar.vue'
 
 <style scoped>
 .nutrition-content {
-  --background: var(--sportik-mint-soft);
+  --background: var(--sportik-bg);
 }
 
 .nutrition-frame {
@@ -45,23 +45,24 @@ import AppTabBar from '@/components/navigation/AppTabBar.vue'
 
 .nutrition-strip {
   flex: 0 0 clamp(108px, 26vw, 152px);
-  background: linear-gradient(165deg, #b8fcff 0%, var(--sportik-cyan) 50%, #52e8e8 100%);
+  background: linear-gradient(145deg, var(--sportik-brand) 0%, var(--sportik-brand-2) 100%);
 }
 
 .nutrition-sheet {
   flex: 1;
-  margin-top: -8px;
+  margin-top: -14px;
   border-radius: 28px 28px 0 0;
-  background: var(--sportik-cream);
+  background: var(--sportik-surface);
   padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px));
   color: var(--sportik-text);
+  box-shadow: var(--sportik-shadow-lg);
 }
 
 .nutrition-title {
   margin: 0;
   text-align: center;
-  font-family: 'Roboto Mono', 'Roboto', monospace;
-  font-size: clamp(1.65rem, 5vw, 2.2rem);
+  font-size: clamp(1.45rem, 5vw, 2rem);
+  font-weight: 700;
 }
 
 .nutrition-subtitle {
@@ -72,8 +73,10 @@ import AppTabBar from '@/components/navigation/AppTabBar.vue'
 }
 
 .nutrition-card {
-  background: var(--sportik-card-gray);
+  background: var(--sportik-surface-soft);
+  border: 1px solid var(--sportik-border);
   border-radius: 14px;
+  box-shadow: var(--sportik-shadow-md);
   padding: 14px;
 }
 
@@ -89,8 +92,9 @@ import AppTabBar from '@/components/navigation/AppTabBar.vue'
   right: 0;
   bottom: 0;
   z-index: 10;
-  background: var(--sportik-cream);
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.06);
+  background: var(--sportik-surface-glass);
+  box-shadow: 0 -8px 22px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(12px);
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 </style>
