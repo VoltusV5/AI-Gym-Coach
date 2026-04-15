@@ -32,9 +32,9 @@ type Profile struct {
 }
 
 type ExWithWeight struct {
-	ID     int    `json:"id"`
-	EXName string `json:"exercise_name"`
-	Weight *int   `json:"weight"`
+	ID     int      `json:"id"`
+	EXName string   `json:"exercise_name"`
+	Weight *float64 `json:"weight"`
 }
 
 type EDaysWithWeight struct {
@@ -77,8 +77,8 @@ type SlotData struct {
 }
 
 type SetData struct {
-	WeightKg int `json:"weight_kg"`
-	Reps     int `json:"reps"`
+	WeightKg float64 `json:"weight_kg"`
+	Reps     int     `json:"reps"`
 }
 
 func CompleteWorkout(
@@ -234,20 +234,24 @@ func GetExercises(ctx context.Context, conn *pgxpool.Pool, plan mlclient.Plan, u
 			for rows.Next() {
 				var id int
 				var name string
-				var weight *int
-				if err := rows.Scan(&id, &name, &weight); err != nil {
+				var baseWeight *int
+				if err := rows.Scan(&id, &name, &baseWeight); err != nil {
 					log.Printf("Error scaning: %v", err)
 					continue
 				}
 
-				if weight != nil {
-					countWeight(ctx, conn, weight, userID)
+				var weight *float64
+				if baseWeight != nil {
+					w := float64(*baseWeight)
+					countWeight(ctx, conn, &w, userID)
+					weight = &w
 				}
 
 				withWeight = append(withWeight, ExWithWeight{ID: id, EXName: name, Weight: weight})
 				noWeight = append(noWeight, ExNoWeight{ID: id, EXName: name})
 			}
 			rows.Close()
+			withWeight = normalizeWeightedBodyweightVariants(withWeight)
 			edayWithWeight.Exercises[j] = withWeight
 			edayNoWeight.Exercises[j] = noWeight
 		}
@@ -258,7 +262,7 @@ func GetExercises(ctx context.Context, conn *pgxpool.Pool, plan mlclient.Plan, u
 	return eplanWithWeight, eplanNoWeight
 }
 
-func countWeight(ctx context.Context, conn *pgxpool.Pool, weight *int, userID string) {
+func countWeight(ctx context.Context, conn *pgxpool.Pool, weight *float64, userID string) {
 	profile, err := GetProfile(ctx, conn, userID)
 	if err != nil {
 		panic(err)
@@ -293,15 +297,15 @@ func countWeight(ctx context.Context, conn *pgxpool.Pool, weight *int, userID st
 		k *= 0.9
 	}
 
-	kg := float64(*weight) * k
+	kg := *weight * k
 	*weight = roundWeightDownToGymStep(kg)
 }
 
 const gymPlateStepSmallKG = 2.5
 const gymPlateStepLargeKG = 5.0
-const gymPlateStepLargeFromKG = 50
+const gymPlateStepLargeFromKG = 50.0
 
-func roundWeightDownToGymStep(kg float64) int {
+func roundWeightDownToGymStep(kg float64) float64 {
 	if kg <= 0 {
 		return 0
 	}
@@ -310,10 +314,11 @@ func roundWeightDownToGymStep(kg float64) int {
 		step = gymPlateStepLargeKG
 	}
 	steps := math.Floor(kg / step)
-	return int(steps * step)
+	rounded := steps * step
+	return math.Round(rounded*10) / 10
 }
 
-func GetUserWorkingWeightsMap(ctx context.Context, conn *pgxpool.Pool, userID string) (map[string]int, error) {
+func GetUserWorkingWeightsMap(ctx context.Context, conn *pgxpool.Pool, userID string) (map[string]float64, error) {
 	var raw []byte
 	err := conn.QueryRow(ctx, `
 		SELECT working_weights FROM sportapp.user_data WHERE user_id = $1
@@ -322,27 +327,27 @@ func GetUserWorkingWeightsMap(ctx context.Context, conn *pgxpool.Pool, userID st
 		return nil, err
 	}
 	if len(raw) == 0 || string(raw) == "null" {
-		return map[string]int{}, nil
+		return map[string]float64{}, nil
 	}
 	var m map[string]any
 	if err := json.Unmarshal(raw, &m); err != nil {
-		return map[string]int{}, nil
+		return map[string]float64{}, nil
 	}
-	out := make(map[string]int, len(m))
+	out := make(map[string]float64, len(m))
 	for k, v := range m {
 		switch val := v.(type) {
 		case float64:
-			out[k] = int(val)
-		case int:
 			out[k] = val
+		case int:
+			out[k] = float64(val)
 		case int64:
-			out[k] = int(val)
+			out[k] = float64(val)
 		}
 	}
 	return out, nil
 }
 
-func ApplyExistingWeightsToPlan(plan *EPlanWithWeight, existing map[string]int) {
+func ApplyExistingWeightsToPlan(plan *EPlanWithWeight, existing map[string]float64) {
 	if len(existing) == 0 {
 		return
 	}
@@ -360,8 +365,8 @@ func ApplyExistingWeightsToPlan(plan *EPlanWithWeight, existing map[string]int) 
 	}
 }
 
-func MergeWorkingWeightsJSON(existing map[string]int, plan EPlanWithWeight) ([]byte, error) {
-	merged := make(map[string]int, len(existing)+64)
+func MergeWorkingWeightsJSON(existing map[string]float64, plan EPlanWithWeight) ([]byte, error) {
+	merged := make(map[string]float64, len(existing)+64)
 	for k, v := range existing {
 		merged[k] = v
 	}
@@ -379,4 +384,30 @@ func MergeWorkingWeightsJSON(existing map[string]int, plan EPlanWithWeight) ([]b
 		}
 	}
 	return json.Marshal(merged)
+}
+
+func normalizeWeightedBodyweightVariants(list []ExWithWeight) []ExWithWeight {
+	filtered := make([]ExWithWeight, 0, len(list))
+	for _, ex := range list {
+		if isWeightedBodyweightExercise(ex.EXName) && !hasPositiveWeight(ex.Weight) {
+			// При нулевом/пустом весе для версии "с отягощением" оставляем только
+			// базовую версию без отягощения.
+			continue
+		}
+		filtered = append(filtered, ex)
+	}
+	return filtered
+}
+
+func hasPositiveWeight(w *float64) bool {
+	return w != nil && *w > 0
+}
+
+func isWeightedBodyweightExercise(name string) bool {
+	switch name {
+	case "Отжимания на брусьях с отягощением", "Подтягивания с отягощением":
+		return true
+	default:
+		return false
+	}
 }
