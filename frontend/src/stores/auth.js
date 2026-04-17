@@ -5,6 +5,19 @@ import { useWorkoutSessionStore } from '@/stores/workoutSession'
 import { saveToken, getToken, removeToken } from '@/utils/auth'
 import { isTrainingDaysComplete } from '@/utils/trainingDays'
 
+function profileReadEndpointUnavailable(err) {
+  const status = err?.response?.status
+  const data = err?.response?.data
+  const rawText =
+    typeof data === 'string'
+      ? data
+      : `${data?.message ?? ''} ${data?.error ?? ''}`.trim()
+  const text = String(rawText || '').toLowerCase()
+
+  // Текущий backend не отдает GET /profile (или отдает 500 на пустом body).
+  return status === 404 || (status === 500 && (text.includes('eof') || text.includes('request body')))
+}
+
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     token: null,
@@ -65,6 +78,10 @@ export const useAuthStore = defineStore('auth', {
               this.token = null
               setAuthHeader(null)
               await this.guestLogin()
+            } else if (profileReadEndpointUnavailable(err)) {
+              // Не роняем приложение, если endpoint чтения профиля недоступен.
+              // Профиль будет наполняться через updateProfile в онбординге.
+              this.profile = this.profile ?? {}
             } else {
               throw err
             }
@@ -104,7 +121,15 @@ export const useAuthStore = defineStore('auth', {
         this.token = token
         await saveToken(token)
         setAuthHeader(token)
-        await this.fetchProfile()
+        try {
+          await this.fetchProfile()
+        } catch (err) {
+          if (profileReadEndpointUnavailable(err)) {
+            this.profile = this.profile ?? {}
+          } else {
+            throw err
+          }
+        }
         return token
       } catch (err) {
         console.error('Guest login error:', err)
