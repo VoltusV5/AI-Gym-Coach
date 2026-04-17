@@ -89,3 +89,7 @@ func (h *HTTPServer) RegisterAPIRouters(routers ...*APIVersionRouter) {
 		)
 	}
 }
+
+func (h *HTTPServer) RegisterLegacyRoute(method string, path string, handler http.Handler) {
+	h.mux.Handle(path, handler)
+}
