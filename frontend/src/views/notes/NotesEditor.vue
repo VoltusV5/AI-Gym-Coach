@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <ion-page class="note-page">
     <ion-content class="note-content" fullscreen>
       <div class="note-frame ion-padding">
@@ -20,17 +20,19 @@
         </div>
       </div>
 
+    </ion-content>
+
+    <ion-footer class="ion-no-border note-page-footer">
       <div class="note-bottom-sheet ion-padding">
         <p class="note-date">{{ t.created }}: {{ createdAtLabel }}</p>
         <ion-button class="sportik-footer-btn" expand="block" @click="saveNote">
           {{ t.save }}
         </ion-button>
       </div>
-
       <div class="note-footer-stack">
         <app-tab-bar active-key="notes" />
       </div>
-    </ion-content>
+    </ion-footer>
   </ion-page>
 </template>
 
@@ -39,13 +41,13 @@ defineOptions({ name: 'NotesEditorPage' })
 
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { IonPage, IonContent, IonButton, IonInput, IonTextarea, toastController } from '@ionic/vue'
+import { IonPage, IonContent, IonFooter, IonButton, IonInput, IonTextarea, toastController } from '@ionic/vue'
 import AppTabBar from '@/components/navigation/AppTabBar.vue'
 import { useNotesStore } from '@/stores/notes'
 
 const t = {
-  titlePlaceholder: '\u0417\u0430\u0433\u043e\u043b\u043e\u0432\u043e\u043a',
-  bodyPlaceholder: '\u0422\u0435\u043a\u0441\u0442 \u0437\u0430\u043c\u0435\u0442\u043a\u0438',
+  titlePlaceholder: '',
+  bodyPlaceholder: '',
   created: '\u0421\u043e\u0437\u0434\u0430\u043d\u043e',
   save: '\u0421\u043e\u0445\u0440\u0430\u043d\u0438\u0442\u044c',
   unknown: '\u043d\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043d\u043e',
@@ -104,7 +106,7 @@ async function saveNote() {
 }
 
 .note-frame {
-  min-height: calc(100svh - 220px - env(safe-area-inset-bottom, 0px));
+  min-height: min(60vh, calc(100svh - 200px));
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -140,12 +142,11 @@ async function saveNote() {
   min-height: 100%;
 }
 
+.note-page-footer {
+  box-shadow: 0 -8px 22px rgba(0, 0, 0, 0.08);
+}
+
 .note-bottom-sheet {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: calc(66px + env(safe-area-inset-bottom, 0px));
-  z-index: 9;
   background: var(--sportik-surface-glass);
   border-top: 1px solid var(--sportik-border);
   backdrop-filter: blur(12px);
@@ -158,13 +159,7 @@ async function saveNote() {
 }
 
 .note-footer-stack {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 10;
   background: var(--sportik-surface-glass);
-  box-shadow: 0 -8px 22px rgba(0, 0, 0, 0.1);
   backdrop-filter: blur(12px);
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }

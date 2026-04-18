@@ -18,18 +18,27 @@ import '@ionic/vue/css/flex-utils.css'
 import '@ionic/vue/css/display.css'
 
 import '@/theme/sportik.css'
+import { useAuthStore } from '@/stores/auth'
 
 async function bootstrap() {
+  // подставляется Vite define при сборке
+  // eslint-disable-next-line no-undef -- Vite define
+  console.info('[Спортик] сборка', __SPORTIK_BUILD_ID__)
   if (import.meta.env.VITE_USE_MOCK === 'true') {
     await import('@/api/mock')
   }
 
   const app = createApp(App)
   app.use(IonicVue)
-  app.use(createPinia())
+  const pinia = createPinia()
+  app.use(pinia)
   app.use(router)
 
   await router.isReady()
+  // До mount: дочерние onMounted ещё не выполнялись. Иначе питание/другие экраны
+  // дергают API без токена (родительский App.vue onMounted идёт ПОСЛЕ дочерних).
+  await useAuthStore(pinia).initialize()
+
   app.mount('#app')
 }
 

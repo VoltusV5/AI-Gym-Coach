@@ -1,5 +1,5 @@
 <template>
-  <workout-chrome>
+  <workout-chrome :active-tab-key="chromeTabKey">
     <ion-header class="ion-no-border alt-header">
       <ion-toolbar class="alt-toolbar">
         <ion-buttons slot="start">
@@ -78,7 +78,10 @@ const currentName = computed(() => {
   return ex?.name ?? ''
 })
 
-const backHref = computed(() => '/workout/session')
+const chromeTabKey = computed(() => (route.query.context === 'home' ? 'main' : 'workout'))
+const backHref = computed(() =>
+  route.query.context === 'home' ? '/workout/session?context=home' : '/workout/session'
+)
 
 onMounted(async () => {
   session.hydrate()

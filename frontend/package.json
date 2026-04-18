@@ -7,6 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "cap:sync": "npm run build && npx cap sync",
+    "docker:rebuild": "docker compose -f ../docker-compose.yml build frontend --no-cache && docker compose -f ../docker-compose.yml up -d frontend",
     "lint": "run-s lint:*",
     "lint:oxlint": "oxlint . --fix",
     "lint:eslint": "eslint . --fix --cache",

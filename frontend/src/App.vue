@@ -19,7 +19,7 @@
       </div>
     </div>
 
-    <ion-router-outlet />
+    <ion-router-outlet v-else />
   </ion-app>
 </template>
 
@@ -34,12 +34,8 @@ const authStore = useAuthStore()
 const router = useRouter()
 const route = useRoute()
 
-onMounted(async () => {
-  // Выполняем логику запуска приложения
-  await authStore.initialize()
-
-  // Старт всегда с Welcome (как в макете): с `/` не уводим на шаги онбординга.
-  // На главную — только если профиль уже полностью заполнен.
+onMounted(() => {
+  // initialize() вызывается в main.js до mount — здесь только редирект с корня.
   if (route.path === '/') {
     const nextStep = authStore.nextOnboardingStep
     if (nextStep === 'Home') {

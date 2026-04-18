@@ -13,9 +13,10 @@ function resolveApiBaseURL() {
     return ''
   }
 
-  // Production fallback — должен быть порт БЭКЕНДА, а не фронтенда!
-  console.log('[API] Production fallback → http://localhost:5050')
-  return 'http://localhost:5050'
+  // Production без VITE_API_URL: запросы на тот же origin (nginx в Docker проксирует /api → backend).
+  // Прямой localhost:5050 ломает сценарии с другого устройства и обход прокси.
+  console.log('[API] Production → same-origin (empty baseURL)')
+  return ''
 }
 
 const api = axios.create({

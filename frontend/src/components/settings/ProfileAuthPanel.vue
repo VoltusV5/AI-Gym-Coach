@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="profile-panel">
     <div class="profile-head">
       <div class="avatar">{{ t.avatar }}</div>
@@ -47,9 +47,6 @@
       </ion-button>
     </div>
 
-    <ion-button expand="block" fill="outline" class="tracker-btn" @click="showToast(`${t.trackers}: ${t.toastTail}`)">
-      {{ t.trackers }}
-    </ion-button>
   </div>
 </template>
 
@@ -71,8 +68,6 @@ const t = {
   currentPassword: '\u0422\u0435\u043a\u0443\u0449\u0438\u0439 \u043f\u0430\u0440\u043e\u043b\u044c',
   newPassword: '\u041d\u043e\u0432\u044b\u0439 \u043f\u0430\u0440\u043e\u043b\u044c',
   name: '\u0418\u043c\u044f',
-  trackers: '\u041f\u043e\u0434\u043a\u043b\u044e\u0447\u0438\u0442\u044c \u0442\u0440\u0435\u043a\u043a\u0435\u0440\u044b',
-  toastTail: 'UI \u0433\u043e\u0442\u043e\u0432, \u0438\u043d\u0442\u0435\u0433\u0440\u0430\u0446\u0438\u044f \u0441 API \u0431\u0443\u0434\u0435\u0442 \u043f\u043e\u0441\u043b\u0435 backend'
 }
 
 const modes = [
@@ -176,5 +171,4 @@ async function onChangePassword() {
 .seg-btn--active { background: color-mix(in srgb, var(--sportik-brand) 25%, var(--sportik-surface)); border-color: color-mix(in srgb, var(--sportik-brand) 60%, transparent); }
 .form-grid { display: flex; flex-direction: column; gap: 8px; }
 .field { --background: var(--sportik-surface-soft); --color: var(--sportik-text); border-radius: 10px; border: 1px solid var(--sportik-border); }
-.tracker-btn { margin-top: 8px; }
 </style>

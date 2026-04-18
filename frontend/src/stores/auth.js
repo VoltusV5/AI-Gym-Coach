@@ -106,10 +106,10 @@ export const useAuthStore = defineStore('auth', {
       try {
         let res
         try {
-          res = await api.post('/api/v1/auth/guest', {})
-        } catch (_) {
-          // Backward compatibility with older backend route
+          // Сначала «короткий» путь — без лишнего 404 в консоли, если /api/v1 ещё не задеплоен
           res = await api.post('/auth/guest', {})
+        } catch (_) {
+          res = await api.post('/api/v1/auth/guest', {})
         }
         const token =
           res.data?.token ||
@@ -144,9 +144,9 @@ export const useAuthStore = defineStore('auth', {
       try {
         let data
         try {
-          data = (await api.get('/api/v1/profile')).data
-        } catch (_) {
           data = (await api.get('/profile')).data
+        } catch (_) {
+          data = (await api.get('/api/v1/profile')).data
         }
         this.profile = data
         return data
@@ -163,9 +163,9 @@ export const useAuthStore = defineStore('auth', {
       try {
         let data
         try {
-          data = (await api.patch('/api/v1/profile', fields)).data
-        } catch (_) {
           data = (await api.post('/profile', fields)).data
+        } catch (_) {
+          data = (await api.patch('/api/v1/profile', fields)).data
         }
         this.profile = data
         return data

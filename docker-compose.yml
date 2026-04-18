@@ -1,3 +1,5 @@
+# После правок в коде: docker compose build frontend backend && docker compose up -d frontend backend
+# (--force-recreate без build не обновляет образ; в PowerShell: $env:PROJECT_ROOT = "$PWD\backend")
 services:
   backend:
     build:

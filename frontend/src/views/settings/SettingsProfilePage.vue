@@ -1,24 +1,18 @@
-﻿<template>
-  <ion-page class="settings-profile-page">
-    <ion-content class="settings-profile-content" fullscreen>
-      <div class="settings-profile-frame ion-padding">
-        <ion-button fill="clear" class="back-btn" @click="goBack">{{ t.back }}</ion-button>
-        <profile-auth-panel class="profile-panel-wrap" />
-      </div>
-
-      <div class="settings-footer-stack">
-        <app-tab-bar active-key="settings" />
-      </div>
-    </ion-content>
-  </ion-page>
+<template>
+  <workout-chrome active-tab-key="settings">
+    <div class="settings-profile-frame">
+      <ion-button fill="clear" class="back-btn" @click="goBack">{{ t.back }}</ion-button>
+      <profile-auth-panel class="profile-panel-wrap" />
+    </div>
+  </workout-chrome>
 </template>
 
 <script setup>
 defineOptions({ name: 'SettingsProfilePage' })
 
 import { useRouter } from 'vue-router'
-import { IonPage, IonContent, IonButton } from '@ionic/vue'
-import AppTabBar from '@/components/navigation/AppTabBar.vue'
+import { IonButton } from '@ionic/vue'
+import WorkoutChrome from '@/components/workout/WorkoutChrome.vue'
 import ProfileAuthPanel from '@/components/settings/ProfileAuthPanel.vue'
 
 const router = useRouter()
@@ -33,13 +27,11 @@ function goBack() {
 </script>
 
 <style scoped>
-.settings-profile-content { --background: var(--sportik-bg); }
-
 .settings-profile-frame {
-  min-height: calc(100svh - 96px - env(safe-area-inset-bottom, 0px));
   display: flex;
   flex-direction: column;
   gap: 10px;
+  padding-bottom: 4px;
 }
 
 .back-btn {
@@ -49,17 +41,5 @@ function goBack() {
 
 .profile-panel-wrap {
   flex: 1;
-}
-
-.settings-footer-stack {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 10;
-  background: var(--sportik-surface-glass);
-  box-shadow: 0 -8px 22px rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(12px);
-  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 </style>
