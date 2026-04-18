@@ -13,6 +13,7 @@ import (
 	core_http_middleware "sport_app/internal/core/transport/http/middleware"
 	core_http_server "sport_app/internal/core/transport/http/server"
 	"sport_app/internal/features/handlers"
+	"sport_app/internal/features/nutrition"
 	"syscall"
 
 	"go.uber.org/zap"
@@ -77,6 +78,11 @@ func main() {
 		core_http_server.NewRoute("POST", "/plans/generate", protectedGenerate),
 		core_http_server.NewRoute("POST", "/workouts/complete", protectedComplete),
 	)
+
+	nutritionService := nutrition.NewService(pool.Pool)
+	nutritionService.RegisterRoutes(func(method, path string, handler http.Handler) {
+		v1Router.RegisterRoutes(core_http_server.NewRoute(method, path, handler))
+	})
 
 	httpServer.RegisterAPIRouters(v1Router)
 

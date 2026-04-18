@@ -14,7 +14,6 @@ import (
 
 	middleware "sport_app/internal/core/transport/http/middleware"
 
-	"github.com/gorilla/mux"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -39,28 +38,28 @@ func init() {
 	}
 }
 
-func (s *Service) RegisterRoutes(router *mux.Router) {
-	router.Handle("/api/v1/nutrition/entries", middleware.Protect()(http.HandlerFunc(s.listEntries))).Methods("GET")
-	router.Handle("/api/v1/nutrition/entries", middleware.Protect()(http.HandlerFunc(s.createEntry))).Methods("POST")
-	router.Handle("/api/v1/nutrition/entries/{id:[0-9]+}", middleware.Protect()(http.HandlerFunc(s.updateEntry))).Methods("PATCH")
-	router.Handle("/api/v1/nutrition/entries/{id:[0-9]+}", middleware.Protect()(http.HandlerFunc(s.deleteEntry))).Methods("DELETE")
+func (s *Service) RegisterRoutes(register func(method, path string, handler http.Handler)) {
+	register("GET", "/nutrition/entries", middleware.Protect()(http.HandlerFunc(s.listEntries)))
+	register("POST", "/nutrition/entries", middleware.Protect()(http.HandlerFunc(s.createEntry)))
+	register("PATCH", "/nutrition/entries/{id}", middleware.Protect()(http.HandlerFunc(s.updateEntry)))
+	register("DELETE", "/nutrition/entries/{id}", middleware.Protect()(http.HandlerFunc(s.deleteEntry)))
 
-	router.Handle("/api/v1/nutrition/favorites", middleware.Protect()(http.HandlerFunc(s.listFavorites))).Methods("GET")
-	router.Handle("/api/v1/nutrition/favorites", middleware.Protect()(http.HandlerFunc(s.createFavorite))).Methods("POST")
-	router.Handle("/api/v1/nutrition/favorites/{id:[0-9]+}", middleware.Protect()(http.HandlerFunc(s.deleteFavorite))).Methods("DELETE")
+	register("GET", "/nutrition/favorites", middleware.Protect()(http.HandlerFunc(s.listFavorites)))
+	register("POST", "/nutrition/favorites", middleware.Protect()(http.HandlerFunc(s.createFavorite)))
+	register("DELETE", "/nutrition/favorites/{id}", middleware.Protect()(http.HandlerFunc(s.deleteFavorite)))
 
-	router.Handle("/api/v1/nutrition/goals", middleware.Protect()(http.HandlerFunc(s.getGoal))).Methods("GET")
-	router.Handle("/api/v1/nutrition/goals/recalculate", middleware.Protect()(http.HandlerFunc(s.recalculateGoal))).Methods("POST")
-	router.Handle("/api/v1/nutrition/dashboard", middleware.Protect()(http.HandlerFunc(s.getDashboard))).Methods("GET")
-	router.Handle("/api/v1/nutrition/stats", middleware.Protect()(http.HandlerFunc(s.getStats))).Methods("GET")
-	router.Handle("/api/v1/nutrition/analytics", middleware.Protect()(http.HandlerFunc(s.getReports))).Methods("GET")
-	router.Handle("/api/v1/nutrition/dishes/search", middleware.Protect()(http.HandlerFunc(s.searchDishes))).Methods("GET")
-	router.Handle("/api/v1/nutrition/dishes/mine", middleware.Protect()(http.HandlerFunc(s.listMyDishes))).Methods("GET")
-	router.Handle("/api/v1/nutrition/dishes", middleware.Protect()(http.HandlerFunc(s.createDish))).Methods("POST")
-	router.Handle("/api/v1/nutrition/dishes/{id:[0-9]+}", middleware.Protect()(http.HandlerFunc(s.patchMyDish))).Methods("PATCH")
-	router.Handle("/api/v1/nutrition/dishes/{id:[0-9]+}", middleware.Protect()(http.HandlerFunc(s.deleteMyDish))).Methods("DELETE")
-	router.Handle("/api/v1/nutrition/water", middleware.Protect()(http.HandlerFunc(s.upsertWater))).Methods("POST")
-	router.Handle("/api/v1/nutrition/weight", middleware.Protect()(http.HandlerFunc(s.upsertWeight))).Methods("POST")
+	register("GET", "/nutrition/goals", middleware.Protect()(http.HandlerFunc(s.getGoal)))
+	register("POST", "/nutrition/goals/recalculate", middleware.Protect()(http.HandlerFunc(s.recalculateGoal)))
+	register("GET", "/nutrition/dashboard", middleware.Protect()(http.HandlerFunc(s.getDashboard)))
+	register("GET", "/nutrition/stats", middleware.Protect()(http.HandlerFunc(s.getStats)))
+	register("GET", "/nutrition/analytics", middleware.Protect()(http.HandlerFunc(s.getReports)))
+	register("GET", "/nutrition/dishes/search", middleware.Protect()(http.HandlerFunc(s.searchDishes)))
+	register("GET", "/nutrition/dishes/mine", middleware.Protect()(http.HandlerFunc(s.listMyDishes)))
+	register("POST", "/nutrition/dishes", middleware.Protect()(http.HandlerFunc(s.createDish)))
+	register("PATCH", "/nutrition/dishes/{id}", middleware.Protect()(http.HandlerFunc(s.patchMyDish)))
+	register("DELETE", "/nutrition/dishes/{id}", middleware.Protect()(http.HandlerFunc(s.deleteMyDish)))
+	register("POST", "/nutrition/water", middleware.Protect()(http.HandlerFunc(s.upsertWater)))
+	register("POST", "/nutrition/weight", middleware.Protect()(http.HandlerFunc(s.upsertWeight)))
 }
 
 type nutritionEntry struct {
@@ -371,7 +370,7 @@ func (s *Service) updateEntry(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
-	idRaw := mux.Vars(r)["id"]
+	idRaw := r.PathValue("id")
 	entryID, err := strconv.Atoi(idRaw)
 	if err != nil {
 		http.Error(w, "Invalid entry id", http.StatusBadRequest)
@@ -461,7 +460,7 @@ func (s *Service) deleteEntry(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
-	idRaw := mux.Vars(r)["id"]
+	idRaw := r.PathValue("id")
 	entryID, err := strconv.Atoi(idRaw)
 	if err != nil {
 		http.Error(w, "Invalid entry id", http.StatusBadRequest)
@@ -557,7 +556,7 @@ func (s *Service) deleteFavorite(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
-	idRaw := mux.Vars(r)["id"]
+	idRaw := r.PathValue("id")
 	favID, err := strconv.Atoi(idRaw)
 	if err != nil {
 		http.Error(w, "Invalid favorite id", http.StatusBadRequest)
@@ -1041,7 +1040,7 @@ func (s *Service) patchMyDish(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
-	id, err := strconv.Atoi(mux.Vars(r)["id"])
+	id, err := strconv.Atoi(r.PathValue("id"))
 	if err != nil || id <= 0 {
 		http.Error(w, "Invalid id", http.StatusBadRequest)
 		return
@@ -1114,7 +1113,7 @@ func (s *Service) deleteMyDish(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
-	id, err := strconv.Atoi(mux.Vars(r)["id"])
+	id, err := strconv.Atoi(r.PathValue("id"))
 	if err != nil || id <= 0 {
 		http.Error(w, "Invalid id", http.StatusBadRequest)
 		return
