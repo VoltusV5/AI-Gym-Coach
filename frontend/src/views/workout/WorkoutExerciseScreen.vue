@@ -1,11 +1,10 @@
 <template>
-  <workout-chrome :show-apollo="false">
+  <workout-chrome :active-tab-key="chromeTabKey" :show-apollo="false">
     <ion-header class="ion-no-border session-header">
       <ion-toolbar class="session-toolbar">
         <ion-buttons slot="start">
-          <ion-back-button default-href="/home" text="" color="dark"></ion-back-button>
+          <ion-back-button default-href="/home" text="" style="--color: #ffffff;"></ion-back-button>
         </ion-buttons>
-        <ion-title class="session-title">Тренировка</ion-title>
       </ion-toolbar>
     </ion-header>
 
@@ -15,6 +14,23 @@
     </div>
 
     <template v-else>
+      <div class="dots-row" aria-label="Прогресс по упражнениям">
+        <button
+          v-for="(st, i) in statusList"
+          :key="i"
+          type="button"
+          class="dot"
+          :class="{
+            'dot--done': st.complete,
+            'dot--current': st.isCurrent && !st.complete,
+            'dot--current-done': st.isCurrent && st.complete,
+            'dot--todo': !st.complete && !st.isCurrent
+          }"
+          :title="`Упражнение ${i + 1}`"
+          @click="session.setCurrentIndex(i)"
+        ></button>
+      </div>
+
       <div class="exercise-layout">
         <div class="exercise-main">
           <h1 class="ex-name">{{ exercise?.name }}</h1>
@@ -51,55 +67,34 @@
           </div>
 
           <div class="nav-row">
-            <ion-button fill="outline" class="nav-btn" :disabled="currentIndex <= 0" @click="session.goPrev">
-              Выше
+            <ion-button fill="clear" class="nav-arrow-btn" :disabled="currentIndex <= 0" @click="session.goPrev">
+              <ion-icon slot="icon-only" :icon="arrowBack"></ion-icon>
             </ion-button>
+            <div class="nav-center-wrap">
+              <ion-button
+                v-if="canSwapExercise"
+                class="nav-btn nav-btn--primary"
+                @click="goChangeExercise"
+              >
+                Поменять упражнение
+              </ion-button>
+              <p v-else class="swap-hint">Для этого слота в плане только одна вариация.</p>
+            </div>
             <ion-button
-              v-if="canSwapExercise"
-              class="nav-btn nav-btn--primary"
-              @click="goChangeExercise"
-            >
-              Поменять упражнение
-            </ion-button>
-            <p v-else class="swap-hint">Для этого слота в плане только одна вариация.</p>
-            <ion-button
-              fill="outline"
-              class="nav-btn"
+              fill="clear"
+              class="nav-arrow-btn"
               :disabled="currentIndex >= slotCount - 1"
               @click="session.goNext"
             >
-              Ниже
+              <ion-icon slot="icon-only" :icon="arrowForward"></ion-icon>
             </ion-button>
           </div>
-
-          <ion-button
-            expand="block"
-            class="finish-temp-btn"
-            color="success"
-            :disabled="!canFinish || finishing"
-            @click="onFinishWorkoutTemp"
-          >
-            Закончить тренировку (временная кнопка для отладки API)
-          </ion-button>
-        </div>
-
-        <div class="dots-col" aria-label="Прогресс по упражнениям">
-          <button
-            v-for="(st, i) in statusList"
-            :key="i"
-            type="button"
-            class="dot"
-            :class="{
-              'dot--done': st.complete,
-              'dot--current': st.isCurrent && !st.complete,
-              'dot--current-done': st.isCurrent && st.complete,
-              'dot--todo': !st.complete && !st.isCurrent
-            }"
-            :title="`Упражнение ${i + 1}`"
-            @click="session.setCurrentIndex(i)"
-          ></button>
         </div>
       </div>
+    </template>
+
+    <template #footer>
+      <!-- Footer content if needed later -->
     </template>
   </workout-chrome>
 </template>
@@ -108,7 +103,7 @@
 defineOptions({ name: 'WorkoutExerciseScreen' })
 
 import { computed, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import {
   IonHeader,
   IonToolbar,
@@ -117,13 +112,20 @@ import {
   IonBackButton,
   IonButton,
   IonInput,
+  IonIcon,
   toastController
 } from '@ionic/vue'
+import { arrowBack, arrowForward } from 'ionicons/icons'
 import WorkoutChrome from '@/components/workout/WorkoutChrome.vue'
 import { useWorkoutSessionStore } from '@/stores/workoutSession'
 
+const route = useRoute()
 const router = useRouter()
 const session = useWorkoutSessionStore()
+
+/** Запуск с главной (?context=home) — таббар как на главной; иначе контекст раздела «Тренировки». */
+const chromeTabKey = computed(() => (route.query.context === 'home' ? 'main' : 'workout'))
+const sessionBackHref = computed(() => (route.query.context === 'home' ? '/home' : '/workout-tools'))
 
 onMounted(() => {
   session.hydrate()
@@ -140,8 +142,6 @@ const exercise = computed(() => session.selectedExercise)
 const statusList = computed(() => session.slotStatusList)
 
 const canSwapExercise = computed(() => (currentSlot.value?.alternatives?.length ?? 0) > 1)
-const canFinish = computed(() => session.isReadyForComplete)
-const finishing = ref(false)
 
 function onSetInput(setIndex, field, value) {
   session.updateSet(setIndex, field, value)
@@ -151,36 +151,9 @@ function goChangeExercise() {
   if (!canSwapExercise.value) return
   router.push({
     name: 'WorkoutAlternatives',
-    params: { slotIndex: String(session.currentIndex) }
+    params: { slotIndex: String(session.currentIndex) },
+    query: route.query.context === 'home' ? { context: 'home' } : {}
   })
-}
-
-async function onFinishWorkoutTemp() {
-  if (!canFinish.value || finishing.value) return
-  finishing.value = true
-  try {
-    await session.submitCompleteWorkout()
-    const toast = await toastController.create({
-      message: 'Тренировка отправлена на сервер (тело — по ТЗ).',
-      duration: 2500,
-      color: 'success'
-    })
-    await toast.present()
-    await router.replace('/home')
-  } catch (e) {
-    const msg =
-      e?.response?.data?.message ||
-      e?.message ||
-      'Не удалось отправить (проверьте бэкенд и авторизацию).'
-    const toast = await toastController.create({
-      message: msg,
-      duration: 3500,
-      color: 'danger'
-    })
-    await toast.present()
-  } finally {
-    finishing.value = false
-  }
 }
 </script>
 
@@ -208,13 +181,25 @@ async function onFinishWorkoutTemp() {
 
 .exercise-layout {
   display: flex;
-  gap: 14px;
+  justify-content: center;
   align-items: flex-start;
+  width: 100%;
 }
 
 .exercise-main {
   flex: 1;
+  max-width: 500px;
   min-width: 0;
+}
+
+.dots-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  width: 100%;
+  padding: 0 0 20px;
 }
 
 .ex-name {
@@ -304,13 +289,32 @@ async function onFinishWorkoutTemp() {
 .nav-row {
   display: flex;
   flex-direction: row;
-  align-items: stretch;
+  align-items: center;
+  justify-content: space-between;
   gap: 10px;
+}
+
+.nav-arrow-btn {
+  --color: var(--sportik-text);
+  --padding-start: 8px;
+  --padding-end: 8px;
+  margin: 0 !important;
+  flex: 0 0 auto;
+}
+
+.nav-center-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
 }
 
 .nav-btn {
   margin: 0 !important;
-  flex: 1 1 0;
+  width: 100%;
+  max-width: 240px;
   font-size: 0.9rem;
 }
 
@@ -342,14 +346,6 @@ async function onFinishWorkoutTemp() {
   text-align: center;
   margin: 0;
   line-height: 1.35;
-}
-
-.dots-col {
-  flex: 0 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding-top: 4px;
 }
 
 .dot {

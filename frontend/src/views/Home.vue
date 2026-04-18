@@ -55,7 +55,10 @@
           </div>
         </div>
       </div>
+    </ion-content>
 
+    <!-- Вне ion-content: иначе position:fixed внутри контента «залипает» на viewport и таббар главной остаётся поверх других экранов. -->
+    <ion-footer class="ion-no-border home-page-footer">
       <div class="home-footer-stack">
         <div class="home-bottom ion-padding">
           <ion-button
@@ -74,7 +77,7 @@
 
         <app-tab-bar active-key="main" />
       </div>
-    </ion-content>
+    </ion-footer>
   </ion-page>
 </template>
 
@@ -82,8 +85,7 @@
 defineOptions({ name: 'HomePage' })
 
 import { computed, onMounted } from 'vue'
-import { IonPage, IonContent, IonButton } from '@ionic/vue'
-import { useRouter } from 'vue-router'
+import { IonPage, IonContent, IonFooter, IonButton, useIonRouter } from '@ionic/vue'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkoutPlanStore } from '@/stores/workoutPlan'
 import { useWorkoutSessionStore } from '@/stores/workoutSession'
@@ -91,7 +93,7 @@ import { workoutMocksEnabled } from '@/config/workoutMocks'
 import { getWorkoutBackgroundImageUrl } from '@/utils/localImages'
 import AppTabBar from '@/components/navigation/AppTabBar.vue'
 
-const router = useRouter()
+const ionRouter = useIonRouter()
 const authStore = useAuthStore()
 const workoutPlanStore = useWorkoutPlanStore()
 const workoutSessionStore = useWorkoutSessionStore()
@@ -129,17 +131,18 @@ function formatRowMeta(ex) {
 }
 
 const workoutApolloImg = getWorkoutBackgroundImageUrl()
-const onStart = () => {
+const onStart = async () => {
   if (!canStartWorkout.value) return
   workoutSessionStore.setCurrentIndex(0)
-  router.push({ name: 'WorkoutSession' })
+  // Тренировка на контексте «Главная»: нижнее меню остаётся с подсветкой «Главная».
+  await ionRouter.push('/workout/session?context=home')
 }
 
 const resetSession = async () => {
   try {
     await authStore.restartSessionForTesting()
     workoutSessionStore.clear()
-    await router.replace('/')
+    await ionRouter.replace('/')
   } catch (e) {
     console.error(e)
   }
@@ -309,18 +312,15 @@ const resetSession = async () => {
   color: var(--sportik-text-muted);
 }
 
+.home-page-footer {
+  box-shadow: 0 -8px 22px rgba(0, 0, 0, 0.08);
+}
+
 .home-footer-stack {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 10;
   display: flex;
   flex-direction: column;
   padding-bottom: env(safe-area-inset-bottom, 0px);
-  /* без прозрачности — иначе сверху просвечивает мятный фон ion-content */
   background: var(--sportik-surface-glass);
-  box-shadow: 0 -8px 22px rgba(0, 0, 0, 0.1);
   backdrop-filter: blur(12px);
 }
 

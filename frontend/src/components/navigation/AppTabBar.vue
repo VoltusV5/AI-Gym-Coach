@@ -19,8 +19,10 @@
 
 <script setup>
 import { computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { useIonRouter } from '@ionic/vue'
+import { MAIN_TABS } from '@/config/mainTabs'
 import { getHomeTabIconUrls } from '@/utils/localImages'
+import { noAnimation } from '@/utils/animations'
 
 const props = defineProps({
   activeKey: {
@@ -38,33 +40,35 @@ const ui = {
   settings: '\u041D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438'
 }
 
-const router = useRouter()
+const ionRouter = useIonRouter()
 const icons = getHomeTabIconUrls()
 
-const items = computed(() => [
-  { key: 'workout', src: icons.workout, label: ui.workout },
-  { key: 'notes', src: icons.notes, label: ui.notes },
-  { key: 'main', src: icons.main, label: ui.main },
-  { key: 'nutrition', src: icons.nutrition, label: ui.nutrition },
-  { key: 'settings', src: icons.settings, label: ui.settings }
-])
+const items = computed(() =>
+  MAIN_TABS.map((t) => ({
+    key: t.key,
+    src: icons[t.key],
+    label: ui[t.key]
+  }))
+)
 
 function onTabClick(key) {
+  /** replace — не копим push-стек при переключении корневых вкладок.
+   *  noAnimation — убираем анимацию при переключении табов. */
   switch (key) {
     case 'workout':
-      router.push('/workout-tools')
+      ionRouter.navigate('/workout-tools', 'root', 'replace', noAnimation)
       return
     case 'main':
-      router.push('/home')
+      ionRouter.navigate('/home', 'root', 'replace', noAnimation)
       return
     case 'notes':
-      router.push('/notes')
+      ionRouter.navigate('/notes', 'root', 'replace', noAnimation)
       return
     case 'settings':
-      router.push('/settings')
+      ionRouter.navigate('/settings', 'root', 'replace', noAnimation)
       return
     case 'nutrition':
-      router.push('/nutrition')
+      ionRouter.navigate('/nutrition', 'root', 'replace', noAnimation)
       return
     default:
   }

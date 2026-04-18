@@ -1,36 +1,28 @@
-﻿<template>
-  <ion-page class="tools-page">
-    <ion-content class="tools-content" fullscreen>
-      <div class="tools-frame ion-padding">
-        <div class="tools-head">
-          <h1 class="sportik-title">Инструменты тренировки</h1>
-          <p class="sportik-subtitle">Соберите персональную систему тренировок</p>
-        </div>
-        <div class="tools-grid">
-          <button
-            v-for="action in actions"
-            :key="action"
-            type="button"
-            class="tools-action-btn"
-            @click="showSoon(action)"
-          >
-            <span class="tools-action-text">{{ action }}</span>
-          </button>
-        </div>
-      </div>
-
-      <div class="tools-footer-stack">
-        <app-tab-bar active-key="workout" />
-      </div>
-    </ion-content>
-  </ion-page>
+<template>
+  <workout-chrome active-tab-key="workout">
+    <div class="tools-head">
+      <h1 class="sportik-title">Инструменты тренировки</h1>
+      <p class="sportik-subtitle">Соберите персональную систему тренировок</p>
+    </div>
+    <div class="tools-grid">
+      <button
+        v-for="action in actions"
+        :key="action"
+        type="button"
+        class="tools-action-btn"
+        @click="showSoon(action)"
+      >
+        <span class="tools-action-text">{{ action }}</span>
+      </button>
+    </div>
+  </workout-chrome>
 </template>
 
 <script setup>
 defineOptions({ name: 'WorkoutToolsPage' })
 
-import { IonPage, IonContent, toastController } from '@ionic/vue'
-import AppTabBar from '@/components/navigation/AppTabBar.vue'
+import { toastController } from '@ionic/vue'
+import WorkoutChrome from '@/components/workout/WorkoutChrome.vue'
 
 const actions = [
   'Смена плана',
@@ -52,21 +44,11 @@ async function showSoon(title) {
 </script>
 
 <style scoped>
-.tools-content {
-  --background: var(--sportik-bg);
-}
-
-.tools-frame {
-  min-height: calc(100svh - 110px - env(safe-area-inset-bottom, 0px));
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
 .tools-head {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  margin-bottom: 4px;
 }
 
 .tools-grid {
@@ -107,17 +89,5 @@ async function showSoon(title) {
 
 .tools-action-text {
   line-height: 1.25;
-}
-
-.tools-footer-stack {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 10;
-  background: var(--sportik-surface-glass);
-  box-shadow: 0 -8px 22px rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(12px);
-  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 </style>
