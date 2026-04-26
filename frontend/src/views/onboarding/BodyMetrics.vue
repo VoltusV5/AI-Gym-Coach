@@ -2,35 +2,43 @@
   <onboarding-layout
     question="Рост и вес"
     :progress="12"
-    :disabled="!height || !weight"
+    :disabled="!canSubmit"
     :loading="isSubmitting"
     @next="submit"
   >
     <p class="hint">Сначала рост, затем вес — так удобнее сверяться с макетом.</p>
     <div class="metrics-row">
       <div class="metric-card">
-        <label class="metric-label">Рост</label>
+        <label class="metric-label" for="onb-height">Рост</label>
         <div class="metric-field">
-          <ion-input
-            v-model.number="height"
+          <input
+            id="onb-height"
+            v-model="heightStr"
+            class="metric-input metric-input-native"
             type="number"
             inputmode="numeric"
             placeholder="180"
-            class="metric-input"
-          ></ion-input>
+            min="1"
+            step="1"
+            autocomplete="off"
+          />
           <span class="metric-unit">см</span>
         </div>
       </div>
       <div class="metric-card">
-        <label class="metric-label">Вес</label>
+        <label class="metric-label" for="onb-weight">Вес</label>
         <div class="metric-field">
-          <ion-input
-            v-model.number="weight"
+          <input
+            id="onb-weight"
+            v-model="weightStr"
+            class="metric-input metric-input-native"
             type="number"
             inputmode="decimal"
             placeholder="75"
-            class="metric-input"
-          ></ion-input>
+            min="1"
+            step="0.1"
+            autocomplete="off"
+          />
           <span class="metric-unit">кг</span>
         </div>
       </div>
@@ -39,31 +47,44 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { IonInput } from '@ionic/vue'
+import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import OnboardingLayout from '@/components/layout/OnboardingLayout.vue'
 import { useAuthStore } from '@/stores/auth'
-import { useRouter } from 'vue-router'
 
 const authStore = useAuthStore()
 const router = useRouter()
 
-const height = ref(authStore.profile?.height_cm ?? null)
-const weight = ref(authStore.profile?.weight_kg ?? null)
+function initialStr(n) {
+  return n != null && n !== '' && Number(n) > 0 ? String(n) : ''
+}
+
+const heightStr = ref(initialStr(authStore.profile?.height_cm))
+const weightStr = ref(initialStr(authStore.profile?.weight_kg))
 const isSubmitting = ref(false)
 
+// Native <input type="number"> отдаёт строку. ion-input + v-model.number оставлял null/NaN,
+// из-за чего :disabled оставался true и кнопка «Далее» казалась нерабочей.
+const canSubmit = computed(() => {
+  const hn = Number(String(heightStr.value).replace(',', '.'))
+  const wn = Number(String(weightStr.value).replace(',', '.'))
+  return Number.isFinite(hn) && Number.isFinite(wn) && hn > 0 && wn > 0
+})
+
 const submit = async () => {
-  if (!height.value || !weight.value) return
+  if (!canSubmit.value || isSubmitting.value) return
 
   isSubmitting.value = true
   try {
-    await authStore.updateProfile({
-      height_cm: Math.round(Number(height.value)),
-      weight_kg: Math.round(Number(weight.value))
-    })
-    router.push('/gender')
+    const height_cm = Math.round(Number(String(heightStr.value).replace(',', '.')))
+    const weight_kg = Math.round(Number(String(weightStr.value).replace(',', '.')))
+    await authStore.updateProfile({ height_cm, weight_kg })
+    await router.push('/gender')
   } catch (error) {
     console.error('Submit error:', error)
+    const status = error?.response?.status
+    const msg = error?.response?.data?.message || error?.message || 'неизвестная ошибка'
+    alert('Не удалось сохранить рост/вес: ' + (status ? `${status} ` : '') + msg)
   } finally {
     isSubmitting.value = false
   }
@@ -116,6 +137,23 @@ const submit = async () => {
   font-weight: 600;
   font-size: 1.75rem;
   text-align: center;
+}
+
+.metric-input-native {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: var(--sportik-text);
+  font: inherit;
+  outline: none;
+  -moz-appearance: textfield;
+}
+
+.metric-input-native::-webkit-outer-spin-button,
+.metric-input-native::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 .metric-unit {

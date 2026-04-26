@@ -8,7 +8,8 @@
       </ion-toolbar>
     </ion-header>
 
-    <ion-content class="sportik-onboarding-content" fullscreen>
+    <!-- без fullscreen: иначе ion-content рисуется ПОД footer и перехватывает тапы по «Далее» -->
+    <ion-content class="sportik-onboarding-content">
       <div class="onboarding-stack">
         <div v-if="progress > 0" class="sportik-progress-strip">
           <ion-progress-bar :value="progress / 100"></ion-progress-bar>
@@ -43,11 +44,11 @@
 
     <ion-footer class="ion-no-border ion-padding sportik-footer" v-if="hasFooter">
       <ion-button
+        type="button"
         class="sportik-footer-btn"
         expand="block"
-        :disabled="disabled"
-        :loading="loading"
-        @click="$emit('next')"
+        :disabled="disabled || loading"
+        @click="onNextClick"
       >
         {{ nextLabel }}
       </ion-button>
@@ -75,7 +76,9 @@ import {
 const bottomQuestionUrl = getOnboardingBottomIllustrationUrl()
 const bottomExclamUrl = getOnboardingExclamationIllustrationUrl()
 
-defineProps({
+const emit = defineEmits(['next'])
+
+const props = defineProps({
   question: {
     type: String,
     default: ''
@@ -110,7 +113,10 @@ defineProps({
   }
 })
 
-defineEmits(['next'])
+function onNextClick() {
+  if (props.disabled || props.loading) return
+  emit('next')
+}
 </script>
 
 <style scoped>

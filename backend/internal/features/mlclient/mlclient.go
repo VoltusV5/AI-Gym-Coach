@@ -6,8 +6,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 	"strings"
+
+	"github.com/kelseyhightower/envconfig"
 )
 
 type Plan struct {
@@ -26,42 +27,77 @@ type Muscules struct {
 	Sub_group *string `json:"подгруппа"`
 }
 
-func GeneratePlan(ctx context.Context, reqBody any) (*Plan, error) {
-	base := strings.TrimSuffix(strings.TrimSpace(os.Getenv("ML_BASE_URL")), "/")
-	if base == "" {
-		return nil, fmt.Errorf("ML_BASE_URL is not set")
+type Config struct {
+	BaseURL string `envconfig:"BASE_URL" required:"true"`
+}
+
+func NewConfig() (Config, error) {
+	var config Config
+
+	if err := envconfig.Process("ML", &config); err != nil {
+		return Config{}, fmt.Errorf("process envconfig: %w", err)
 	}
-	url := base + "/plan/user"
+
+	return config, nil
+}
+
+func NewConfigMust() Config {
+	config, err := NewConfig()
+	if err != nil {
+		err = fmt.Errorf("get ML client config: %w", err)
+		panic(err)
+	}
+
+	return config
+}
+
+type Client struct {
+	baseURL    string
+	httpClient *http.Client
+}
+
+func NewClient(config Config) *Client {
+	return &Client{
+		baseURL:    strings.TrimSuffix(strings.TrimSpace(config.BaseURL), "/"),
+		httpClient: http.DefaultClient,
+	}
+}
+
+func (c *Client) GeneratePlan(ctx context.Context, reqBody any) (*Plan, error) {
+	if c.baseURL == "" {
+		return nil, fmt.Errorf("ML base url is not set")
+	}
+
+	url := c.baseURL + "/plan/user"
 	data, err := json.Marshal(reqBody)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("marshal request: %w", err)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(data))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("build request: %w", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("do request: %w", err)
 	}
-
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("ML returned %d", resp.StatusCode)
+		return nil, fmt.Errorf("ML returned status %d", resp.StatusCode)
 	}
 
 	var plan Plan
 	if err := json.NewDecoder(resp.Body).Decode(&plan); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("decode response: %w", err)
 	}
 
-	modificated_plan := replaceExercises(plan)
+	modificatedPlan := replaceExercises(plan)
 
-	return &modificated_plan, nil
+	return &modificatedPlan, nil
 }
 
 func replaceExercises(plan Plan) Plan {

@@ -11,10 +11,8 @@ export default defineConfig({
     host: true,
     port: 5173,
     strictPort: true,
-    // В dev фронт ходит на тот же origin (пустой baseURL в api.js) — прокси на Go, без CORS.
+    // В dev фронт ходит на тот же origin (пустой baseURL в api.js) — только /api/* на Go, без CORS.
     proxy: {
-      '/auth': { target: 'http://127.0.0.1:5050', changeOrigin: true },
-      '/profile': { target: 'http://127.0.0.1:5050', changeOrigin: true },
       '/api': { target: 'http://127.0.0.1:5050', changeOrigin: true }
     }
   },

@@ -1,3 +1,4 @@
+DROP INDEX IF EXISTS sportapp.users_email_lower_uniq;
 DROP TABLE sportapp.exercises;
 DROP TABLE sportapp.profile;
 DROP TABLE sportapp.user_data;

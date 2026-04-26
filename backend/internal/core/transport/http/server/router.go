@@ -3,6 +3,8 @@ package core_http_server
 import (
 	"fmt"
 	"net/http"
+
+	core_http_middleware "sport_app/internal/core/transport/http/middleware"
 )
 
 type ApiVersion string
@@ -31,6 +33,8 @@ func (r *APIVersionRouter) RegisterRoutes(routes ...Route) {
 	for _, route := range routes {
 		pattern := fmt.Sprintf("%s %s", route.Method, route.Path)
 
-		r.Handle(pattern, route.Handler)
+		handler := core_http_middleware.ChainMiddleware(route.Handler, route.Middlewares...)
+
+		r.Handle(pattern, handler)
 	}
 }
