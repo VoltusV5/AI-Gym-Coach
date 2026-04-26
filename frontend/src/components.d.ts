@@ -13,6 +13,7 @@ declare module 'vue' {
   export interface GlobalComponents {
     AppTabBar: typeof import('./components/navigation/AppTabBar.vue')['default']
     BaseButton: typeof import('./components/ui/BaseButton.vue')['default']
+    NutritionChrome: typeof import('./components/nutrition/NutritionChrome.vue')['default']
     OnboardingLayout: typeof import('./components/layout/OnboardingLayout.vue')['default']
     ProfileAuthPanel: typeof import('./components/settings/ProfileAuthPanel.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']

@@ -95,7 +95,13 @@ export const useAuthStore = defineStore('auth', {
     /** Гостевой вход — POST /api/v1/auth/guest */
     async guestLogin() {
       try {
-        const res = await api.post('/api/v1/auth/guest', {})
+        let res
+        try {
+          // Сначала «короткий» путь — без лишнего 404 в консоли, если /api/v1 ещё не задеплоен
+          res = await api.post('/auth/guest', {})
+        } catch (_) {
+          res = await api.post('/api/v1/auth/guest', {})
+        }
         const token =
           res.data?.token ||
           (typeof res.headers?.authorization === 'string' &&
@@ -124,9 +130,18 @@ export const useAuthStore = defineStore('auth', {
 
     /** Получение профиля — GET /api/v1/profile */
     async fetchProfile() {
-      const { data } = await api.get('/api/v1/profile')
-      this.profile = data
-      return data
+      try {
+        let data
+        try {
+          data = (await api.get('/profile')).data
+        } catch (_) {
+          data = (await api.get('/api/v1/profile')).data
+        }
+        this.profile = data
+        return data
+      } catch (err) {
+        throw err
+      }
     },
 
     /**
@@ -139,13 +154,11 @@ export const useAuthStore = defineStore('auth', {
      */
     async updateProfile(fields, _retried = false) {
       try {
-        if (this.profile?.version == null) {
-          await this.fetchProfile()
-        }
-        const version = this.profile?.version
-        if (typeof version !== 'number') {
-          console.error('[updateProfile] profile.version is not a number:', this.profile)
-          throw new Error('Не удалось получить version профиля. Проверь GET /api/v1/profile.')
+        let data
+        try {
+          data = (await api.post('/profile', fields)).data
+        } catch (_) {
+          data = (await api.patch('/api/v1/profile', fields)).data
         }
         const body = { ...fields, version }
         const { data } = await api.post('/api/v1/profile', body)

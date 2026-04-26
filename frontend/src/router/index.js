@@ -1,4 +1,4 @@
-﻿// router/index.js
+// router/index.js
 import { createRouter, createWebHistory } from '@ionic/vue-router'
 import Welcome from '@/views/Welcome.vue'
 
@@ -109,7 +109,42 @@ const routes = [
   {
     path: '/nutrition',
     name: 'Nutrition',
-    component: () => import('@/views/NutritionPlaceholder.vue')
+    component: () => import('@/views/nutrition/NutritionHome.vue')
+  },
+  {
+    path: '/nutrition/add-meal',
+    name: 'NutritionAddMeal',
+    component: () => import('@/views/nutrition/NutritionDiaryPage.vue')
+  },
+  {
+    path: '/nutrition/add-meal/search',
+    name: 'NutritionDishSearch',
+    component: () => import('@/views/nutrition/NutritionDishSearchPage.vue')
+  },
+  {
+    path: '/nutrition/add-meal/picker',
+    name: 'NutritionMealPicker',
+    component: () => import('@/views/nutrition/NutritionMealPickerPage.vue')
+  },
+  {
+    path: '/nutrition/goals',
+    name: 'NutritionGoals',
+    component: () => import('@/views/nutrition/NutritionGoalsPage.vue')
+  },
+  {
+    path: '/nutrition/water',
+    name: 'NutritionWater',
+    component: () => import('@/views/nutrition/NutritionWaterPage.vue')
+  },
+  {
+    path: '/nutrition/favorites',
+    name: 'NutritionFavorites',
+    component: () => import('@/views/nutrition/NutritionFavoritesPage.vue')
+  },
+  {
+    path: '/nutrition/my-dishes',
+    name: 'NutritionMyDishes',
+    component: () => import('@/views/nutrition/NutritionMyDishesPage.vue')
   }
 ]
 

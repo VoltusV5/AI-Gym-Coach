@@ -45,6 +45,15 @@ export function getWorkoutBackgroundImageUrl() {
   return firstUrl((n) => n.includes('тренировк') && n.includes('апполон'))
 }
 
+/** Шапка с Аполлоном на любых экранах (питание, заметки и т.д.) — с запасным вариантом, если glob отличается в сборке */
+export function getApolloHeaderImageUrl() {
+  return (
+    getWorkoutBackgroundImageUrl() ||
+    getWelcomeApolloLeftUrl() ||
+    firstUrl((n) => n.includes('апполон'))
+  )
+}
+
 /** Иконки нижнего меню: main, workout, notes, nutrition, settings */
 export function getHomeTabIconUrls() {
   const pick = (substr) => firstUrl((n) => n.includes('меню снизу') && n.includes(substr))

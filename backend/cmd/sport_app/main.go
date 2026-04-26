@@ -12,10 +12,9 @@ import (
 	core_postgres_pool "sport_app/internal/core/repository/postgres/pool"
 	core_http_middleware "sport_app/internal/core/transport/http/middleware"
 	core_http_server "sport_app/internal/core/transport/http/server"
-	"sport_app/internal/features/mlclient"
-	users_postgres_repository "sport_app/internal/features/users/repository/postgres"
-	users_service "sport_app/internal/features/users/service"
-	users_transport_http "sport_app/internal/features/users/transport/http"
+	"sport_app/internal/features/handlers"
+	"sport_app/internal/features/nutrition"
+	"syscall"
 
 	"go.uber.org/zap"
 )
@@ -74,7 +73,12 @@ func main() {
 	apiVersionRouter := core_http_server.NewAPIVersionRouter(core_http_server.ApiVersion1)
 	apiVersionRouter.RegisterRoutes(usersTransportHTTP.Routes()...)
 
-	httpServer.RegisterAPIRouters(apiVersionRouter)
+	nutritionService := nutrition.NewService(pool.Pool)
+	nutritionService.RegisterRoutes(func(method, path string, handler http.Handler) {
+		v1Router.RegisterRoutes(core_http_server.NewRoute(method, path, handler))
+	})
+
+	httpServer.RegisterAPIRouters(v1Router)
 
 	if err := httpServer.Run(ctx); err != nil {
 		logger.Error("HTTP server run error", zap.Error(err))

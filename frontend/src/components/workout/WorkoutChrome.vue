@@ -14,26 +14,28 @@
           </div>
         </div>
       </div>
+    </ion-content>
 
+    <ion-footer class="ion-no-border workout-chrome-footer">
       <div class="chrome-footer-stack">
         <div v-if="$slots.footer" class="chrome-footer-extra ion-padding">
           <slot name="footer" />
         </div>
         <app-tab-bar :active-key="activeTabKey" />
       </div>
-    </ion-content>
+    </ion-footer>
   </ion-page>
 </template>
 
 <script setup>
-import { IonPage, IonContent } from '@ionic/vue'
+import { IonPage, IonContent, IonFooter } from '@ionic/vue'
 import { getWorkoutBackgroundImageUrl } from '@/utils/localImages'
 import AppTabBar from '@/components/navigation/AppTabBar.vue'
 
 defineProps({
   activeTabKey: {
     type: String,
-    default: 'main'
+    default: 'workout'
   },
   showApollo: {
     type: Boolean,
@@ -86,7 +88,7 @@ const apolloSrc = getWorkoutBackgroundImageUrl()
   width: 100%;
   margin-top: -16px;
   background: var(--sportik-surface);
-  border-radius: 26px 26px 0 0;
+  border-radius: 28px 28px 0 0;
   box-shadow: var(--sportik-shadow-lg);
   min-height: calc(100svh - var(--chrome-apollo-h) - env(safe-area-inset-bottom, 0px) + 8px);
   padding-bottom: calc(var(--chrome-footer-pad) + 4px);
@@ -101,22 +103,19 @@ const apolloSrc = getWorkoutBackgroundImageUrl()
 }
 
 .chrome-sheet-inner {
-  padding-top: 0.9rem;
-  padding-bottom: 0.5rem;
+  padding-top: 1rem;
+  padding-bottom: 0.25rem;
+}
+
+.workout-chrome-footer {
+  box-shadow: 0 -8px 22px rgba(0, 0, 0, 0.08);
 }
 
 .chrome-footer-stack {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 10;
   display: flex;
   flex-direction: column;
   padding-bottom: env(safe-area-inset-bottom, 0px);
-  background: var(--sportik-cream);
   background: var(--sportik-surface-glass);
-  box-shadow: 0 -8px 22px rgba(0, 0, 0, 0.1);
   backdrop-filter: blur(12px);
 }
 
