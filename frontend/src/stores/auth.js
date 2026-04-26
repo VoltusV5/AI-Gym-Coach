@@ -5,17 +5,13 @@ import { useWorkoutSessionStore } from '@/stores/workoutSession'
 import { saveToken, getToken, removeToken } from '@/utils/auth'
 import { isTrainingDaysComplete } from '@/utils/trainingDays'
 
-function profileReadEndpointUnavailable(err) {
-  const status = err?.response?.status
+// Профиль свежесозданного гостя в БД ещё пуст → 404/«no rows».
+// Это не ошибка — даём онбордингу заполнить его POST'ами.
+function profileNotYetCreated(err) {
+  const status = Number(err?.response?.status)
   const data = err?.response?.data
-  const rawText =
-    typeof data === 'string'
-      ? data
-      : `${data?.message ?? ''} ${data?.error ?? ''}`.trim()
-  const text = String(rawText || '').toLowerCase()
-
-  // Текущий backend не отдает GET /profile (или отдает 500 на пустом body).
-  return status === 404 || (status === 500 && (text.includes('eof') || text.includes('request body')))
+  const text = String(typeof data === 'string' ? data : data?.message ?? data?.error ?? '').toLowerCase()
+  return status === 404 || (status === 500 && (text.includes('no rows') || text.includes('not found')))
 }
 
 export const useAuthStore = defineStore('auth', {
@@ -72,15 +68,12 @@ export const useAuthStore = defineStore('auth', {
           try {
             await this.fetchProfile()
           } catch (err) {
-            // Если 401 ошибка - удаляем токен и пробуем войти ещё раз
-            if (err.response && err.response.status === 401) {
+            if (Number(err?.response?.status) === 401) {
               await removeToken()
               this.token = null
               setAuthHeader(null)
               await this.guestLogin()
-            } else if (profileReadEndpointUnavailable(err)) {
-              // Не роняем приложение, если endpoint чтения профиля недоступен.
-              // Профиль будет наполняться через updateProfile в онбординге.
+            } else if (profileNotYetCreated(err)) {
               this.profile = this.profile ?? {}
             } else {
               throw err
@@ -99,9 +92,7 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    /**
-     * Гостевой вход (POST /auth/guest)
-     */
+    /** Гостевой вход — POST /api/v1/auth/guest */
     async guestLogin() {
       try {
         let res
@@ -124,7 +115,7 @@ export const useAuthStore = defineStore('auth', {
         try {
           await this.fetchProfile()
         } catch (err) {
-          if (profileReadEndpointUnavailable(err)) {
+          if (profileNotYetCreated(err)) {
             this.profile = this.profile ?? {}
           } else {
             throw err
@@ -137,9 +128,7 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    /**
-     * Получение профиля (GET /profile)
-     */
+    /** Получение профиля — GET /api/v1/profile */
     async fetchProfile() {
       try {
         let data
@@ -156,10 +145,14 @@ export const useAuthStore = defineStore('auth', {
     },
 
     /**
-     * Обновление профиля (POST /profile)
-     * @param {Object} fields
+     * Обновление профиля — POST /api/v1/profile.
+     * (PATCH на бэкенде не реализован; ProfileHandler читает JSON-body на POST.)
+     *
+     * Бэкенд использует optimistic locking: ждёт `version` в теле и проверяет
+     * `WHERE user_id=? AND version=?`. На 409 один раз перезагружаем профиль и
+     * пробуем снова (флаг _retried предохраняет от бесконечного цикла).
      */
-    async updateProfile(fields) {
+    async updateProfile(fields, _retried = false) {
       try {
         let data
         try {
@@ -167,13 +160,19 @@ export const useAuthStore = defineStore('auth', {
         } catch (_) {
           data = (await api.patch('/api/v1/profile', fields)).data
         }
+        const body = { ...fields, version }
+        const { data } = await api.post('/api/v1/profile', body)
         this.profile = data
         return data
       } catch (err) {
-        // Если 401 - пробуем перелогиниться и повторить
-        if (err.response && err.response.status === 401) {
+        const status = Number(err?.response?.status)
+        if (status === 401) {
           await this.initialize()
-          return this.updateProfile(fields)
+          return this.updateProfile(fields, _retried)
+        }
+        if (status === 409 && !_retried) {
+          await this.fetchProfile()
+          return this.updateProfile(fields, true)
         }
         throw err
       }

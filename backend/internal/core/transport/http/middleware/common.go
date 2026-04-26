@@ -2,16 +2,17 @@ package core_http_middleware
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
 
 	core_auth "sport_app/internal/core/auth"
+	core_errors "sport_app/internal/core/errors"
 	core_logger "sport_app/internal/core/logger"
 	core_http_responce "sport_app/internal/core/transport/http/responce"
 
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
@@ -80,6 +81,7 @@ func Trace() Middleware {
 			before := time.Now()
 			log.Debug(
 				">>> incoming HTTP request",
+				zap.String("http_method", r.Method),
 				zap.Time("time", before.UTC()),
 			)
 
@@ -88,7 +90,7 @@ func Trace() Middleware {
 			log.Debug(
 				">>> done HTTP request",
 				zap.Int("status_code", rw.GetStatusCodeOrPanic()),
-				zap.Duration("latency", time.Now().Sub(before)),
+				zap.Duration("latency", time.Since(before)),
 			)
 		})
 	}
@@ -101,58 +103,50 @@ const (
 	IsAnonymousKey contextKey = "isAnonymous"
 )
 
-func Protect() Middleware {
+func UserIDFromContext(ctx context.Context) (string, error) {
+	userID, ok := ctx.Value(UserIDKey).(string)
+	if !ok || userID == "" {
+		return "", fmt.Errorf("user id not found in context: %w", core_errors.ErrUnauthorized)
+	}
+
+	return userID, nil
+}
+
+func Protect(jwt *core_auth.JWT) Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ctx := r.Context()
+			log := core_logger.FromContext(ctx)
+			responceHandler := core_http_responce.NewHTTPResponce(log, w)
+
 			authHeader := r.Header.Get("Authorization")
 			if authHeader == "" {
-				http.Error(w, "Header missing Authorization", http.StatusUnauthorized)
+				responceHandler.ErrorResponse(
+					fmt.Errorf("missing 'Authorization' header: %w", core_errors.ErrUnauthorized),
+					"missing 'Authorization' header",
+				)
 				return
 			}
 
 			parts := strings.Split(authHeader, " ")
 			if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
-				http.Error(w, "Invalid header format. Expected 'Bearer <token>'", http.StatusUnauthorized)
+				responceHandler.ErrorResponse(
+					fmt.Errorf("invalid 'Authorization' header format, expected 'Bearer <token>': %w", core_errors.ErrUnauthorized),
+					"invalid 'Authorization' header format",
+				)
 				return
 			}
-			tokenString := parts[1]
 
-			token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-				if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-					return nil, jwt.ErrSignatureInvalid
-				}
-				return core_auth.SecretKey, nil
-			})
-
+			claims, err := jwt.ParseToken(parts[1])
 			if err != nil {
-				http.Error(w, "Token is invalid or expired: "+err.Error(), http.StatusUnauthorized)
+				responceHandler.ErrorResponse(err, "failed to parse JWT token")
 				return
 			}
 
-			if !token.Valid {
-				http.Error(w, "Token is invalid", http.StatusUnauthorized)
-				return
-			}
+			ctx = context.WithValue(ctx, UserIDKey, claims.UserID)
+			ctx = context.WithValue(ctx, IsAnonymousKey, claims.IsAnonymous)
 
-			claims, ok := token.Claims.(jwt.MapClaims)
-			if !ok {
-				http.Error(w, "Invalid token structure", http.StatusUnauthorized)
-				return
-			}
-
-			sub, ok := claims["sub"].(string)
-			if !ok || sub == "" {
-				http.Error(w, "The token is missing a user ID.", http.StatusUnauthorized)
-				return
-			}
-
-			isAnonymous, _ := claims["is_anonymous"].(bool)
-
-			ctx := context.WithValue(r.Context(), UserIDKey, sub)
-			ctx = context.WithValue(ctx, IsAnonymousKey, isAnonymous)
-			r = r.WithContext(ctx)
-
-			next.ServeHTTP(w, r)
+			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
 }

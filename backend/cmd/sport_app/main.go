@@ -3,13 +3,13 @@ package main
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"os"
 	"os/signal"
-	auth "sport_app/internal/core/auth"
+	"syscall"
+
+	core_auth "sport_app/internal/core/auth"
 	core_logger "sport_app/internal/core/logger"
-	core_models_simpleconnection "sport_app/internal/core/models/simple_connection"
-	simplesql "sport_app/internal/core/models/simple_sql"
+	core_postgres_pool "sport_app/internal/core/repository/postgres/pool"
 	core_http_middleware "sport_app/internal/core/transport/http/middleware"
 	core_http_server "sport_app/internal/core/transport/http/server"
 	"sport_app/internal/features/handlers"
@@ -28,32 +28,38 @@ func main() {
 
 	logger, err := core_logger.NewLogger(core_logger.NewConfigMust())
 	if err != nil {
-		fmt.Println("Failed to init application logger:", err)
+		fmt.Println("Failed to init application logger: ", err)
 		os.Exit(1)
 	}
 	defer logger.Close()
 
-	logger.Info("starting sport_app backend")
-
-	dbConfig, err := core_models_simpleconnection.NewConfig()
-	if err != nil {
-		logger.Fatal("failed to get postgres config", zap.Error(err))
-	}
-
-	pool, err := core_models_simpleconnection.NewConnectionPool(ctx, dbConfig)
+	logger.Debug("initializing postgres connection pool")
+	pool, err := core_postgres_pool.NewConnectionPool(
+		ctx,
+		core_postgres_pool.NewConfigMust(),
+	)
 	if err != nil {
 		logger.Fatal("failed to init postgres connection pool", zap.Error(err))
 	}
 	defer pool.Close()
 
-	auth.InitJWTFromEnv()
+	logger.Debug("initializing JWT")
+	jwt := core_auth.NewJWT(core_auth.NewConfigMust())
 
-	handlers.InitDBPool(pool)
+	logger.Debug("initializing ML client")
+	mlClient := mlclient.NewClient(mlclient.NewConfigMust())
 
-	if err := simplesql.EnsureExercisesSeeded(ctx, pool); err != nil {
-		panic(err)
+	logger.Debug("initializing feature", zap.String("feature", "users"))
+	usersRepository := users_postgres_repository.NewUsersRepository(pool)
+	usersService := users_service.NewUsersService(usersRepository, mlClient, jwt)
+
+	usersTransportHTTP := users_transport_http.NewUsersHTTPHandler(usersService, jwt)
+
+	if err := usersService.EnsureExercisesSeeded(ctx); err != nil {
+		logger.Fatal("failed to ensure exercises seeded", zap.Error(err))
 	}
 
+	logger.Debug("initializing HTTP Server")
 	httpServer := core_http_server.NewHTTPServer(
 		core_http_server.NewConfigMust(),
 		logger,
@@ -64,20 +70,8 @@ func main() {
 		core_http_middleware.Trace(),
 	)
 
-	httpServer.RegisterLegacyRoute("POST", "/auth/guest", http.HandlerFunc(handlers.GuestHandler))
-
-	protectedProfile := core_http_middleware.Protect()(http.HandlerFunc(handlers.ProfileHandler))
-	httpServer.RegisterLegacyRoute("POST", "/profile", protectedProfile)
-
-	v1Router := core_http_server.NewAPIVersionRouter(core_http_server.ApiVersion1)
-
-	protectedGenerate := core_http_middleware.Protect()(http.HandlerFunc(handlers.ResponceGenerateHandler))
-	protectedComplete := core_http_middleware.Protect()(http.HandlerFunc(handlers.WorkoutCompleteHandler))
-
-	v1Router.RegisterRoutes(
-		core_http_server.NewRoute("POST", "/plans/generate", protectedGenerate),
-		core_http_server.NewRoute("POST", "/workouts/complete", protectedComplete),
-	)
+	apiVersionRouter := core_http_server.NewAPIVersionRouter(core_http_server.ApiVersion1)
+	apiVersionRouter.RegisterRoutes(usersTransportHTTP.Routes()...)
 
 	nutritionService := nutrition.NewService(pool.Pool)
 	nutritionService.RegisterRoutes(func(method, path string, handler http.Handler) {

@@ -37,7 +37,7 @@ mock.onGet('/api/v1/profile').reply((config) => {
   return [200, { ...mockProfile }]
 })
 
-mock.onPatch('/api/v1/profile').reply((config) => {
+mock.onPost('/api/v1/profile').reply((config) => {
   if (!config.headers.Authorization) {
     return [401, { message: 'Unauthorized' }]
   }

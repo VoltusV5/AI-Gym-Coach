@@ -11,7 +11,7 @@ function normalizeTitle(rawTitle, rawBody) {
   const t = String(rawTitle ?? '').trim()
   if (t) return t
   const body = String(rawBody ?? '').trim()
-  if (!body) return 'Без названия'
+  if (!body) return 'пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ'
   return body.slice(0, 32)
 }
 

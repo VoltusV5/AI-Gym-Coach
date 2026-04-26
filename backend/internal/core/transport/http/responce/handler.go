@@ -38,6 +38,10 @@ func (h *HTTPResponceHandler) JSONResponse(
 	}
 }
 
+func (h *HTTPResponceHandler) NoContentResponse() {
+	h.rw.WriteHeader(http.StatusNoContent)
+}
+
 func (h *HTTPResponceHandler) ErrorResponse(err error, msg string) {
 	var (
 		statusCode int
@@ -55,6 +59,10 @@ func (h *HTTPResponceHandler) ErrorResponse(err error, msg string) {
 
 	case errors.Is(err, core_errors.ErrConflict):
 		statusCode = http.StatusConflict
+		logFunc = h.log.Warn
+
+	case errors.Is(err, core_errors.ErrUnauthorized):
+		statusCode = http.StatusUnauthorized
 		logFunc = h.log.Warn
 
 	default:
