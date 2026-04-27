@@ -1,6 +1,11 @@
 package users_postgres_repository
 
-import "time"
+import (
+	"fmt"
+	"time"
+
+	core_errors "sport_app/internal/core/errors"
+)
 
 type User struct {
 	ID                 int        `json:"id"`
@@ -77,4 +82,45 @@ type SlotData struct {
 type SetData struct {
 	WeightKg float64 `json:"weight_kg"`
 	Reps     int     `json:"reps"`
+}
+
+func (r WorkoutCompleteRequest) Validate() error {
+	if r.DayCode == "" {
+		return fmt.Errorf("`day_code` is required: %w", core_errors.ErrInvalidArgument)
+	}
+	if r.FinishedAt.IsZero() {
+		return fmt.Errorf("`finished_at` is required: %w", core_errors.ErrInvalidArgument)
+	}
+	if len(r.Slots) == 0 {
+		return fmt.Errorf("`slots` must not be empty: %w", core_errors.ErrInvalidArgument)
+	}
+
+	for i, slot := range r.Slots {
+		if slot.SlotIndex < 0 {
+			return fmt.Errorf("`slots[%d].slot_index` must be >= 0: %w", i, core_errors.ErrInvalidArgument)
+		}
+		if slot.ExerciseID <= 0 {
+			return fmt.Errorf("`slots[%d].exercise_id` must be > 0: %w", i, core_errors.ErrInvalidArgument)
+		}
+		if len(slot.Sets) == 0 {
+			return fmt.Errorf("`slots[%d].sets` must not be empty: %w", i, core_errors.ErrInvalidArgument)
+		}
+
+		for j, set := range slot.Sets {
+			if set.WeightKg < 0 {
+				return fmt.Errorf(
+					"`slots[%d].sets[%d].weight_kg` must be >= 0: %w",
+					i, j, core_errors.ErrInvalidArgument,
+				)
+			}
+			if set.Reps <= 0 {
+				return fmt.Errorf(
+					"`slots[%d].sets[%d].reps` must be > 0: %w",
+					i, j, core_errors.ErrInvalidArgument,
+				)
+			}
+		}
+	}
+
+	return nil
 }

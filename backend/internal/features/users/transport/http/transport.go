@@ -3,6 +3,7 @@ package users_transport_http
 import (
 	"context"
 	"net/http"
+	"time"
 
 	core_auth "sport_app/internal/core/auth"
 	core_http_middleware "sport_app/internal/core/transport/http/middleware"
@@ -55,6 +56,28 @@ type UsersService interface {
 		current_password string,
 		new_password string,
 	) error
+	GetListNotes(
+		ctx context.Context,
+		userID string,
+	) ([]users_postgres_repository.Note, error)
+	CreateNotesUser(
+		ctx context.Context,
+		userID string,
+		title string,
+		body string,
+	) (users_postgres_repository.Note, error)
+	UpdateNotesUser(
+		ctx context.Context,
+		userID string,
+		noteID int,
+		title string,
+		body string,
+	) (users_postgres_repository.Note, error)
+	DeleteNotesUser(
+		ctx context.Context,
+		userID string,
+		noteID int,
+	) error
 }
 
 func NewUsersHTTPHandler(
@@ -69,16 +92,19 @@ func NewUsersHTTPHandler(
 
 func (h *UsersHTTPHandler) Routes() []core_http_server.Route {
 	protect := core_http_middleware.Protect(h.jwt)
+	guestCreateRateLimit := core_http_middleware.RateLimit(10, time.Minute)
+	registerRateLimit := core_http_middleware.RateLimit(20, time.Minute)
+	loginRateLimit := core_http_middleware.RateLimit(30, time.Minute)
 
 	return []core_http_server.Route{
 		core_http_server.NewRoute(
-			http.MethodPost, "/auth/guest", h.CreateGuestUser,
+			http.MethodPost, "/auth/guest", h.CreateGuestUser, guestCreateRateLimit,
 		),
 		core_http_server.NewRoute(
-			http.MethodPost, "/auth/register", h.RegisterUser, protect,
+			http.MethodPost, "/auth/register", h.RegisterUser, registerRateLimit,
 		),
 		core_http_server.NewRoute(
-			http.MethodPost, "/auth/login", h.LoginUser,
+			http.MethodPost, "/auth/login", h.LoginUser, loginRateLimit,
 		),
 		core_http_server.NewRoute(
 			http.MethodPost, "/auth/change-password", h.ChangeUserPassword, protect,
@@ -94,6 +120,18 @@ func (h *UsersHTTPHandler) Routes() []core_http_server.Route {
 		),
 		core_http_server.NewRoute(
 			http.MethodPost, "/workouts/complete", h.CompleteWorkout, protect,
+		),
+		core_http_server.NewRoute(
+			http.MethodGet, "/notes", h.ListNotes, protect,
+		),
+		core_http_server.NewRoute(
+			http.MethodPost, "/notes", h.CreateNote, protect,
+		),
+		core_http_server.NewRoute(
+			http.MethodPatch, "/notes/{id}", h.UpdateNote, protect,
+		),
+		core_http_server.NewRoute(
+			http.MethodDelete, "/notes/{id}", h.DeleteNote, protect,
 		),
 	}
 }

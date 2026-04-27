@@ -3,9 +3,10 @@ package users_transport_http
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
+	core_errors "sport_app/internal/core/errors"
 	core_logger "sport_app/internal/core/logger"
-	core_http_middleware "sport_app/internal/core/transport/http/middleware"
 	core_http_request "sport_app/internal/core/transport/http/request"
 	core_http_responce "sport_app/internal/core/transport/http/responce"
 )
@@ -31,11 +32,38 @@ func (h *UsersHTTPHandler) RegisterUser(rw http.ResponseWriter, r *http.Request)
 	log := core_logger.FromContext(ctx)
 	responseHandler := core_http_responce.NewHTTPResponce(log, rw)
 
-	guestUserID, err := core_http_middleware.UserIDFromContext(ctx)
-	if err != nil {
-		responseHandler.ErrorResponse(err, "failed to get user id from context")
+	authHeader := strings.TrimSpace(r.Header.Get("Authorization"))
+	if authHeader == "" {
+		responseHandler.ErrorResponse(
+			fmt.Errorf("guest token is required for registration: %w", core_errors.ErrUnauthorized),
+			"missing guest token",
+		)
 		return
 	}
+
+	parts := strings.Split(authHeader, " ")
+	if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
+		responseHandler.ErrorResponse(
+			fmt.Errorf("invalid 'Authorization' header format, expected 'Bearer <token>': %w", core_errors.ErrUnauthorized),
+			"invalid 'Authorization' header format",
+		)
+		return
+	}
+
+	claims, err := h.jwt.ParseToken(parts[1])
+	if err != nil {
+		responseHandler.ErrorResponse(err, "failed to parse guest JWT token")
+		return
+	}
+	if !claims.IsAnonymous {
+		responseHandler.ErrorResponse(
+			fmt.Errorf("registration expects guest token: %w", core_errors.ErrConflict),
+			"only guest users can register via this endpoint",
+		)
+		return
+	}
+
+	guestUserID := claims.UserID
 
 	var req RegisterUserRequest
 	if err := core_http_request.DecodeAndValidateRequest(r, &req); err != nil {

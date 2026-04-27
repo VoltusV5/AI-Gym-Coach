@@ -91,6 +91,34 @@ type UsersRepository interface {
 		expectedVersion int64,
 		newPasswordHash string,
 	) error
+	GetListNotes(
+		ctx context.Context,
+		userID string,
+	) ([]users_postgres_repository.Note, error)
+	GetNoteByID(
+		ctx context.Context,
+		userID string,
+		noteID int,
+	) (users_postgres_repository.Note, error)
+	CreateNotesUser(
+		ctx context.Context,
+		userID string,
+		title string,
+		body string,
+	) (users_postgres_repository.Note, error)
+	UpdateNotesUser(
+		ctx context.Context,
+		userID string,
+		noteID int,
+		expectedVersion int64,
+		title string,
+		body string,
+	) (users_postgres_repository.Note, error)
+	DeleteNotesUser(
+		ctx context.Context,
+		userID string,
+		noteID int,
+	) error
 }
 
 type MLClient interface {

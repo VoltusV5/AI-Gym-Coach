@@ -77,7 +77,7 @@ CREATE TABLE sportapp.user_programs (
 CREATE TABLE sportapp.notes (
     id SERIAL PRIMARY KEY,
     version BIGINT NOT NULL DEFAULT 1,
-    user_id INTEGER NOT NULL UNIQUE,
+    user_id INTEGER NOT NULL,
     title VARCHAR(120),
     body VARCHAR,
     created_at TIMESTAMPTZ,
