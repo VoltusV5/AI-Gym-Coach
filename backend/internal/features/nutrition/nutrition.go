@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"sport_app/internal/core/auth"
 	middleware "sport_app/internal/core/transport/http/middleware"
 
 	"github.com/jackc/pgx/v5"
@@ -38,28 +39,29 @@ func init() {
 	}
 }
 
-func (s *Service) RegisterRoutes(register func(method, path string, handler http.Handler)) {
-	register("GET", "/nutrition/entries", middleware.Protect()(http.HandlerFunc(s.listEntries)))
-	register("POST", "/nutrition/entries", middleware.Protect()(http.HandlerFunc(s.createEntry)))
-	register("PATCH", "/nutrition/entries/{id}", middleware.Protect()(http.HandlerFunc(s.updateEntry)))
-	register("DELETE", "/nutrition/entries/{id}", middleware.Protect()(http.HandlerFunc(s.deleteEntry)))
+func (s *Service) RegisterRoutes(jwt *core_auth.JWT, register func(method, path string, handler http.Handler)) {
+	protect := middleware.Protect(jwt)
+	register("GET", "/nutrition/entries", protect(http.HandlerFunc(s.listEntries)))
+	register("POST", "/nutrition/entries", protect(http.HandlerFunc(s.createEntry)))
+	register("PATCH", "/nutrition/entries/{id}", protect(http.HandlerFunc(s.updateEntry)))
+	register("DELETE", "/nutrition/entries/{id}", protect(http.HandlerFunc(s.deleteEntry)))
 
-	register("GET", "/nutrition/favorites", middleware.Protect()(http.HandlerFunc(s.listFavorites)))
-	register("POST", "/nutrition/favorites", middleware.Protect()(http.HandlerFunc(s.createFavorite)))
-	register("DELETE", "/nutrition/favorites/{id}", middleware.Protect()(http.HandlerFunc(s.deleteFavorite)))
+	register("GET", "/nutrition/favorites", protect(http.HandlerFunc(s.listFavorites)))
+	register("POST", "/nutrition/favorites", protect(http.HandlerFunc(s.createFavorite)))
+	register("DELETE", "/nutrition/favorites/{id}", protect(http.HandlerFunc(s.deleteFavorite)))
 
-	register("GET", "/nutrition/goals", middleware.Protect()(http.HandlerFunc(s.getGoal)))
-	register("POST", "/nutrition/goals/recalculate", middleware.Protect()(http.HandlerFunc(s.recalculateGoal)))
-	register("GET", "/nutrition/dashboard", middleware.Protect()(http.HandlerFunc(s.getDashboard)))
-	register("GET", "/nutrition/stats", middleware.Protect()(http.HandlerFunc(s.getStats)))
-	register("GET", "/nutrition/analytics", middleware.Protect()(http.HandlerFunc(s.getReports)))
-	register("GET", "/nutrition/dishes/search", middleware.Protect()(http.HandlerFunc(s.searchDishes)))
-	register("GET", "/nutrition/dishes/mine", middleware.Protect()(http.HandlerFunc(s.listMyDishes)))
-	register("POST", "/nutrition/dishes", middleware.Protect()(http.HandlerFunc(s.createDish)))
-	register("PATCH", "/nutrition/dishes/{id}", middleware.Protect()(http.HandlerFunc(s.patchMyDish)))
-	register("DELETE", "/nutrition/dishes/{id}", middleware.Protect()(http.HandlerFunc(s.deleteMyDish)))
-	register("POST", "/nutrition/water", middleware.Protect()(http.HandlerFunc(s.upsertWater)))
-	register("POST", "/nutrition/weight", middleware.Protect()(http.HandlerFunc(s.upsertWeight)))
+	register("GET", "/nutrition/goals", protect(http.HandlerFunc(s.getGoal)))
+	register("POST", "/nutrition/goals/recalculate", protect(http.HandlerFunc(s.recalculateGoal)))
+	register("GET", "/nutrition/dashboard", protect(http.HandlerFunc(s.getDashboard)))
+	register("GET", "/nutrition/stats", protect(http.HandlerFunc(s.getStats)))
+	register("GET", "/nutrition/analytics", protect(http.HandlerFunc(s.getReports)))
+	register("GET", "/nutrition/dishes/search", protect(http.HandlerFunc(s.searchDishes)))
+	register("GET", "/nutrition/dishes/mine", protect(http.HandlerFunc(s.listMyDishes)))
+	register("POST", "/nutrition/dishes", protect(http.HandlerFunc(s.createDish)))
+	register("PATCH", "/nutrition/dishes/{id}", protect(http.HandlerFunc(s.patchMyDish)))
+	register("DELETE", "/nutrition/dishes/{id}", protect(http.HandlerFunc(s.deleteMyDish)))
+	register("POST", "/nutrition/water", protect(http.HandlerFunc(s.upsertWater)))
+	register("POST", "/nutrition/weight", protect(http.HandlerFunc(s.upsertWeight)))
 }
 
 type nutritionEntry struct {

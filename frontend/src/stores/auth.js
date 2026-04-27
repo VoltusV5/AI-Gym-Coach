@@ -95,13 +95,7 @@ export const useAuthStore = defineStore('auth', {
     /** Гостевой вход — POST /api/v1/auth/guest */
     async guestLogin() {
       try {
-        let res
-        try {
-          // Сначала «короткий» путь — без лишнего 404 в консоли, если /api/v1 ещё не задеплоен
-          res = await api.post('/auth/guest', {})
-        } catch (_) {
-          res = await api.post('/api/v1/auth/guest', {})
-        }
+        const res = await api.post('/api/v1/auth/guest', {})
         const token =
           res.data?.token ||
           (typeof res.headers?.authorization === 'string' &&
@@ -131,12 +125,7 @@ export const useAuthStore = defineStore('auth', {
     /** Получение профиля — GET /api/v1/profile */
     async fetchProfile() {
       try {
-        let data
-        try {
-          data = (await api.get('/profile')).data
-        } catch (_) {
-          data = (await api.get('/api/v1/profile')).data
-        }
+        const { data } = await api.get('/api/v1/profile')
         this.profile = data
         return data
       } catch (err) {
@@ -154,12 +143,7 @@ export const useAuthStore = defineStore('auth', {
      */
     async updateProfile(fields, _retried = false) {
       try {
-        let data
-        try {
-          data = (await api.post('/profile', fields)).data
-        } catch (_) {
-          data = (await api.patch('/api/v1/profile', fields)).data
-        }
+        const version = this.profile?.version ?? 0
         const body = { ...fields, version }
         const { data } = await api.post('/api/v1/profile', body)
         this.profile = data

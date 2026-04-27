@@ -3,17 +3,23 @@ package main
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"os/signal"
-	"syscall"
 
 	core_auth "sport_app/internal/core/auth"
 	core_logger "sport_app/internal/core/logger"
 	core_postgres_pool "sport_app/internal/core/repository/postgres/pool"
 	core_http_middleware "sport_app/internal/core/transport/http/middleware"
 	core_http_server "sport_app/internal/core/transport/http/server"
-	"sport_app/internal/features/handlers"
+	"sport_app/internal/features/mlclient"
+	"sport_app/internal/features/notes/repository/postgres"
+	notes_service "sport_app/internal/features/notes/service"
+	notes_transport_http "sport_app/internal/features/notes/transport/http"
 	"sport_app/internal/features/nutrition"
+	users_postgres_repository "sport_app/internal/features/users/repository/postgres"
+	users_service "sport_app/internal/features/users/service"
+	users_transport_http "sport_app/internal/features/users/transport/http"
 	"syscall"
 
 	"go.uber.org/zap"
@@ -74,11 +80,18 @@ func main() {
 	apiVersionRouter.RegisterRoutes(usersTransportHTTP.Routes()...)
 
 	nutritionService := nutrition.NewService(pool.Pool)
-	nutritionService.RegisterRoutes(func(method, path string, handler http.Handler) {
-		v1Router.RegisterRoutes(core_http_server.NewRoute(method, path, handler))
+	nutritionService.RegisterRoutes(jwt, func(method, path string, handler http.Handler) {
+		apiVersionRouter.RegisterRoutes(core_http_server.NewRoute(method, path, handler.(http.HandlerFunc)))
 	})
 
-	httpServer.RegisterAPIRouters(v1Router)
+	notesRepo := notes_postgres_repository.NewRepository(pool.Pool)
+	notesService := notes_service.NewService(notesRepo)
+	notesHandler := notes_transport_http.NewHandler(notesService, jwt)
+	notesHandler.RegisterRoutes(func(method, path string, handler http.Handler) {
+		apiVersionRouter.RegisterRoutes(core_http_server.NewRoute(method, path, handler.(http.HandlerFunc)))
+	})
+
+	httpServer.RegisterAPIRouters(apiVersionRouter)
 
 	if err := httpServer.Run(ctx); err != nil {
 		logger.Error("HTTP server run error", zap.Error(err))

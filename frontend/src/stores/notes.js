@@ -32,6 +32,10 @@ function toApiPayload(title, body) {
   }
 }
 
+function isServerNoteId(id) {
+  return /^\d+$/.test(String(id ?? '').trim())
+}
+
 export const useNotesStore = defineStore('notes', {
   state: () => ({
     notes: []
@@ -142,7 +146,7 @@ export const useNotesStore = defineStore('notes', {
     },
 
     async saveNoteWithApi(id, title, body) {
-      const exists = Boolean(this.noteById(id))
+      const exists = Boolean(this.noteById(id)) && isServerNoteId(id)
       const local = this.upsertNote(id, title, body)
       try {
         if (exists) return await this.updateNoteRemote(id, title, body)
@@ -160,6 +164,7 @@ export const useNotesStore = defineStore('notes', {
 
     async deleteNoteWithApi(id) {
       this.deleteNote(id)
+      if (!isServerNoteId(id)) return
       try {
         await api.delete(`/api/v1/notes/${id}`)
       } catch (_) {

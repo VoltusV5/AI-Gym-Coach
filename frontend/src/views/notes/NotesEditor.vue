@@ -40,7 +40,7 @@
 defineOptions({ name: 'NotesEditorPage' })
 
 import { computed, onMounted, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { IonPage, IonContent, IonFooter, IonButton, IonInput, IonTextarea, toastController } from '@ionic/vue'
 import AppTabBar from '@/components/navigation/AppTabBar.vue'
 import { useNotesStore } from '@/stores/notes'
@@ -55,6 +55,7 @@ const t = {
 }
 
 const route = useRoute()
+const router = useRouter()
 const notesStore = useNotesStore()
 
 const title = ref('')
@@ -90,7 +91,11 @@ const createdAtLabel = computed(() => {
 })
 
 async function saveNote() {
-  await notesStore.saveNoteWithApi(noteId.value, title.value, body.value)
+  const saved = await notesStore.saveNoteWithApi(noteId.value, title.value, body.value)
+  const savedId = String(saved?.id ?? '')
+  if (savedId && savedId !== noteId.value) {
+    await router.replace(`/notes/${savedId}`)
+  }
   const toast = await toastController.create({
     message: t.saved,
     duration: 1300,
