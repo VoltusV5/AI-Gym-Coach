@@ -1,3 +1,4 @@
 # Минимум для запуска только HTTP-API (ai/main.py)
 fastapi>=0.100
 uvicorn[standard]>=0.20
+
