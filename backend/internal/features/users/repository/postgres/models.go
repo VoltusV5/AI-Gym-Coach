@@ -84,6 +84,19 @@ type SetData struct {
 	Reps     int     `json:"reps"`
 }
 
+type AchievementUnlocked struct {
+	ID    int    `json:"id"`
+	Title string `json:"title"`
+}
+
+type UserAchievement struct {
+	ID          int       `json:"id"`
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
+	Category    *string   `json:"category,omitempty"`
+	UnlockedAt  time.Time `json:"unlocked_at"`
+}
+
 func (r WorkoutCompleteRequest) Validate() error {
 	if r.DayCode == "" {
 		return fmt.Errorf("`day_code` is required: %w", core_errors.ErrInvalidArgument)

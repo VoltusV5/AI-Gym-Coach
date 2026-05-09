@@ -28,7 +28,9 @@ type Muscules struct {
 }
 
 type Config struct {
-	BaseURL string `envconfig:"BASE_URL" required:"true"`
+	BaseURL     string `envconfig:"BASE_URL" required:"true"`
+	ChatBaseURL string `envconfig:"CHAT_BASE_URL"`
+	ChatPath    string `envconfig:"CHAT_PATH" default:"/ai/user/chat"`
 }
 
 func NewConfig() (Config, error) {
@@ -49,6 +51,22 @@ func NewConfigMust() Config {
 	}
 
 	return config
+}
+
+func (c Config) ChatURL() string {
+	base := strings.TrimSpace(c.ChatBaseURL)
+	if base == "" {
+		base = strings.TrimSpace(c.BaseURL)
+	}
+	base = strings.TrimSuffix(base, "/")
+	path := strings.TrimSpace(c.ChatPath)
+	if path == "" {
+		path = "/ai/user/chat"
+	}
+	if !strings.HasPrefix(path, "/") {
+		path = "/" + path
+	}
+	return base + path
 }
 
 type Client struct {

@@ -7,8 +7,7 @@ import (
 	"time"
 
 	core_errors "sport_app/internal/core/errors"
-
-	"github.com/jackc/pgx/v5"
+	core_postgres_pool "sport_app/internal/core/repository/postgres/pool"
 )
 
 type Note struct {
@@ -33,7 +32,7 @@ func (r *UsersRepository) GetListNotes(
 		`SELECT id, version, user_id, title, body, created_at, updated_at, deleted_at 
 		 FROM sportapp.notes 
 		 WHERE user_id = $1 AND deleted_at IS NULL 
-		 ORDER BY created_at DESC`,
+		 ORDER BY created_at DESC;`,
 		userID,
 	)
 	if err != nil {
@@ -64,11 +63,11 @@ func (r *UsersRepository) GetNoteByID(
 	err := r.pool.QueryRow(ctx,
 		`SELECT id, version, user_id, title, body, created_at, updated_at, deleted_at
 		 FROM sportapp.notes
-		 WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL`,
+		 WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL;`,
 		noteID, userID,
 	).Scan(&n.ID, &n.Version, &n.UserID, &n.Title, &n.Body, &n.CreatedAt, &n.UpdatedAt, &n.DeletedAt)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
+		if errors.Is(err, core_postgres_pool.ErrNoRows) {
 			return Note{}, fmt.Errorf(
 				"note id='%d' for user_id='%s' not found: %w",
 				noteID,
@@ -95,7 +94,7 @@ func (r *UsersRepository) CreateNotesUser(
 	if err := r.pool.QueryRow(ctx,
 		`INSERT INTO sportapp.notes (user_id, title, body, created_at, updated_at) 
 		 VALUES ($1, $2, $3, NOW(), NOW()) 
-		 RETURNING id, version, user_id, title, body, created_at, updated_at, deleted_at`,
+		 RETURNING id, version, user_id, title, body, created_at, updated_at, deleted_at;`,
 		userID, title, body,
 	).Scan(&n.ID, &n.Version, &n.UserID, &n.Title, &n.Body, &n.CreatedAt, &n.UpdatedAt, &n.DeletedAt); err != nil {
 		return Note{}, fmt.Errorf("scan create notes: %w", err)
@@ -120,10 +119,10 @@ func (r *UsersRepository) UpdateNotesUser(
 		`UPDATE sportapp.notes 
 		 SET title = $1, body = $2, updated_at = NOW(), version = version + 1
 		 WHERE id = $3 AND user_id = $4 AND version = $5 AND deleted_at IS NULL 
-		 RETURNING id, version, user_id, title, body, created_at, updated_at, deleted_at`,
+		 RETURNING id, version, user_id, title, body, created_at, updated_at, deleted_at;`,
 		title, body, noteID, userID, expectedVersion,
 	).Scan(&n.ID, &n.Version, &n.UserID, &n.Title, &n.Body, &n.CreatedAt, &n.UpdatedAt, &n.DeletedAt); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
+		if errors.Is(err, core_postgres_pool.ErrNoRows) {
 			return Note{}, fmt.Errorf(
 				"note id='%d' for user_id='%s' concurrently accessed or not found: %w",
 				noteID,
@@ -146,7 +145,7 @@ func (r *UsersRepository) DeleteNotesUser(
 	defer cancel()
 
 	_, err := r.pool.Exec(ctx,
-		`UPDATE sportapp.notes SET deleted_at = NOW() WHERE id = $1 AND user_id = $2`,
+		`UPDATE sportapp.notes SET deleted_at = NOW() WHERE id = $1 AND user_id = $2;`,
 		noteID, userID,
 	)
 	if err != nil {

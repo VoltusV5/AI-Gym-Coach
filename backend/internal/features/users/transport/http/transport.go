@@ -49,7 +49,7 @@ type UsersService interface {
 		ctx context.Context,
 		userID string,
 		req users_postgres_repository.WorkoutCompleteRequest,
-	) error
+	) (*users_postgres_repository.WorkoutCompleteServiceResult, error)
 	ChangeUserPassword(
 		ctx context.Context,
 		userID string,
@@ -78,6 +78,10 @@ type UsersService interface {
 		userID string,
 		noteID int,
 	) error
+	GetAchievements(
+		ctx context.Context,
+		userID string,
+	) ([]users_postgres_repository.UserAchievement, error)
 }
 
 func NewUsersHTTPHandler(
@@ -132,6 +136,9 @@ func (h *UsersHTTPHandler) Routes() []core_http_server.Route {
 		),
 		core_http_server.NewRoute(
 			http.MethodDelete, "/notes/{id}", h.DeleteNote, protect,
+		),
+		core_http_server.NewRoute(
+			http.MethodGet, "/achievements/get_achievements", h.GetAchievements, protect,
 		),
 	}
 }

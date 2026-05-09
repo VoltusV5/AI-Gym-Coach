@@ -5,9 +5,8 @@ import (
 	"fmt"
 	"math"
 
+	core_postgres_pool "sport_app/internal/core/repository/postgres/pool"
 	"sport_app/internal/features/mlclient"
-
-	"github.com/jackc/pgx/v5"
 )
 
 func (r *UsersRepository) GetExercises(
@@ -68,7 +67,7 @@ func (r *UsersRepository) queryExerciseGroup(
 	profile Profile,
 ) ([]ExWithWeight, []ExNoWeight, error) {
 	var (
-		rows pgx.Rows
+		rows core_postgres_pool.Rows
 		err  error
 	)
 
@@ -78,7 +77,7 @@ func (r *UsersRepository) queryExerciseGroup(
 			FROM sportapp.exercises
 			WHERE muscular_group = $1 AND muscular_subgroup IS NULL
 			ORDER BY id
-			LIMIT 5
+			LIMIT 5;
 		`, ex.Group)
 	} else {
 		rows, err = r.pool.Query(ctx, `
@@ -86,7 +85,7 @@ func (r *UsersRepository) queryExerciseGroup(
 			FROM sportapp.exercises
 			WHERE muscular_group = $1 AND muscular_subgroup = $2
 			ORDER BY id
-			LIMIT 5
+			LIMIT 5;
 		`, ex.Group, *ex.Sub_group)
 	}
 	if err != nil {
@@ -182,11 +181,21 @@ func roundWeightDownToGymStep(kg float64) float64 {
 	return math.Round(rounded*10) / 10
 }
 
+func RoundWeightToNearestGymStep(kg float64) float64 {
+	if kg <= 0 {
+		return 0
+	}
+	step := gymPlateStepSmallKG
+	if kg >= gymPlateStepLargeFromKG {
+		step = gymPlateStepLargeKG
+	}
+	rounded := math.Round(kg/step) * step
+	return math.Round(rounded*10) / 10
+}
+
 func normalizeWeightedBodyweightVariants(list []ExWithWeight) []ExWithWeight {
 	filtered := make([]ExWithWeight, 0, len(list))
 	for _, ex := range list {
-		// Если для версии "с отягощением" вес нулевой/пустой —
-		// оставляем только базовую версию без отягощения.
 		if isWeightedBodyweightExercise(ex.EXName) && !hasPositiveWeight(ex.Weight) {
 			continue
 		}

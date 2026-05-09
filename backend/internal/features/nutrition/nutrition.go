@@ -13,22 +13,20 @@ import (
 	"time"
 
 	"sport_app/internal/core/auth"
+	core_postgres_pool "sport_app/internal/core/repository/postgres/pool"
 	middleware "sport_app/internal/core/transport/http/middleware"
 
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Service struct {
-	pool *pgxpool.Pool
+	pool core_postgres_pool.Pool
 }
 
-func NewService(pool *pgxpool.Pool) *Service {
+func NewService(pool core_postgres_pool.Pool) *Service {
 	return &Service{pool: pool}
 }
 
-// Календарный день дневника питания — Europe/Moscow (как у пользователей приложения).
 var nutritionTZ *time.Location
 
 func init() {
@@ -105,9 +103,7 @@ type entryPayload struct {
 	CarbsG     *float64 `json:"carbs_g"`
 	Calories   *float64 `json:"calories"`
 	ConsumedAt *string  `json:"consumed_at"`
-	// Календарный день дневника YYYY-MM-DD (Europe/Moscow, как в GET …/entries?day=).
-	// Если задан — consumed_at ставится на полдень этого дня, чтобы запись попала в те же сутки, что и сводка.
-	Day string `json:"day"`
+	Day        string   `json:"day"`
 }
 
 type recalcPayload struct {
@@ -115,7 +111,6 @@ type recalcPayload struct {
 	TargetDeltaKg *float64 `json:"target_delta_kg"`
 }
 
-// ErrProfileIncomplete зарезервировано для редких случаев (раньше — пустой профиль).
 var ErrProfileIncomplete = errors.New("profile incomplete")
 
 func userIDFromRequest(r *http.Request) (int, error) {
@@ -151,7 +146,6 @@ func mealTypeOrDefault(v string) string {
 	}
 }
 
-// dayBoundsFromQuery задаёт интервал [startUTC, endUTC) для суток по календарю в nutritionTZ и строку даты YYYY-MM-DD.
 func dayBoundsFromQuery(r *http.Request) (startUTC, endUTC time.Time, dayYMD string) {
 	dayRaw := strings.TrimSpace(r.URL.Query().Get("day"))
 	now := time.Now().In(nutritionTZ)
@@ -287,7 +281,6 @@ func (s *Service) createEntry(w http.ResponseWriter, r *http.Request) {
 				payload.Calories = &cal
 			}
 		} else {
-			// Частый баг фронта: в dish_id передают id избранного/записи дневника. Тогда БЖУ с клиента трактуем как на 100 г.
 			pg := scaleFrom100(*payload.ProteinG, grams)
 			fg := scaleFrom100(*payload.FatG, grams)
 			cg := scaleFrom100(*payload.CarbsG, grams)
@@ -314,7 +307,6 @@ func (s *Service) createEntry(w http.ResponseWriter, r *http.Request) {
 		).Scan(&autoID)
 		if err == nil {
 			dishID = &autoID
-			// Клиент присылает БЖУ на 100 г; в nutrition_dishes уже сохранили per-100, в строку дневника — порцию.
 			perP := *payload.ProteinG
 			perF := *payload.FatG
 			perC := *payload.CarbsG
@@ -590,7 +582,7 @@ func (s *Service) getGoal(w http.ResponseWriter, r *http.Request) {
 		userID,
 	).Scan(&g.ProteinG, &g.FatG, &g.CarbsG, &g.Calories, &g.UpdatedAt)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
+		if errors.Is(err, core_postgres_pool.ErrNoRows) {
 			synced, syncErr := s.upsertNutritionGoalFromProfile(r.Context(), userID, "", nil)
 			if syncErr != nil {
 				w.WriteHeader(http.StatusNoContent)
@@ -605,8 +597,6 @@ func (s *Service) getGoal(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, g)
 }
 
-// upsertNutritionGoalFromProfile writes sportapp.nutrition_goals from onboarding profile (Mifflin–St Jeor + macros).
-// reqTarget: optional "lose"|"maintain"|"gain" overriding profile.goal wording.
 func (s *Service) upsertNutritionGoalFromProfile(ctx context.Context, userID int, reqTarget string, targetDeltaKg *float64) (nutritionGoal, error) {
 	type profileRow struct {
 		Age           *int
@@ -623,11 +613,10 @@ func (s *Service) upsertNutritionGoalFromProfile(ctx context.Context, userID int
 		 FROM sportapp.profile WHERE user_id = $1`,
 		userID,
 	).Scan(&p.Age, &p.Gender, &p.HeightCm, &p.WeightKg, &p.ActivityLevel, &p.Goal)
-	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+	if err != nil && !errors.Is(err, core_postgres_pool.ErrNoRows) {
 		return nutritionGoal{}, err
 	}
 
-	// Значения по умолчанию, если онбординг не заполнил профиль — иначе GET /goals и дашборд остаются пустыми.
 	age := 30
 	if p.Age != nil && *p.Age > 0 && *p.Age < 120 {
 		age = *p.Age
@@ -673,7 +662,6 @@ func (s *Service) upsertNutritionGoalFromProfile(ctx context.Context, userID int
 	}
 
 	newGoal := calculateGoalFromProfile(age, heightCm, weightKg, gender, activity, goal)
-	// Только при ненулевой дельте по весу пересчитываем калории и перераспределяем жиры/углеводы (0 в JSON не считаем «изменением»).
 	if targetDeltaKg != nil && math.Abs(*targetDeltaKg) > 1e-6 {
 		newGoal.Calories += targetDeltaAdjustment(*targetDeltaKg)
 		if newGoal.Calories < 1200 {
@@ -735,11 +723,9 @@ func targetAdjustment(target string, weightKg float64) float64 {
 }
 
 func targetDeltaAdjustment(deltaKg float64) float64 {
-	// Soft adjustment for daily calories by desired weight direction.
 	return deltaKg * 220
 }
 
-// dailyWaterGoalMlFromWeight — суточная норма воды (мл) по массе тела: ~33 мл/кг, с разумными пределами.
 func dailyWaterGoalMlFromWeight(weightKg float64) int {
 	if weightKg <= 0 {
 		return 2000
@@ -847,7 +833,6 @@ func (s *Service) getStats(w http.ResponseWriter, r *http.Request) {
 		return acc, err
 	}
 
-	// «Сегодня» — тот же интервал, что и GET /dashboard?day= (сутки Europe/Moscow).
 	dayEnd := dayStart.Add(24 * time.Hour)
 	var day sums
 	err = s.pool.QueryRow(
@@ -895,12 +880,12 @@ func (s *Service) getStats(w http.ResponseWriter, r *http.Request) {
 }
 
 type catalogItem struct {
-	ID       int     `json:"id,omitempty"`
-	Title    string  `json:"title"`
-	ProteinG float64 `json:"protein_g,omitempty"`
-	FatG     float64 `json:"fat_g,omitempty"`
-	CarbsG   float64 `json:"carbs_g,omitempty"`
-	Calories float64 `json:"calories,omitempty"`
+	ID        int     `json:"id,omitempty"`
+	Title     string  `json:"title"`
+	ProteinG  float64 `json:"protein_g,omitempty"`
+	FatG      float64 `json:"fat_g,omitempty"`
+	CarbsG    float64 `json:"carbs_g,omitempty"`
+	Calories  float64 `json:"calories,omitempty"`
 	BaseGrams float64 `json:"base_grams,omitempty"`
 }
 
@@ -945,11 +930,11 @@ func (s *Service) createDish(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var payload struct {
-		Title    string   `json:"title"`
-		ProteinG *float64 `json:"protein_g"`
-		FatG     *float64 `json:"fat_g"`
-		CarbsG   *float64 `json:"carbs_g"`
-		Calories *float64 `json:"calories"`
+		Title     string   `json:"title"`
+		ProteinG  *float64 `json:"protein_g"`
+		FatG      *float64 `json:"fat_g"`
+		CarbsG    *float64 `json:"carbs_g"`
+		Calories  *float64 `json:"calories"`
 		BaseGrams *float64 `json:"base_grams"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
@@ -1094,7 +1079,7 @@ func (s *Service) patchMyDish(w http.ResponseWriter, r *http.Request) {
 		title, pg, fg, cg, cal, baseGrams, id, userID,
 	).Scan(&item.ID, &item.Title, &item.ProteinG, &item.FatG, &item.CarbsG, &item.Calories, &item.BaseGrams)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
+		if errors.Is(err, core_postgres_pool.ErrNoRows) {
 			http.Error(w, "Not found or not your dish", http.StatusNotFound)
 			return
 		}
@@ -1120,27 +1105,17 @@ func (s *Service) deleteMyDish(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid id", http.StatusBadRequest)
 		return
 	}
-	tx, err := s.pool.Begin(r.Context())
-	if err != nil {
-		http.Error(w, "Failed to begin tx", http.StatusInternalServerError)
-		return
-	}
-	defer tx.Rollback(r.Context())
-	if _, err := tx.Exec(r.Context(), `UPDATE sportapp.nutrition_entries SET dish_id = NULL WHERE user_id = $1 AND dish_id = $2`, userID, id); err != nil {
+	if _, err := s.pool.Exec(r.Context(), `UPDATE sportapp.nutrition_entries SET dish_id = NULL WHERE user_id = $1 AND dish_id = $2`, userID, id); err != nil {
 		http.Error(w, "Failed to detach entries", http.StatusInternalServerError)
 		return
 	}
-	res, err := tx.Exec(r.Context(), `DELETE FROM sportapp.nutrition_dishes WHERE id = $1 AND created_by_user_id = $2`, id, userID)
+	res, err := s.pool.Exec(r.Context(), `DELETE FROM sportapp.nutrition_dishes WHERE id = $1 AND created_by_user_id = $2`, id, userID)
 	if err != nil {
 		http.Error(w, "Failed to delete dish", http.StatusInternalServerError)
 		return
 	}
 	if res.RowsAffected() == 0 {
 		http.Error(w, "Not found or not your dish", http.StatusNotFound)
-		return
-	}
-	if err := tx.Commit(r.Context()); err != nil {
-		http.Error(w, "Failed to commit", http.StatusInternalServerError)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -1287,7 +1262,7 @@ func (s *Service) getDashboard(w http.ResponseWriter, r *http.Request) {
 		userID,
 	).Scan(&goalProtein, &goalFat, &goalCarbs, &goalCalories)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
+		if errors.Is(err, core_postgres_pool.ErrNoRows) {
 			g, syncErr := s.upsertNutritionGoalFromProfile(r.Context(), userID, "", nil)
 			if syncErr == nil {
 				goalProtein, goalFat, goalCarbs, goalCalories = g.ProteinG, g.FatG, g.CarbsG, g.Calories
@@ -1304,7 +1279,7 @@ func (s *Service) getDashboard(w http.ResponseWriter, r *http.Request) {
 	var lastWeight *float64
 	var lastWeightDay *time.Time
 	row := s.pool.QueryRow(r.Context(), `SELECT weight_kg, logged_on::timestamp FROM sportapp.nutrition_weight_logs WHERE user_id = $1 ORDER BY logged_on DESC LIMIT 1`, userID)
-	if rowErr := row.Scan(&lastWeight, &lastWeightDay); rowErr != nil && !errors.Is(rowErr, pgx.ErrNoRows) {
+	if rowErr := row.Scan(&lastWeight, &lastWeightDay); rowErr != nil && !errors.Is(rowErr, core_postgres_pool.ErrNoRows) {
 		http.Error(w, "Failed to load weight", http.StatusInternalServerError)
 		return
 	}
@@ -1346,11 +1321,11 @@ func (s *Service) getDashboard(w http.ResponseWriter, r *http.Request) {
 			"goal_liters": math.Round(float64(wMlGoal)/1000.0*100) / 100,
 		},
 		"weight": map[string]any{
-			"last_weight_kg":      lastWeight,
-			"last_weight_day":     lastWeightDay,
+			"last_weight_kg":       lastWeight,
+			"last_weight_day":      lastWeightDay,
 			"need_weight_reminder": needWeightReminder,
 		},
-		"streak_days": streakDays,
+		"streak_days":     streakDays,
 		"burned_calories": 0.0,
 	})
 }
@@ -1448,4 +1423,3 @@ func (s *Service) getReports(w http.ResponseWriter, r *http.Request) {
 		"water":  waterSeries,
 	})
 }
-

@@ -7,8 +7,8 @@ import (
 	"time"
 
 	core_errors "sport_app/internal/core/errors"
+	core_postgres_pool "sport_app/internal/core/repository/postgres/pool"
 
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
@@ -29,7 +29,7 @@ func (r *UsersRepository) PromoteGuestToUser(
 	    version = version + 1,
 	    updated_at = $3
 	WHERE id = $4 AND is_anonymous = TRUE
-	RETURNING id, version, is_anonymous, email, subscription_status, created_at, updated_at
+	RETURNING id, version, is_anonymous, email, subscription_status, created_at, updated_at;
 	`
 
 	var u User
@@ -44,7 +44,7 @@ func (r *UsersRepository) PromoteGuestToUser(
 				"email '%s' already registered: %w", email, core_errors.ErrConflict,
 			)
 		}
-		if errors.Is(err, pgx.ErrNoRows) {
+		if errors.Is(err, core_postgres_pool.ErrNoRows) {
 			return User{}, fmt.Errorf(
 				"user_id='%s' is not a guest or does not exist: %w",
 				userID, core_errors.ErrConflict,

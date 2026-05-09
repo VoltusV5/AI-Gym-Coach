@@ -18,12 +18,35 @@ type rateLimitEntry struct {
 	windowStart time.Time
 }
 
-func RateLimit(maxRequests int, window time.Duration) Middleware {
-	var (
-		mu      sync.Mutex
-		entries = make(map[string]rateLimitEntry)
-	)
+type slidingWindowLimiter struct {
+	mu      sync.Mutex
+	entries map[string]rateLimitEntry
+}
 
+func newSlidingWindowLimiter() *slidingWindowLimiter {
+	return &slidingWindowLimiter{entries: make(map[string]rateLimitEntry)}
+}
+
+func (l *slidingWindowLimiter) allow(key string, maxRequests int, window time.Duration) bool {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	now := time.Now()
+	entry := l.entries[key]
+	if entry.windowStart.IsZero() || now.Sub(entry.windowStart) >= window {
+		l.entries[key] = rateLimitEntry{count: 1, windowStart: now}
+		return true
+	}
+	if entry.count >= maxRequests {
+		return false
+	}
+	entry.count++
+	l.entries[key] = entry
+	return true
+}
+
+func RateLimit(maxRequests int, window time.Duration) Middleware {
+	lim := newSlidingWindowLimiter()
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
@@ -31,24 +54,7 @@ func RateLimit(maxRequests int, window time.Duration) Middleware {
 			responseHandler := core_http_responce.NewHTTPResponce(log, w)
 
 			key := clientIPFromRequest(r)
-			now := time.Now()
-
-			mu.Lock()
-			entry := entries[key]
-			if entry.windowStart.IsZero() || now.Sub(entry.windowStart) >= window {
-				entry = rateLimitEntry{
-					count:       1,
-					windowStart: now,
-				}
-				entries[key] = entry
-				mu.Unlock()
-
-				next.ServeHTTP(w, r)
-				return
-			}
-
-			if entry.count >= maxRequests {
-				mu.Unlock()
+			if !lim.allow(key, maxRequests, window) {
 				responseHandler.ErrorResponse(
 					fmt.Errorf(
 						"rate limit exceeded for ip='%s': %w",
@@ -59,11 +65,37 @@ func RateLimit(maxRequests int, window time.Duration) Middleware {
 				)
 				return
 			}
+			next.ServeHTTP(w, r)
+		})
+	}
+}
 
-			entry.count++
-			entries[key] = entry
-			mu.Unlock()
+func UserRateLimit(maxRequests int, window time.Duration) Middleware {
+	lim := newSlidingWindowLimiter()
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ctx := r.Context()
+			log := core_logger.FromContext(ctx)
+			responseHandler := core_http_responce.NewHTTPResponce(log, w)
 
+			userID, err := UserIDFromContext(ctx)
+			if err != nil {
+				responseHandler.ErrorResponse(err, "rate limit: user id")
+				return
+			}
+
+			key := "user_rate:" + userID
+			if !lim.allow(key, maxRequests, window) {
+				responseHandler.ErrorResponse(
+					fmt.Errorf(
+						"user rate limit exceeded for user_id='%s': %w",
+						userID,
+						core_errors.ErrTooManyRequests,
+					),
+					"rate limit exceeded",
+				)
+				return
+			}
 			next.ServeHTTP(w, r)
 		})
 	}

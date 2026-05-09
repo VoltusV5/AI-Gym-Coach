@@ -6,8 +6,7 @@ import (
 	"fmt"
 
 	core_errors "sport_app/internal/core/errors"
-
-	"github.com/jackc/pgx/v5"
+	core_postgres_pool "sport_app/internal/core/repository/postgres/pool"
 )
 
 func (r *UsersRepository) GetUserByEmail(
@@ -21,7 +20,7 @@ func (r *UsersRepository) GetUserByEmail(
 	SELECT id, version, is_anonymous, email, password_hash,
 	       subscription_status, created_at, updated_at
 	FROM sportapp.users
-	WHERE LOWER(email) = LOWER($1) AND is_anonymous = FALSE
+	WHERE LOWER(email) = LOWER($1) AND is_anonymous = FALSE;
 	`
 
 	var (
@@ -33,7 +32,7 @@ func (r *UsersRepository) GetUserByEmail(
 		&u.SubscriptionStatus, &u.CreatedAt, &u.UpdatedAt,
 	)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
+		if errors.Is(err, core_postgres_pool.ErrNoRows) {
 			return User{}, "", fmt.Errorf(
 				"user with email='%s': %w", email, core_errors.ErrNotFound,
 			)

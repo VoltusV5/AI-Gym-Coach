@@ -1,14 +1,9 @@
-"""
-Локальный ML-сервис для backend: POST /plan/user → JSON плана (русские ключи, как в mlclient.Plan).
-Запуск из папки ai:  python -m uvicorn main:app --host 127.0.0.1 --port 5050
-"""
 from typing import Any, Dict
 
 from fastapi import Body, FastAPI
 
 app = FastAPI(title="sportik-ml", version="0.1.0")
 
-# Статический план (совместим с сидом exercises и replaceExercises в Go)
 STATIC_PLAN = {
     "тип_сплита": "Фулбади",
     "еженедельный_план": [

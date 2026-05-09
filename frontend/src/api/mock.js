@@ -76,7 +76,7 @@ mock.onPost('/api/v1/workouts/complete').reply((config) => {
   } catch (_) {
     /* ignore */
   }
-  return [200, { ok: true, saved_id: `mock-${Date.now()}` }]
+  return [200, { ok: true, saved_id: `mock-${Date.now()}`, new_achievements: [], session_highlights: [] }]
 })
 
 mock.onPost('/api/v1/auth/register').reply((config) => {
