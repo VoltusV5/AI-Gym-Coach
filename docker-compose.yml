@@ -24,6 +24,22 @@ services:
       - ./ai/.env
     ports:
       - "8000:8000"
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+    restart: always
+
+  ml-chat:
+    build:
+      context: ./ai
+      dockerfile: Dockerfile
+      args:
+        HOST: ${HOST}
+        PORT: ${PORT}
+    container_name: ml-chat
+    env_file:
+      - ./ai/.env
+    ports:
+      - "8001:8000"
+    command: ["uvicorn", "chat_app:app", "--host", "0.0.0.0", "--port", "8000"]
     restart: always
   
   frontend:

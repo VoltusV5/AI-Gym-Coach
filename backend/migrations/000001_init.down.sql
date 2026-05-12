@@ -1,7 +1,11 @@
 DROP INDEX IF EXISTS sportapp.users_email_lower_uniq;
+DROP INDEX IF EXISTS sportapp.user_achievements_user_id_idx;
 DROP TABLE sportapp.exercises;
 DROP TABLE sportapp.profile;
 DROP TABLE sportapp.user_data;
 DROP TABLE sportapp.user_programs;
 DROP TABLE sportapp.users;
+DROP TABLE sportapp.chat_messages;
+DROP TABLE sportapp.user_achievements;
+DROP TABLE sportapp.achievements;
 DROP SCHEMA sportapp;

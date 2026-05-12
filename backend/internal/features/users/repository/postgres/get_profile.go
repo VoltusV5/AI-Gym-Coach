@@ -6,8 +6,7 @@ import (
 	"fmt"
 
 	core_errors "sport_app/internal/core/errors"
-
-	"github.com/jackc/pgx/v5"
+	core_postgres_pool "sport_app/internal/core/repository/postgres/pool"
 )
 
 func (r *UsersRepository) GetProfile(
@@ -22,7 +21,7 @@ func (r *UsersRepository) GetProfile(
 	       activity_level, injuries_notes, goal, fitness_level,
 	       training_days_map, created_at, updated_at
 	FROM sportapp.profile
-	WHERE user_id = $1
+	WHERE user_id = $1;
 	`
 
 	var p Profile
@@ -32,7 +31,7 @@ func (r *UsersRepository) GetProfile(
 		&p.TrainingDaysMap, &p.CreatedAt, &p.UpdatedAt,
 	)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
+		if errors.Is(err, core_postgres_pool.ErrNoRows) {
 			return Profile{}, fmt.Errorf(
 				"profile for user_id='%s': %w",
 				userID,

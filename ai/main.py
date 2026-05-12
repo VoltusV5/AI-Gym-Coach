@@ -1,7 +1,3 @@
-"""
-Локальный ML-сервис для backend: POST /plan/user → JSON плана (русские ключи, как в mlclient.Plan).
-Запуск из папки ai:  python -m uvicorn main:app --host 127.0.0.1 --port 5050
-"""
 from typing import Any, Dict
 from catboost import CatBoostClassifier
 from fastapi import Body, FastAPI

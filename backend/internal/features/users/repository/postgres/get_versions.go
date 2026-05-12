@@ -6,8 +6,7 @@ import (
 	"fmt"
 
 	core_errors "sport_app/internal/core/errors"
-
-	"github.com/jackc/pgx/v5"
+	core_postgres_pool "sport_app/internal/core/repository/postgres/pool"
 )
 
 func (r *UsersRepository) GetUserProgramsVersion(
@@ -19,10 +18,10 @@ func (r *UsersRepository) GetUserProgramsVersion(
 
 	var version int64
 	err := r.pool.QueryRow(ctx, `
-		SELECT version FROM sportapp.user_programs WHERE user_id = $1
+		SELECT version FROM sportapp.user_programs WHERE user_id = $1;
 	`, userID).Scan(&version)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
+		if errors.Is(err, core_postgres_pool.ErrNoRows) {
 			return 0, fmt.Errorf(
 				"user_programs for user_id='%s': %w",
 				userID,
@@ -44,10 +43,10 @@ func (r *UsersRepository) GetUserDataVersion(
 
 	var version int64
 	err := r.pool.QueryRow(ctx, `
-		SELECT version FROM sportapp.user_data WHERE user_id = $1
+		SELECT version FROM sportapp.user_data WHERE user_id = $1;
 	`, userID).Scan(&version)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
+		if errors.Is(err, core_postgres_pool.ErrNoRows) {
 			return 0, fmt.Errorf(
 				"user_data for user_id='%s': %w",
 				userID,

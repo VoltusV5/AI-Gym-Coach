@@ -13,8 +13,10 @@ import (
 )
 
 type CompleteWorkoutResponse struct {
-	OK      bool   `json:"ok"`
-	SavedID string `json:"saved_id"`
+	OK                bool                                            `json:"ok"`
+	SavedID           string                                          `json:"saved_id"`
+	NewAchievements   []users_postgres_repository.AchievementUnlocked `json:"new_achievements"`
+	SessionHighlights []users_postgres_repository.SessionHighlight    `json:"session_highlights"`
 }
 
 func (h *UsersHTTPHandler) CompleteWorkout(rw http.ResponseWriter, r *http.Request) {
@@ -34,13 +36,25 @@ func (h *UsersHTTPHandler) CompleteWorkout(rw http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	if err := h.usersService.CompleteWorkout(ctx, userID, request); err != nil {
+	result, err := h.usersService.CompleteWorkout(ctx, userID, request)
+	if err != nil {
 		responseHandler.ErrorResponse(err, "failed to complete workout")
 		return
 	}
+	if result == nil {
+		result = &users_postgres_repository.WorkoutCompleteServiceResult{}
+	}
+	if result.NewAchievements == nil {
+		result.NewAchievements = []users_postgres_repository.AchievementUnlocked{}
+	}
+	if result.SessionHighlights == nil {
+		result.SessionHighlights = []users_postgres_repository.SessionHighlight{}
+	}
 
 	responseHandler.JSONResponse(CompleteWorkoutResponse{
-		OK:      true,
-		SavedID: fmt.Sprintf("real-%d", time.Now().Unix()),
+		OK:                true,
+		SavedID:           fmt.Sprintf("real-%d", time.Now().Unix()),
+		NewAchievements:   result.NewAchievements,
+		SessionHighlights: result.SessionHighlights,
 	}, http.StatusOK)
 }

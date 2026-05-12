@@ -66,7 +66,7 @@ CREATE TABLE sportapp.user_programs (
     id SERIAL PRIMARY KEY,
     version BIGINT NOT NULL DEFAULT 1,
     user_id INTEGER NOT NULL UNIQUE,
-    started_at TIMESTAMP,
+    started_at TIMESTAMPTZ,
     planned_end_at TIMESTAMPTZ,
     is_active BOOLEAN,
     plan_template JSONB,
@@ -85,3 +85,32 @@ CREATE TABLE sportapp.notes (
     deleted_at TIMESTAMPTZ,
     FOREIGN KEY (user_id) REFERENCES sportapp.users(id) ON DELETE CASCADE
 );
+
+CREATE TABLE sportapp.chat_messages (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    role TEXT NOT NULL,
+    content TEXT NOT NULL,
+    send_at TIMESTAMPTZ
+);
+
+CREATE TABLE sportapp.achievements (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(100) NOT NULL,
+    description VARCHAR(10000) NOT NULL,
+    category VARCHAR(100)
+);
+
+CREATE TABLE sportapp.user_achievements (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    achievement_id INTEGER NOT NULL,
+    unlocked_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT user_achievements_user_fk
+        FOREIGN KEY (user_id) REFERENCES sportapp.users (id) ON DELETE CASCADE,
+    CONSTRAINT user_achievements_achievement_fk
+        FOREIGN KEY (achievement_id) REFERENCES sportapp.achievements (id) ON DELETE CASCADE,
+    CONSTRAINT user_achievements_user_achievement_uniq UNIQUE (user_id, achievement_id)
+);
+
+CREATE INDEX user_achievements_user_id_idx ON sportapp.user_achievements (user_id);

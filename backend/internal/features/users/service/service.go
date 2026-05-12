@@ -18,6 +18,9 @@ type UsersRepository interface {
 	EnsureExercisesSeeded(
 		ctx context.Context,
 	) error
+	EnsureAchievements(
+		ctx context.Context,
+	) error
 	CreateGuestUser(
 		ctx context.Context,
 	) (string, error)
@@ -84,7 +87,13 @@ type UsersRepository interface {
 		ctx context.Context,
 		userID string,
 		req users_postgres_repository.WorkoutCompleteRequest,
+		newWorkingWeights []byte,
+		expectedVersion int64,
 	) error
+	UnlockNewAchievements(
+		ctx context.Context,
+		userID string,
+	) ([]users_postgres_repository.AchievementUnlocked, error)
 	UpdatePassword(
 		ctx context.Context,
 		userID string,
@@ -119,6 +128,18 @@ type UsersRepository interface {
 		userID string,
 		noteID int,
 	) error
+	GetAchievements(
+		ctx context.Context,
+		userID string,
+	) ([]users_postgres_repository.UserAchievement, error)
+	LoadCompletedWorkouts(
+		ctx context.Context,
+		userID string,
+	) ([]users_postgres_repository.WorkoutCompleteRequest, error)
+	GetExerciseNamesByIDs(
+		ctx context.Context,
+		ids []int,
+	) (map[int]string, error)
 }
 
 type MLClient interface {

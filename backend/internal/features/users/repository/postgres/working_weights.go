@@ -97,6 +97,48 @@ func ApplyExistingWeightsToPlan(plan *EPlanWithWeight, existing map[string]float
 	}
 }
 
+func worstApproachRepsAndWeight(sets []SetData) (r int, act float64, ok bool) {
+	if len(sets) == 0 {
+		return 0, 0, false
+	}
+	r = sets[0].Reps
+	idx := 0
+	for i := 1; i < len(sets); i++ {
+		if sets[i].Reps < r {
+			r = sets[i].Reps
+			idx = i
+		}
+	}
+	return r, sets[idx].WeightKg, true
+}
+
+func MergeWorkingWeightsWithProgression(
+	existing map[string]float64,
+	req WorkoutCompleteRequest,
+) ([]byte, error) {
+	merged := make(map[string]float64, len(existing)+len(req.Slots))
+	for k, v := range existing {
+		merged[k] = v
+	}
+	for _, slot := range req.Slots {
+		r, act, ok := worstApproachRepsAndWeight(slot.Sets)
+		if !ok {
+			continue
+		}
+		key := strconv.Itoa(slot.ExerciseID)
+		rec := merged[key]
+		if rec <= 0 {
+			rec = act
+		}
+		merged[key] = NextRecommendedWeight(rec, act, r)
+	}
+	data, err := json.Marshal(merged)
+	if err != nil {
+		return nil, fmt.Errorf("marshal working_weights: %w", err)
+	}
+	return data, nil
+}
+
 func MergeWorkingWeightsJSON(existing map[string]float64, plan EPlanWithWeight) ([]byte, error) {
 	merged := make(map[string]float64, len(existing)+64)
 	for k, v := range existing {
