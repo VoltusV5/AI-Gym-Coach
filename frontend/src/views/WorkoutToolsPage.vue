@@ -7,12 +7,12 @@
     <div class="tools-grid">
       <button
         v-for="action in actions"
-        :key="action"
+        :key="action.title"
         type="button"
         class="tools-action-btn"
-        @click="showSoon(action)"
+        @click="onActionClick(action)"
       >
-        <span class="tools-action-text">{{ action }}</span>
+        <span class="tools-action-text">{{ action.title }}</span>
       </button>
     </div>
   </workout-chrome>
@@ -21,25 +21,29 @@
 <script setup>
 defineOptions({ name: 'WorkoutToolsPage' })
 
+import { useRouter } from 'vue-router'
 import { toastController } from '@ionic/vue'
 import WorkoutChrome from '@/components/workout/WorkoutChrome.vue'
 
+const router = useRouter()
+
 const actions = [
-  'Смена плана',
-  'Составление тренировки',
-  'Расписание тренировок',
-  'Чат с AI тренером',
-  'Поменять параметры тела',
-  'Собственные тренировки'
+  { title: 'Смена плана', path: '/body-metrics', query: { regenerate: '1' } },
+  { title: 'Чат с AI тренером', path: '/ai-chat' },
+  { title: 'Поменять параметры тела', path: '/body-metrics' }
 ]
 
-async function showSoon(title) {
-  const toast = await toastController.create({
-    message: `${title}: функционал будет добавлен позже`,
-    duration: 1500,
-    color: 'medium'
-  })
-  await toast.present()
+async function onActionClick(action) {
+  if (action.path) {
+    router.push({ path: action.path, query: action.query || {} })
+  } else {
+    const toast = await toastController.create({
+      message: `${action.title}: функционал будет добавлен позже`,
+      duration: 1500,
+      color: 'medium'
+    })
+    await toast.present()
+  }
 }
 </script>
 

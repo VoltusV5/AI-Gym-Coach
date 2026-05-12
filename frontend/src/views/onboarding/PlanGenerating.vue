@@ -7,36 +7,51 @@
         :style="{ backgroundImage: `url(${workoutBgUrl})` }"
         aria-hidden="true"
       ></div>
-      <div class="generating-container">
-        <!-- Анимация загрузки -->
-        <div class="animation-wrapper">
-          <ion-spinner name="crescent" color="primary" class="main-spinner"></ion-spinner>
-          <div class="pulse-ring"></div>
+        <div v-if="errorMsg" class="error-content">
+          <div class="error-icon-wrapper">
+            <ion-icon :icon="alertCircleOutline" color="danger"></ion-icon>
+          </div>
+          <h3>Ошибка генерации</h3>
+          <p>{{ errorMsg }}</p>
+          <ion-button expand="block" mode="ios" class="sportik-footer-btn" @click="retry">
+            Попробовать ещё раз
+          </ion-button>
+          <ion-button fill="clear" color="medium" @click="router.replace('/training-days')">
+            Назад к выбору дней
+          </ion-button>
         </div>
 
-        <div class="text-content">
-          <transition name="fade" mode="out-in">
-            <h2 :key="currentQuoteIndex">{{ quotes[currentQuoteIndex] }}</h2>
-          </transition>
-          <p>Это займёт всего несколько секунд...</p>
-        </div>
+        <div v-else class="generating-container">
+          <!-- Анимация загрузки -->
+          <div class="animation-wrapper">
+            <ion-spinner name="crescent" color="primary" class="main-spinner"></ion-spinner>
+            <div class="pulse-ring"></div>
+          </div>
 
-        <div class="progress-bar-wrapper">
-          <ion-progress-bar :value="progress"></ion-progress-bar>
-          <span class="progress-text">{{ Math.round(progress * 100) }}%</span>
-        </div>
+          <div class="text-content">
+            <transition name="fade" mode="out-in">
+              <h2 :key="currentQuoteIndex">{{ quotes[currentQuoteIndex] }}</h2>
+            </transition>
+            <p>Это займёт всего несколько секунд...</p>
+          </div>
 
-        <div class="footer-hint">
-          <p>Учитываем ваши цели и уровень... Осталось совсем немного!</p>
+          <div class="progress-bar-wrapper">
+            <ion-progress-bar :value="progress"></ion-progress-bar>
+            <span class="progress-text">{{ Math.round(progress * 100) }}%</span>
+          </div>
+
+          <div class="footer-hint">
+            <p>Учитываем ваши цели и уровень... Осталось совсем немного!</p>
+          </div>
         </div>
-      </div>
     </ion-content>
   </ion-page>
 </template>
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
-import { IonPage, IonContent, IonSpinner, IonProgressBar } from '@ionic/vue'
+import { IonPage, IonContent, IonSpinner, IonProgressBar, IonIcon, IonButton } from '@ionic/vue'
+import { alertCircleOutline } from 'ionicons/icons'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkoutPlanStore } from '@/stores/workoutPlan'
 import { useWorkoutSessionStore } from '@/stores/workoutSession'
@@ -51,6 +66,7 @@ const router = useRouter()
 const workoutBgUrl = getWorkoutBackgroundImageUrl()
 
 const progress = ref(0)
+const errorMsg = ref(null)
 const currentQuoteIndex = ref(0)
 const quotes = [
   'Анализируем ваши данные...',
@@ -63,19 +79,10 @@ const quotes = [
 let progressInterval
 let quoteInterval
 
-onMounted(async () => {
-  // Интервал для прогресс-бара
-  progressInterval = setInterval(() => {
-    if (progress.value < 0.95) {
-      progress.value += 0.01 + Math.random() * 0.02
-    }
-  }, 100)
-
-  // Интервал для смены цитат
-  quoteInterval = setInterval(() => {
-    currentQuoteIndex.value = (currentQuoteIndex.value + 1) % quotes.length
-  }, 2500)
-
+const startGeneration = async () => {
+  errorMsg.value = null
+  progress.value = 0
+  
   try {
     const planPayload = await authStore.generatePlan()
     workoutPlanStore.setPlanFromApi(planPayload)
@@ -88,9 +95,37 @@ onMounted(async () => {
     }, 500)
   } catch (err) {
     console.error('Failed to generate plan:', err)
-    // Если ошибка, то вернем на шаг выбора дней
-    router.replace('/training-days')
+    const status = err?.response?.status
+    if (status === 502 || status === 504) {
+      errorMsg.value = 'Сервис генерации временно недоступен (502/504). Пожалуйста, попробуйте позже.'
+    } else if (status === 500) {
+      errorMsg.value = 'Ошибка на сервере при создании плана. Мы уже работаем над исправлением.'
+    } else if (err?.code === 'ERR_NETWORK') {
+      errorMsg.value = 'Проблема с сетью. Проверьте соединение с интернетом.'
+    } else {
+      errorMsg.value = err?.message || 'Непредвиденная ошибка при создании плана.'
+    }
   }
+}
+
+const retry = () => {
+  startGeneration()
+}
+
+onMounted(async () => {
+  // Интервал для прогресс-бара
+  progressInterval = setInterval(() => {
+    if (!errorMsg.value && progress.value < 0.95) {
+      progress.value += 0.01 + Math.random() * 0.02
+    }
+  }, 100)
+
+  // Интервал для смены цитат
+  quoteInterval = setInterval(() => {
+    currentQuoteIndex.value = (currentQuoteIndex.value + 1) % quotes.length
+  }, 2500)
+
+  await startGeneration()
 })
 
 onUnmounted(() => {
@@ -192,5 +227,46 @@ onUnmounted(() => {
 }
 .fade-enter-from, .fade-leave-to {
   opacity: 0;
+}
+
+/* Ошибки */
+.error-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  padding: 2.5rem;
+  min-height: 100%;
+  position: relative;
+  z-index: 2;
+}
+
+.error-icon-wrapper {
+  font-size: 5rem;
+  margin-bottom: -0.5rem;
+  animation: shake 0.5s ease-in-out;
+}
+
+.error-content h3 {
+  font-size: 1.6rem;
+  font-weight: 800;
+  margin: 0;
+  color: var(--sportik-text);
+}
+
+.error-content p {
+  font-size: 1.05rem;
+  line-height: 1.5;
+  color: var(--sportik-text-muted);
+  max-width: 320px;
+  margin-bottom: 0.5rem;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-8px); }
+  50% { transform: translateX(8px); }
+  75% { transform: translateX(-4px); }
 }
 </style>

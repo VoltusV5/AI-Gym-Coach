@@ -5,18 +5,11 @@ import api from '@/api/api'
 
 const STORAGE_KEY = 'sportik_workout_session'
 
-const ALT_DESC =
-  'Техника и видео — позже с бэкенда. Контролируйте амплитуду и дыхание.'
+const ALT_DESC = ''
 
 function emptySetsFromWeight(weight) {
-  if (weight === 0 || weight === '0') {
-    return [
-      { weightKg: '0', reps: '' },
-      { weightKg: '', reps: '' },
-      { weightKg: '', reps: '' }
-    ]
-  }
   const w = weight != null && weight !== '' ? String(weight) : ''
+  // Всегда начинаем с 3 полей для ввода
   return [
     { weightKg: w, reps: '' },
     { weightKg: '', reps: '' },
@@ -109,11 +102,14 @@ export const useWorkoutSessionStore = defineStore('workoutSession', {
     },
 
     slotStatusList(state) {
-      return state.slots.map((slot, i) => ({
-        index: i,
-        complete: slot.sets.every(isSetFilled),
-        isCurrent: i === state.currentIndex
-      }))
+      return state.slots.map((slot, i) => {
+        const filledSetsCount = (slot.sets || []).filter(isSetFilled).length
+        return {
+          index: i,
+          complete: filledSetsCount >= 3,
+          isCurrent: i === state.currentIndex
+        }
+      })
     },
 
     /** Хотя бы один подход (вес + повторы) заполнен где угодно — можно слать complete (частичный JSON). */
@@ -181,13 +177,11 @@ export const useWorkoutSessionStore = defineStore('workoutSession', {
      * @param {{ sourceOverride?: string }} [opts]
      */
     buildFromApiPlan(planRoot, opts = {}) {
-      const mocksOn = workoutMocksEnabled()
       const dayA = findPlanDayA(planRoot)
       const slotArrays = dayA?.exercises
 
       if (!Array.isArray(slotArrays) || slotArrays.length === 0) {
-        if (mocksOn) this.loadDemo()
-        else this.clear()
+        this.clear()
         return
       }
 
@@ -205,8 +199,7 @@ export const useWorkoutSessionStore = defineStore('workoutSession', {
       }
 
       if (slots.length === 0) {
-        if (mocksOn) this.loadDemo()
-        else this.clear()
+        this.clear()
         return
       }
 
@@ -219,15 +212,6 @@ export const useWorkoutSessionStore = defineStore('workoutSession', {
       this.persist()
     },
 
-    loadDemo() {
-      if (!workoutMocksEnabled()) {
-        this.clear()
-        return
-      }
-      const payload = getMockPlanGenerateResponse()
-      this.buildFromApiPlan(payload, { sourceOverride: 'mock' })
-    },
-
     syncWithPlanStore(workoutPlanStore) {
       const plan = workoutPlanStore.plan
       if (plan?.plan?.length) {
@@ -237,14 +221,7 @@ export const useWorkoutSessionStore = defineStore('workoutSession', {
         this.buildFromApiPlan(plan)
         return
       }
-      if (!workoutMocksEnabled()) {
-        this.clear()
-        return
-      }
-      if (this.slots.length === 0) {
-        this.hydrate()
-        if (this.slots.length === 0) this.loadDemo()
-      }
+      this.clear()
     },
 
     setCurrentIndex(i) {
@@ -264,8 +241,20 @@ export const useWorkoutSessionStore = defineStore('workoutSession', {
 
     updateSet(setIndex, field, value) {
       const slot = this.slots[this.currentIndex]
-      if (!slot?.sets?.[setIndex]) return
+      if (!slot) return
+      
+      // Ensure the set object exists (should always for initial 3)
+      if (!slot.sets[setIndex]) {
+        slot.sets[setIndex] = { weightKg: '', reps: '' }
+      }
+      
       slot.sets[setIndex][field] = value
+      
+      // Если это последний подход в списке и в нём что-то начали писать — добавляем следующий
+      if (setIndex === slot.sets.length - 1 && String(value).trim() !== '') {
+        slot.sets.push({ weightKg: '', reps: '' })
+      }
+
       this.persist()
     },
 
@@ -282,20 +271,19 @@ export const useWorkoutSessionStore = defineStore('workoutSession', {
     },
 
     slotIsComplete(slot) {
-      if (!slot?.sets?.length) return false
-      return slot.sets.every(isSetFilled)
+      const filledSetsCount = (slot.sets || []).filter(isSetFilled).length
+      return filledSetsCount >= 3
     },
 
     /**
      * Тело POST /api/v1/workouts/complete: только слоты с ≥1 заполненным подходом;
-     * в каждом слоте — только заполненные подходы (порядок 1→3).
+     * в каждом слоте — только заполненные подходы.
      */
     buildCompletePayload() {
       const slots = []
       for (let idx = 0; idx < this.slots.length; idx++) {
         const slot = this.slots[idx]
         const filledSets = (slot.sets || [])
-          .slice(0, 3)
           .filter(isSetFilled)
           .map((s) => ({
             weight_kg: Number(String(s.weightKg ?? '').trim()),

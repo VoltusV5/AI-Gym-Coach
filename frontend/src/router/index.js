@@ -86,6 +86,11 @@ const routes = [
     props: true
   },
   {
+    path: '/ai-chat',
+    name: 'AiChat',
+    component: () => import('@/views/workout/AiChatScreen.vue')
+  },
+  {
     path: '/notes',
     name: 'Notes',
     component: () => import('@/views/notes/NotesList.vue')

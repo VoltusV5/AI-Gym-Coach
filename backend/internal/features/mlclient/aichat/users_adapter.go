@@ -46,3 +46,11 @@ func (a *usersRepoAdapter) InsertChatMessage(
 ) error {
 	return a.repo.InsertChatMessage(ctx, userID, role, content)
 }
+
+func (a *usersRepoAdapter) GetChatMessages(
+	ctx context.Context,
+	userID string,
+	limit int,
+) ([]users_postgres_repository.ChatMessage, error) {
+	return a.repo.GetChatMessages(ctx, userID, limit)
+}

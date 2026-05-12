@@ -7,11 +7,13 @@
         label="Введите название блюда"
         label-placement="stacked"
         placeholder="Например: омлет"
-        @ionInput="onInput"
       />
     </section>
     <section class="nutrition-card list-card">
-      <p v-if="!items.length" class="empty">Введите минимум 2 символа</p>
+      <div v-if="!items.length" class="empty-state">
+        <p v-if="query.trim().length < 2" class="empty">Введите минимум 2 символа</p>
+        <p v-else class="empty">Ничего не найдено</p>
+      </div>
       <button v-for="item in items" :key="item.id" type="button" class="dish-item" @click="pick(item)">
         <p class="dish-title">{{ item.title }}</p>
         <p class="dish-meta">{{ fmt(item) }} на 100г</p>
@@ -21,7 +23,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { IonInput } from '@ionic/vue'
 import NutritionChrome from '@/components/nutrition/NutritionChrome.vue'
@@ -39,13 +41,26 @@ function toNum(v) {
 function fmt(x) {
   return `Б ${toNum(x.protein_g).toFixed(1)} / Ж ${toNum(x.fat_g).toFixed(1)} / У ${toNum(x.carbs_g).toFixed(1)} / ${toNum(x.calories).toFixed(0)} ккал`
 }
-async function onInput() {
-  if (query.value.trim().length < 2) {
+
+let timeout = null
+watch(query, (newVal) => {
+  if (timeout) clearTimeout(timeout)
+  
+  if (newVal.trim().length < 2) {
     items.value = []
     return
   }
-  items.value = await store.searchDishes(query.value, 40)
-}
+
+  timeout = setTimeout(async () => {
+    try {
+      items.value = await store.searchDishes(newVal, 40)
+    } catch (err) {
+      console.error('Search error:', err)
+      items.value = []
+    }
+  }, 300)
+})
+
 function pick(item) {
   store.setSelectedDish({
     source: 'catalog',

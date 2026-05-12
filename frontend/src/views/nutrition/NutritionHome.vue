@@ -102,20 +102,26 @@ import { IonButton, toastController, onIonViewWillEnter } from '@ionic/vue'
 import { useRouter } from 'vue-router'
 import NutritionChrome from '@/components/nutrition/NutritionChrome.vue'
 import { useNutritionStore } from '@/stores/nutrition'
+import { useAuthStore } from '@/stores/auth'
 
 const nutrition = useNutritionStore()
+const authStore = useAuthStore()
 const router = useRouter()
 const weightKg = ref(70)
 
 onMounted(async () => {
   await nutrition.hydrateAll()
-  weightKg.value = Number(nutrition.dashboard?.weight?.last_weight_kg ?? 70)
+  const lastWeight = nutrition.dashboard?.weight?.last_weight_kg
+  const profileWeight = authStore.profile?.weight_kg
+  weightKg.value = Number(lastWeight ?? profileWeight ?? 70)
   await nutrition.fetchReports(30)
 })
 
 onIonViewWillEnter(async () => {
   await nutrition.hydrateAll()
-  weightKg.value = Number(nutrition.dashboard?.weight?.last_weight_kg ?? weightKg.value)
+  const lastWeight = nutrition.dashboard?.weight?.last_weight_kg
+  const profileWeight = authStore.profile?.weight_kg
+  weightKg.value = Number(lastWeight ?? profileWeight ?? weightKg.value)
 })
 
 function toNum(v) {

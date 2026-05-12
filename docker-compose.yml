@@ -39,7 +39,7 @@ services:
       - ./ai/.env
     ports:
       - "8001:8000"
-    command: ["uvicorn", "chat_app:app", "--host", "0.0.0.0", "--port", "8000"]
+    command: ["uvicorn", "chat.chat_ml_service:app", "--host", "0.0.0.0", "--port", "8000"]
     restart: always
   
   frontend:
@@ -70,10 +70,14 @@ services:
     image: migrate/migrate:v4.19.1
     volumes:
       - ./backend/migrations:/migrations
+    command:
+      - -path=/migrations/
+      - -database=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:5432/${POSTGRES_DB}?sslmode=disable
+      - up
   
   port-forwarder:
     image: alpine/socat:1.8.0.3
     container_name: sportapp-postgres-port-forwarder
     command: tcp-listen:5432,fork,reuseaddr tcp-connect:sportapp-postgres:5432
     ports:
-      - "127.0.0.1:5432:5432"
+      - "127.0.0.1:5433:5432"

@@ -1,4 +1,8 @@
-# Минимум для запуска только HTTP-API (ai/main.py)
 fastapi>=0.100
 uvicorn[standard]>=0.20
+catboost
+pandas
+cerebras_cloud_sdk
+python-dotenv
+g4f
 

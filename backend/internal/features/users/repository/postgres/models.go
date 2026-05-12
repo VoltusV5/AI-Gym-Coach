@@ -67,6 +67,11 @@ type EPlanNoWeight struct {
 	Plan  []EDaysNoWeight `json:"plan"`
 }
 
+type ChatMessage struct {
+	Role    string `json:"role"`
+	Content string `json:"content"`
+}
+
 type WorkoutCompleteRequest struct {
 	DayCode    string     `json:"day_code"`
 	FinishedAt time.Time  `json:"finished_at"`

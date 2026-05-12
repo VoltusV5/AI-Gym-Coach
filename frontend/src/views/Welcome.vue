@@ -34,14 +34,6 @@
 
           <p class="welcome-sub">Займёт меньше минуты</p>
 
-          <ion-button
-            fill="clear"
-            size="small"
-            class="welcome-reset-test"
-            @click="newTestSession"
-          >
-            Новая тестовая сессия
-          </ion-button>
         </div>
       </div>
     </ion-content>

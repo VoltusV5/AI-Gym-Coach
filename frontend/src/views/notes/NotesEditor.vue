@@ -46,12 +46,12 @@ import AppTabBar from '@/components/navigation/AppTabBar.vue'
 import { useNotesStore } from '@/stores/notes'
 
 const t = {
-  titlePlaceholder: '',
-  bodyPlaceholder: '',
-  created: '\u0421\u043e\u0437\u0434\u0430\u043d\u043e',
-  save: '\u0421\u043e\u0445\u0440\u0430\u043d\u0438\u0442\u044c',
-  unknown: '\u043d\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043d\u043e',
-  saved: '\u0417\u0430\u043c\u0435\u0442\u043a\u0430 \u0441\u043e\u0445\u0440\u0430\u043d\u0435\u043d\u0430'
+  titlePlaceholder: 'Название заметки...',
+  bodyPlaceholder: 'Начните писать здесь...',
+  created: 'Создано',
+  save: 'Сохранить',
+  unknown: 'неизвестно',
+  saved: 'Заметка сохранена'
 }
 
 const route = useRoute()
@@ -91,11 +91,8 @@ const createdAtLabel = computed(() => {
 })
 
 async function saveNote() {
-  const saved = await notesStore.saveNoteWithApi(noteId.value, title.value, body.value)
-  const savedId = String(saved?.id ?? '')
-  if (savedId && savedId !== noteId.value) {
-    await router.replace(`/notes/${savedId}`)
-  }
+  await notesStore.saveNoteWithApi(noteId.value, title.value, body.value)
+  await router.push('/notes')
   const toast = await toastController.create({
     message: t.saved,
     duration: 1300,

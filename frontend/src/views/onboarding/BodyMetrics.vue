@@ -48,12 +48,13 @@
 
 <script setup>
 import { computed, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import OnboardingLayout from '@/components/layout/OnboardingLayout.vue'
 import { useAuthStore } from '@/stores/auth'
 
 const authStore = useAuthStore()
 const router = useRouter()
+const route = useRoute()
 
 function initialStr(n) {
   return n != null && n !== '' && Number(n) > 0 ? String(n) : ''
@@ -79,7 +80,12 @@ const submit = async () => {
     const height_cm = Math.round(Number(String(heightStr.value).replace(',', '.')))
     const weight_kg = Math.round(Number(String(weightStr.value).replace(',', '.')))
     await authStore.updateProfile({ height_cm, weight_kg })
-    await router.push('/gender')
+    
+    if (route.query.regenerate === '1') {
+      await router.push('/plan-generating')
+    } else {
+      await router.push('/gender')
+    }
   } catch (error) {
     console.error('Submit error:', error)
     const status = error?.response?.status

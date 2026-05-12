@@ -40,14 +40,10 @@
             <span>Видео упражнения (скоро)</span>
           </div>
 
-          <p class="reps-hint">
-            Рекомендуем подобрать веса так, чтобы вы делали 6–12 повторений. Рекомендуемое количество
-            подходов: 3.
-          </p>
 
           <div class="sets-block">
             <p class="sets-label">Подходы</p>
-            <div v-for="(_, si) in 3" :key="si" class="set-row">
+            <div v-for="(_, si) in currentSlot.sets" :key="si" class="set-row">
               <span class="set-num">{{ si + 1 }}</span>
               <ion-input
                 :model-value="String(currentSlot?.sets?.[si]?.weightKg ?? '')"

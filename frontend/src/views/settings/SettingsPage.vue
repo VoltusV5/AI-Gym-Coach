@@ -22,7 +22,7 @@
       </section>
 
       <section class="subscription-block">
-        <ion-button expand="block" class="sportik-footer-btn subscription-btn" @click="noActionYet(t.subscription)">
+        <ion-button expand="block" class="sportik-footer-btn subscription-btn" @click="noActionYet()">
           {{ t.subscription }}
         </ion-button>
       </section>
@@ -54,7 +54,7 @@
 <script setup>
 defineOptions({ name: 'SettingsPage' })
 
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { IonButton, IonToggle, IonIcon, toastController } from '@ionic/vue'
 import { moonOutline, sunnyOutline, notificationsOutline, notificationsOffOutline } from 'ionicons/icons'
@@ -100,16 +100,25 @@ const isAuthHint = computed(() => {
 
 const brandLine = computed(() => (isAuthHint.value ? t.authHint : t.brand))
 
-const themeOn = ref(false)
+const themeOn = ref(document.documentElement.classList.contains('dark-theme'))
+
+watch(themeOn, (val) => {
+  if (val) {
+    document.documentElement.classList.add('dark-theme')
+  } else {
+    document.documentElement.classList.remove('dark-theme')
+  }
+})
+
 const notificationsOn = ref(false)
 
 function openProfilePage() {
   router.push('/settings/profile')
 }
 
-async function noActionYet(name) {
+async function noActionYet() {
   const toast = await toastController.create({
-    message: `${name}: ${t.toastSuffix}`,
+    message: 'Скоро...',
     duration: 1500,
     color: 'medium'
   })
@@ -117,12 +126,7 @@ async function noActionYet(name) {
 }
 
 async function onTrackers() {
-  const toast = await toastController.create({
-    message: t.trackersToast,
-    duration: 2200,
-    color: 'medium'
-  })
-  await toast.present()
+  await noActionYet()
 }
 </script>
 

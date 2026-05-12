@@ -70,9 +70,6 @@
           >
             Начать тренировку
           </ion-button>
-          <ion-button fill="clear" size="small" class="logout-btn" @click="resetSession">
-            Заново пройти онбординг (тест)
-          </ion-button>
         </div>
 
         <app-tab-bar active-key="main" />

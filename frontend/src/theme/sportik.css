@@ -39,24 +39,22 @@
   --ion-color-medium: #8892aa;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --sportik-bg: #0d1320;
-    --sportik-surface: #161f33;
-    --sportik-surface-soft: #1b253c;
-    --sportik-surface-glass: rgba(20, 30, 52, 0.88);
-    --sportik-brand: #6f9cff;
-    --sportik-brand-rgb: 111, 156, 255;
-    --sportik-brand-2: #8c7cff;
-    --sportik-text: #f0f4ff;
-    --sportik-text-muted: #a9b2c8;
-    --sportik-text-soft: #d8def0;
-    --sportik-border: #2d3b5c;
-    --sportik-shadow-md: 0 12px 28px rgba(0, 0, 0, 0.26);
-    --sportik-shadow-lg: 0 20px 44px rgba(0, 0, 0, 0.34);
-    --ion-background-color: var(--sportik-bg);
-    --ion-text-color: var(--sportik-text);
-  }
+html.dark-theme {
+  --sportik-bg: #0d1320;
+  --sportik-surface: #161f33;
+  --sportik-surface-soft: #1b253c;
+  --sportik-surface-glass: rgba(20, 30, 52, 0.88);
+  --sportik-brand: #6f9cff;
+  --sportik-brand-rgb: 111, 156, 255;
+  --sportik-brand-2: #8c7cff;
+  --sportik-text: #f0f4ff;
+  --sportik-text-muted: #a9b2c8;
+  --sportik-text-soft: #d8def0;
+  --sportik-border: #2d3b5c;
+  --sportik-shadow-md: 0 12px 28px rgba(0, 0, 0, 0.26);
+  --sportik-shadow-lg: 0 20px 44px rgba(0, 0, 0, 0.34);
+  --ion-background-color: var(--sportik-bg);
+  --ion-text-color: var(--sportik-text);
 }
 
 ion-back-button {

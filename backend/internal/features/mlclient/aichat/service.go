@@ -29,6 +29,7 @@ type UsersReader interface {
 	GetProfile(ctx context.Context, userID string) (users_postgres_repository.Profile, error)
 	GetPlanTemplateJSON(ctx context.Context, userID string) (json.RawMessage, error)
 	InsertChatMessage(ctx context.Context, userID string, role string, content string) error
+	GetChatMessages(ctx context.Context, userID string, limit int) ([]users_postgres_repository.ChatMessage, error)
 }
 
 type Service struct {
@@ -193,12 +194,45 @@ func (s *Service) HandleGenerateAnswer(rw http.ResponseWriter, r *http.Request) 
 	}
 }
 
+func (s *Service) HandleGetHistory(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := core_logger.FromContext(ctx)
+	responseHandler := core_http_responce.NewHTTPResponce(log, rw)
+
+	userID, err := core_http_middleware.UserIDFromContext(ctx)
+	if err != nil {
+		responseHandler.ErrorResponse(err, "failed to get user id from context")
+		return
+	}
+
+	msgs, err := s.users.GetChatMessages(ctx, userID, 50)
+	if err != nil {
+		responseHandler.ErrorResponse(err, "failed to get chat history")
+		return
+	}
+
+	// Convert repository ChatMessage to local ChatMessage struct for JSON rendering
+	res := make([]ChatMessage, len(msgs))
+	for i, m := range msgs {
+		res[i] = ChatMessage{
+			Role:    m.Role,
+			Content: m.Content,
+		}
+	}
+
+	responseHandler.JSONResponse(res, http.StatusOK)
+}
+
 func (s *Service) RegisterRoutes(
 	jwt *core_auth.JWT,
 	register func(method, path string, handler http.Handler),
 ) {
 	protect := core_http_middleware.Protect(jwt)
 	rl := core_http_middleware.UserRateLimit(chatUserRatePerMinute, time.Minute)
-	h := protect(rl(http.HandlerFunc(s.HandleGenerateAnswer)))
-	register(http.MethodPost, "/ai_chat/generate_answer", h)
+
+	hGen := protect(rl(http.HandlerFunc(s.HandleGenerateAnswer)))
+	register(http.MethodPost, "/ai_chat/generate_answer", hGen)
+
+	hHist := protect(http.HandlerFunc(s.HandleGetHistory))
+	register(http.MethodGet, "/ai_chat/history", hHist)
 }
