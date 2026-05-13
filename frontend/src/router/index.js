@@ -1,8 +1,6 @@
-// router/index.js
+
 import { createRouter, createWebHistory } from '@ionic/vue-router'
 import Welcome from '@/views/Welcome.vue'
-
-// РћРЅР±РѕСЂРґРёРЅРі: СЂРѕСЃС‚/РІРµСЃ в†’ РїРѕР» в†’ РІРѕР·СЂР°СЃС‚ в†’ Р°РєС‚РёРІРЅРѕСЃС‚СЊ в†’ С‚СЂР°РІРјС‹ в†’ С†РµР»СЊ в†’ СѓСЂРѕРІРµРЅСЊ в†’ РґРЅРё
 import BodyMetrics from '@/views/onboarding/BodyMetrics.vue'
 import Gender from '@/views/onboarding/Gender.vue'
 import Age from '@/views/onboarding/Age.vue'
@@ -86,6 +84,11 @@ const routes = [
     props: true
   },
   {
+    path: '/workout/success',
+    name: 'WorkoutSuccess',
+    component: () => import('@/views/workout/WorkoutSuccessScreen.vue')
+  },
+  {
     path: '/ai-chat',
     name: 'AiChat',
     component: () => import('@/views/workout/AiChatScreen.vue')
@@ -159,4 +162,3 @@ const router = createRouter({
 })
 
 export default router
-

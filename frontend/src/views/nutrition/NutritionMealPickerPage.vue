@@ -68,7 +68,6 @@ function normalizeSelectedDish(d) {
       calories: d.calories
     }
   }
-  // Старый pick из поиска: только id блюда каталога (не путать с id избранного).
   if (d.source === 'catalog' && d.id != null && Number(d.id) > 0) {
     const id = Number(d.id)
     return {
@@ -103,7 +102,7 @@ function toNum(v) {
   const n = Number(v)
   return Number.isFinite(n) ? n : 0
 }
-/** БЖУ записи дневника → значения на 100 г (для повторного добавления с новыми граммами). */
+
 function per100FromEntryPortion(e) {
   const g = Math.max(1, toNum(e.grams))
   return {

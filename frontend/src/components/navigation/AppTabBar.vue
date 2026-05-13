@@ -52,8 +52,7 @@ const items = computed(() =>
 )
 
 function onTabClick(key) {
-  /** replace — не копим push-стек при переключении корневых вкладок.
-   *  noAnimation — убираем анимацию при переключении табов. */
+
   switch (key) {
     case 'workout':
       ionRouter.navigate('/workout-tools', 'root', 'replace', noAnimation)

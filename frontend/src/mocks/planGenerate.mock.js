@@ -1,7 +1,4 @@
-/**
- * Ответ POST /api/v1/plans/generate для моков и превью (см. docs/TZ-backend-trenirovka-uprazhneniya.md).
- * plan[].exercises[j] — слот j, внутри массив вариаций { id, exercise_name, weight }.
- */
+
 export function getMockPlanGenerateResponse() {
   return {
     split: 'fullbody',

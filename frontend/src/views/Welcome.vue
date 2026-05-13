@@ -87,7 +87,7 @@ const newTestSession = async () => {
   overflow: hidden;
 }
 
-/* Аполлон справа, компактный; якорь — правый нижний угол */
+
 .welcome-bg-apollo {
   position: absolute;
   right: 0;
@@ -99,7 +99,7 @@ const newTestSession = async () => {
   object-position: right bottom;
   opacity: 0.48;
   filter: saturate(1.05);
-  /* было 0.6; +~22% ≈ 0.73 */
+
   transform: scale(0.73);
   transform-origin: right bottom;
 }
@@ -116,7 +116,7 @@ const newTestSession = async () => {
   padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
 }
 
-/* Верх: бейдж + фото ≈ 4/10 экрана */
+
 .welcome-zone--top {
   flex: 4 1 0;
   min-height: min(42dvh, 40svh);

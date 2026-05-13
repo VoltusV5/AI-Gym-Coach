@@ -89,12 +89,12 @@ const submit = async () => {
   margin: 0 auto;
 }
 
-/* 7-й элемент (ВС) — по центру третьей строки */
+
 .days-grid .day-square:nth-child(7) {
   grid-column: 2;
 }
 
-/* Ещё −10% */
+
 .day-square {
   aspect-ratio: 1;
   width: 100%;

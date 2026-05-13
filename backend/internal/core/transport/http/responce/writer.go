@@ -36,4 +36,3 @@ func (rw *ResponceWriter) Flush() {
 		fl.Flush()
 	}
 }
-

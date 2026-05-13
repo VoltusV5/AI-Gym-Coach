@@ -1,4 +1,4 @@
-/** Проверка: дни тренировок заданы (массив с бэка или объект из старого мока) */
+
 export function isTrainingDaysComplete(raw) {
   if (raw == null) return false
   if (Array.isArray(raw)) return raw.length > 0
@@ -6,7 +6,7 @@ export function isTrainingDaysComplete(raw) {
   return false
 }
 
-/** Нормализация ответа API в объект { mon: bool, ... } для UI */
+
 export function trainingDaysToSelection(raw) {
   const base = {
     mon: false,
@@ -30,7 +30,7 @@ export function trainingDaysToSelection(raw) {
   return base
 }
 
-/** UI → массив ключей для PATCH profile */
+
 export function selectionToTrainingDaysArray(sel) {
   return Object.entries(sel)
     .filter(([, v]) => v)

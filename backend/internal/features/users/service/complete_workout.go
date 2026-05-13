@@ -39,6 +39,7 @@ func (s *UsersService) CompleteWorkout(
 	}
 
 	highlights := users_postgres_repository.BuildSessionHighlights(history, req, names)
+	planUpdates := users_postgres_repository.BuildPlanUpdates(existing, newWW, names)
 
 	if err := s.usersRepository.CompleteWorkout(ctx, userID, req, newWW, dataVer); err != nil {
 		return nil, fmt.Errorf("complete workout: %w", err)
@@ -55,9 +56,13 @@ func (s *UsersService) CompleteWorkout(
 	if highlights == nil {
 		highlights = []users_postgres_repository.SessionHighlight{}
 	}
+	if planUpdates == nil {
+		planUpdates = []users_postgres_repository.PlanUpdate{}
+	}
 
 	return &users_postgres_repository.WorkoutCompleteServiceResult{
 		NewAchievements:   newAch,
 		SessionHighlights: highlights,
+		PlanUpdates:       planUpdates,
 	}, nil
 }

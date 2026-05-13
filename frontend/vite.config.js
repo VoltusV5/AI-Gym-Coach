@@ -14,10 +14,8 @@ function sportikBuildLabel() {
   return `${iso}#${uniq}`
 }
 
-/** Один раз за запуск vite — и meta, и define совпадают */
-const sportikBuildLabelOnce = sportikBuildLabel()
 
-// https://vite.dev/config/
+const sportikBuildLabelOnce = sportikBuildLabel()
 export default defineConfig({
   define: {
     __SPORTIK_BUILD_ID__: JSON.stringify(sportikBuildLabelOnce)
@@ -26,7 +24,6 @@ export default defineConfig({
     host: true,
     port: 5173,
     strictPort: true,
-    // В dev фронт ходит на тот же origin (пустой baseURL в api.js) — только /api/* на Go, без CORS.
     proxy: {
       '/api': { target: 'http://127.0.0.1:5050', changeOrigin: true }
     }
@@ -42,8 +39,6 @@ export default defineConfig({
         )
       }
     },
-    // Не помечать ion-* как native custom elements: в @ionic/vue это Vue-компоненты.
-    // isCustomElement: ion-* ломает шаблоны — <ion-page> не связывается с IonPage → пустой экран.
     vue(),
 
     vueDevTools(),

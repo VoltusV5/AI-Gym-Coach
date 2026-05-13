@@ -45,7 +45,7 @@ function fmt(x) {
 let timeout = null
 watch(query, (newVal) => {
   if (timeout) clearTimeout(timeout)
-  
+
   if (newVal.trim().length < 2) {
     items.value = []
     return

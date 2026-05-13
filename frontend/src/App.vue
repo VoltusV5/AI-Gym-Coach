@@ -35,7 +35,6 @@ const router = useRouter()
 const route = useRoute()
 
 onMounted(() => {
-  // initialize() вызывается в main.js до mount — здесь только редирект с корня.
   if (route.path === '/') {
     const nextStep = authStore.nextOnboardingStep
     if (nextStep === 'Home') {

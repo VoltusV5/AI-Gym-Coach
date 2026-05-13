@@ -11,7 +11,20 @@
       <section class="achievements-block">
         <p class="block-title">{{ t.achievements }}</p>
         <div class="achievements-field">
-          <span>{{ t.achievementsHint }}</span>
+          <div v-if="loadingAchievements" class="ach-loading">
+            <ion-spinner name="crescent"></ion-spinner>
+          </div>
+          <div v-else-if="achievements.length === 0" class="ach-empty">
+            <p>{{ t.achievementsHint }}</p>
+          </div>
+          <div v-else class="ach-grid">
+            <div v-for="ach in achievements" :key="ach.id" class="ach-item" @click="showAchDetails(ach)">
+              <div class="ach-icon-wrap">
+                <span class="ach-emoji">{{ getAchEmoji(ach.title) }}</span>
+              </div>
+              <p class="ach-label">{{ formatAchTitle(ach.title) }}</p>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -54,14 +67,13 @@
 <script setup>
 defineOptions({ name: 'SettingsPage' })
 
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { IonButton, IonToggle, IonIcon, toastController } from '@ionic/vue'
-import { moonOutline, sunnyOutline, notificationsOutline, notificationsOffOutline } from 'ionicons/icons'
+import { IonButton, IonToggle, IonIcon, IonSpinner, toastController, alertController } from '@ionic/vue'
+import { moonOutline, sunnyOutline, notificationsOutline, notificationsOffOutline, PersonCircleOutline } from 'ionicons/icons'
 import WorkoutChrome from '@/components/workout/WorkoutChrome.vue'
 import { useAuthStore } from '@/stores/auth'
-
-// eslint-disable-next-line no-undef -- подставляется Vite define при сборке
+import api from '@/api/api'
 const sportikBuildId = __SPORTIK_BUILD_ID__
 
 const router = useRouter()
@@ -115,6 +127,61 @@ const notificationsOn = ref(false)
 function openProfilePage() {
   router.push('/settings/profile')
 }
+
+const achievements = ref([])
+const loadingAchievements = ref(false)
+
+async function fetchAchievements() {
+  loadingAchievements.value = true
+  try {
+    const res = await api.get('/api/v1/achievements/get_achievements')
+    achievements.value = res.data.achievements || []
+  } catch (e) {
+    console.error('Failed to fetch achievements:', e)
+  } finally {
+    loadingAchievements.value = false
+  }
+}
+
+function getAchEmoji(title) {
+  const map = {
+    first_workout: '🏆',
+    five_workouts: '⭐',
+    ten_workouts: '🌟',
+    twenty_five_workouts: '👑',
+    week_warrior: '🔥',
+    consistent_month: '📅',
+    comeback: '🔄',
+    early_bird: '🌅',
+    night_owl: '🦉',
+    volume_session_5k: '💪',
+    volume_session_10k: '🏋️',
+    double_digit_sets: '🔢',
+    profile_ready: '✅'
+  }
+  return map[title] || '🏅'
+}
+
+function formatAchTitle(title) {
+  return title
+    .split('_')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
+}
+
+async function showAchDetails(ach) {
+  const alert = await alertController.create({
+    header: formatAchTitle(ach.title),
+    message: ach.description,
+    buttons: ['OK'],
+    mode: 'ios'
+  })
+  await alert.present()
+}
+
+onMounted(() => {
+  fetchAchievements()
+})
 
 async function noActionYet() {
   const toast = await toastController.create({
@@ -216,6 +283,59 @@ async function onTrackers() {
   padding: 12px;
   color: var(--sportik-text-soft);
   line-height: 1.4;
+  overflow-y: auto;
+}
+
+.ach-loading, .ach-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 120px;
+  text-align: center;
+}
+
+.ach-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.ach-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+}
+
+.ach-icon-wrap {
+  width: 54px;
+  height: 54px;
+  background: var(--sportik-bg);
+  border: 1px solid var(--sportik-border);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  box-shadow: var(--sportik-shadow-sm);
+  transition: transform 0.2s ease;
+}
+
+.ach-item:active .ach-icon-wrap {
+  transform: scale(0.92);
+}
+
+.ach-label {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--sportik-text);
+  line-height: 1.2;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .quick-options-row {

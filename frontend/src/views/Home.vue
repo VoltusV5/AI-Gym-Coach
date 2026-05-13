@@ -44,7 +44,16 @@
                   :key="`row-${idx}`"
                   class="exercise-row"
                 >
-                  <div class="exercise-thumb" aria-hidden="true"></div>
+                  <div class="exercise-thumb" aria-hidden="true">
+                    <img
+                      v-if="ex.image_url"
+                      :src="staticUrl(ex.image_url)"
+                      :alt="ex.exercise_name"
+                      class="exercise-thumb-img"
+                      loading="lazy"
+                      @error="(e) => e.target.style.display='none'"
+                    />
+                  </div>
                   <div class="exercise-meta">
                     <p class="exercise-name">{{ ex.exercise_name }}</p>
                     <p class="exercise-time">{{ formatRowMeta(ex) }}</p>
@@ -88,6 +97,7 @@ import { useWorkoutPlanStore } from '@/stores/workoutPlan'
 import { useWorkoutSessionStore } from '@/stores/workoutSession'
 import { workoutMocksEnabled } from '@/config/workoutMocks'
 import { getWorkoutBackgroundImageUrl } from '@/utils/localImages'
+import { staticUrl } from '@/api/api'
 import AppTabBar from '@/components/navigation/AppTabBar.vue'
 
 const ionRouter = useIonRouter()
@@ -131,7 +141,6 @@ const workoutApolloImg = getWorkoutBackgroundImageUrl()
 const onStart = async () => {
   if (!canStartWorkout.value) return
   workoutSessionStore.setCurrentIndex(0)
-  // Тренировка на контексте «Главная»: нижнее меню остаётся с подсветкой «Главная».
   await ionRouter.push('/workout/session?context=home')
 }
 
@@ -151,7 +160,7 @@ const resetSession = async () => {
   --background: var(--sportik-bg);
 }
 
-/* Отступ под фикс. футер — внутри .home-sheet, чтобы лист визуально смыкался с кнопками */
+
 .home-scroll {
   padding-bottom: 0;
   background: transparent;
@@ -166,7 +175,7 @@ const resetSession = async () => {
   width: 100%;
 }
 
-/* Зона над скруглённым листом — голубой фон + Аполлон */
+
 .home-apollo-strip {
   flex: 0 0 var(--home-apollo-h);
   width: 100%;
@@ -185,7 +194,7 @@ const resetSession = async () => {
   display: block;
 }
 
-/* Лист ниже (меньше заезд на Аполлона) — Аполлон заметнее; низ листа = место под футер */
+
 .home-sheet {
   flex: 1 1 auto;
   width: 100%;
@@ -285,7 +294,19 @@ const resetSession = async () => {
   height: 72px;
   border-radius: 10px;
   flex-shrink: 0;
-  background: linear-gradient(135deg, #e0e0e0, #bdbdbd);
+  background: linear-gradient(135deg, var(--sportik-brand) 0%, var(--sportik-brand-2) 100%);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.exercise-thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 10px;
 }
 
 .exercise-meta {

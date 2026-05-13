@@ -210,8 +210,6 @@ func (s *Service) HandleGetHistory(rw http.ResponseWriter, r *http.Request) {
 		responseHandler.ErrorResponse(err, "failed to get chat history")
 		return
 	}
-
-	// Convert repository ChatMessage to local ChatMessage struct for JSON rendering
 	res := make([]ChatMessage, len(msgs))
 	for i, m := range msgs {
 		res[i] = ChatMessage{

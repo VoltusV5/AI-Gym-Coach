@@ -101,6 +101,8 @@ func main() {
 
 	nutrition.NewService(pool).RegisterRoutes(jwt, registerV1)
 	aichat.NewService(mlCfg, aichat.NewUsersReader(usersRepository)).RegisterRoutes(jwt, registerV1)
+	staticDir := "/app/static"
+	httpServer.RegisterStaticDir("/static/", staticDir)
 
 	httpServer.RegisterAPIRouters(apiVersionRouter)
 

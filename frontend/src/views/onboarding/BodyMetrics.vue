@@ -63,9 +63,6 @@ function initialStr(n) {
 const heightStr = ref(initialStr(authStore.profile?.height_cm))
 const weightStr = ref(initialStr(authStore.profile?.weight_kg))
 const isSubmitting = ref(false)
-
-// Native <input type="number"> отдаёт строку. ion-input + v-model.number оставлял null/NaN,
-// из-за чего :disabled оставался true и кнопка «Далее» казалась нерабочей.
 const canSubmit = computed(() => {
   const hn = Number(String(heightStr.value).replace(',', '.'))
   const wn = Number(String(weightStr.value).replace(',', '.'))
@@ -80,7 +77,7 @@ const submit = async () => {
     const height_cm = Math.round(Number(String(heightStr.value).replace(',', '.')))
     const weight_kg = Math.round(Number(String(weightStr.value).replace(',', '.')))
     await authStore.updateProfile({ height_cm, weight_kg })
-    
+
     if (route.query.regenerate === '1') {
       await router.push('/plan-generating')
     } else {

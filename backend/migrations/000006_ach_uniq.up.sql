@@ -1,0 +1,1 @@
+ALTER TABLE sportapp.achievements ADD CONSTRAINT achievements_title_uniq UNIQUE (title);

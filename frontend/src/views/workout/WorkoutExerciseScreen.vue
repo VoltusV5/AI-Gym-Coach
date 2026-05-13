@@ -36,8 +36,17 @@
           <h1 class="ex-name">{{ exercise?.name }}</h1>
           <p class="ex-desc">{{ exercise?.description }}</p>
 
-          <div class="video-placeholder" aria-hidden="true">
-            <span>Видео упражнения (скоро)</span>
+          <!-- Demo animação do exercício -->
+          <div class="video-demo-wrap" aria-label="Демонстрация упражнения">
+            <img
+              v-if="exerciseVideoUrl"
+              :src="exerciseVideoUrl"
+              :alt="exercise?.name"
+              class="video-demo-media"
+            />
+            <div v-else class="video-placeholder">
+              <span>Демонстрация упражнения</span>
+            </div>
           </div>
 
 
@@ -69,9 +78,11 @@
             <div class="nav-center-wrap">
               <ion-button
                 v-if="canSwapExercise"
-                class="nav-btn nav-btn--primary"
+                fill="clear"
+                class="swap-btn"
                 @click="goChangeExercise"
               >
+                <ion-icon :icon="swapHorizontalOutline" slot="start" />
                 Поменять упражнение
               </ion-button>
               <p v-else class="swap-hint">Для этого слота в плане только одна вариация.</p>
@@ -85,6 +96,16 @@
               <ion-icon slot="icon-only" :icon="arrowForward"></ion-icon>
             </ion-button>
           </div>
+
+          <ion-button
+            expand="block"
+            class="finish-workout-btn"
+            :disabled="isSubmitting"
+            @click="finishWorkout"
+          >
+            <ion-spinner v-if="isSubmitting" name="crescent" slot="start"></ion-spinner>
+            Завершить тренировку
+          </ion-button>
         </div>
       </div>
     </template>
@@ -111,17 +132,42 @@ import {
   IonIcon,
   toastController
 } from '@ionic/vue'
-import { arrowBack, arrowForward } from 'ionicons/icons'
+import { arrowBack, arrowForward, swapHorizontalOutline } from 'ionicons/icons'
 import WorkoutChrome from '@/components/workout/WorkoutChrome.vue'
 import { useWorkoutSessionStore } from '@/stores/workoutSession'
+import { staticUrl } from '@/api/api'
 
 const route = useRoute()
 const router = useRouter()
 const session = useWorkoutSessionStore()
+const isSubmitting = ref(false)
 
-/** Запуск с главной (?context=home) — таббар как на главной; иначе контекст раздела «Тренировки». */
+
 const chromeTabKey = computed(() => (route.query.context === 'home' ? 'main' : 'workout'))
 const sessionBackHref = computed(() => (route.query.context === 'home' ? '/home' : '/workout-tools'))
+
+async function finishWorkout() {
+  if (isSubmitting.value) return
+  if (!session.isReadyForComplete) {
+    alert('Пожалуйста, заполните хотя бы один подход в любом упражнении.')
+    return
+  }
+
+  isSubmitting.value = true
+  try {
+    const result = await session.submitCompleteWorkout()
+    router.replace({
+      name: 'WorkoutSuccess',
+      query: { result: JSON.stringify(result) }
+    })
+  } catch (error) {
+    console.error('Failed to finish workout:', error)
+    const msg = error?.response?.data?.message || error?.message || 'неизвестная ошибка'
+    alert('Не удалось завершить тренировку: ' + msg)
+  } finally {
+    isSubmitting.value = false
+  }
+}
 
 onMounted(() => {
   session.hydrate()
@@ -136,6 +182,10 @@ const currentIndex = computed(() => session.currentIndex)
 const currentSlot = computed(() => session.currentSlot)
 const exercise = computed(() => session.selectedExercise)
 const statusList = computed(() => session.slotStatusList)
+const exerciseVideoUrl = computed(() => {
+  const vUrl = exercise.value?.videoUrl
+  return vUrl ? staticUrl(vUrl) : null
+})
 
 const canSwapExercise = computed(() => (currentSlot.value?.alternatives?.length ?? 0) > 1)
 
@@ -213,26 +263,35 @@ function goChangeExercise() {
   line-height: 1.45;
 }
 
-.video-placeholder {
+.video-demo-wrap {
   width: 100%;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 4 / 3;
   border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 1rem;
   background: linear-gradient(
     145deg,
-    color-mix(in srgb, var(--sportik-brand) 26%, var(--sportik-surface)) 0%,
-    color-mix(in srgb, var(--sportik-brand-2) 16%, var(--sportik-surface-soft)) 100%
+    color-mix(in srgb, var(--sportik-brand) 20%, var(--sportik-surface)) 0%,
+    color-mix(in srgb, var(--sportik-brand-2) 12%, var(--sportik-surface-soft)) 100%
   );
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 1rem;
 }
 
-.video-placeholder span {
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.95);
-  text-align: center;
-  padding: 0 1rem;
+.video-demo-media {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.video-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .reps-hint {
@@ -381,5 +440,28 @@ function goChangeExercise() {
   .nav-btn {
     font-size: 0.82rem;
   }
+}
+
+.finish-workout-btn {
+  margin-top: 1.5rem;
+  --background: var(--ion-color-primary);
+  --color: #ffffff;
+  --border-radius: 12px;
+  font-weight: 700;
+  width: 100%;
+  height: 54px;
+  font-size: 1.1rem;
+}
+
+.finish-container {
+  background: var(--sportik-surface-glass);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid var(--sportik-border);
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.finish-btn {
+  margin: 0;
+  --box-shadow: none;
 }
 </style>

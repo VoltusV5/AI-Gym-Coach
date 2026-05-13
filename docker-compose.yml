@@ -11,6 +11,7 @@ services:
     restart: always
     volumes:
     - ./backend/out/logs:/app/logs
+    - ./backend/static:/app/static
   
   ml:
     build:

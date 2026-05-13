@@ -34,7 +34,7 @@ func NextRecommendedWeight(rec, act float64, r int) float64 {
 	switch {
 	case r < normRepsMin:
 		next = max(act-step, minFloor)
-	case r > normRepsMax:
+	case r >= normRepsMax:
 		next = act + step
 	default:
 		if act >= rec*(1.0+progressionDeviationThreshold) {
@@ -42,7 +42,7 @@ func NextRecommendedWeight(rec, act float64, r int) float64 {
 		} else if act < rec {
 			next = max(act, rec-step)
 		} else {
-			next = act + step
+			next = act
 		}
 	}
 

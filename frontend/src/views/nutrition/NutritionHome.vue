@@ -129,7 +129,7 @@ function toNum(v) {
   return Number.isFinite(n) ? n : 0
 }
 
-/** Если дашборд отдал нули, суммируем записи за день (тот же список, что в блоке «Питание»). */
+
 function totalsFromEntries() {
   const list = nutrition.entries || []
   return list.reduce(
@@ -144,7 +144,6 @@ function totalsFromEntries() {
 }
 
 const consumedCalories = computed(() => {
-  // Список записей за день — единственный надёжный источник после добавления блюда (дашборд мог отставать).
   if (nutrition.entries?.length) return totalsFromEntries().calories
   return toNum(nutrition.dashboard?.today?.calories)
 })
@@ -269,7 +268,7 @@ function go(path) {
 </script>
 
 <style scoped>
-/* Контейнер с position: relative, чтобы бейджи не перекрывали «Сводку», и отступ сверху под них */
+
 .nutrition-home {
   position: relative;
   padding-top: 46px;

@@ -4,9 +4,6 @@ import { useWorkoutPlanStore } from '@/stores/workoutPlan'
 import { useWorkoutSessionStore } from '@/stores/workoutSession'
 import { saveToken, getToken, removeToken } from '@/utils/auth'
 import { isTrainingDaysComplete } from '@/utils/trainingDays'
-
-// Профиль свежесозданного гостя в БД ещё пуст → 404/«no rows».
-// Это не ошибка — даём онбордингу заполнить его POST'ами.
 function profileNotYetCreated(err) {
   const status = Number(err?.response?.status)
   const data = err?.response?.data
@@ -23,11 +20,8 @@ export const useAuthStore = defineStore('auth', {
   }),
 
   getters: {
-    // Определяем следующий шаг онбординга на основе данных профиля
     nextOnboardingStep: (state) => {
       if (!state.profile) return 'Welcome'
-
-      // Порядок: рост/вес → пол → возраст → активность → травмы → цель → уровень → дни
       if (state.profile.height_cm == null || state.profile.weight_kg == null) return 'BodyMetrics'
       if (state.profile.gender == null || state.profile.gender === '') return 'Gender'
       if (state.profile.age == null || state.profile.age === 0) return 'Age'
@@ -48,9 +42,7 @@ export const useAuthStore = defineStore('auth', {
   },
 
   actions: {
-    /**
-     * Инициализация приложения: проверка токена, получение профиля
-     */
+
     async initialize() {
       this.isLoading = true
       this.error = null
@@ -61,7 +53,6 @@ export const useAuthStore = defineStore('auth', {
         if (!token) {
           await this.guestLogin()
         } else {
-          // Если токен есть - ставим заголовок и проверяем профиль
           this.token = token
           setAuthHeader(token)
 
@@ -92,7 +83,7 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    /** Гостевой вход — POST /api/v1/auth/guest */
+
     async guestLogin() {
       try {
         const res = await api.post('/api/v1/auth/guest', {})
@@ -122,7 +113,7 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    /** Получение профиля — GET /api/v1/profile */
+
     async fetchProfile() {
       try {
         const { data } = await api.get('/api/v1/profile')
@@ -133,14 +124,7 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    /**
-     * Обновление профиля — POST /api/v1/profile.
-     * (PATCH на бэкенде не реализован; ProfileHandler читает JSON-body на POST.)
-     *
-     * Бэкенд использует optimistic locking: ждёт `version` в теле и проверяет
-     * `WHERE user_id=? AND version=?`. На 409 один раз перезагружаем профиль и
-     * пробуем снова (флаг _retried предохраняет от бесконечного цикла).
-     */
+
     async updateProfile(fields, _retried = false) {
       try {
         const version = this.profile?.version ?? 0
@@ -162,9 +146,7 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    /**
-     * Запуск генерации плана (POST /api/v1/plans/generate)
-     */
+
     async generatePlan() {
       try {
         const { data } = await api.post('/api/v1/plans/generate', {})
@@ -208,10 +190,7 @@ export const useAuthStore = defineStore('auth', {
       return data
     },
 
-    /**
-     * Сброс для тестов: новый гостевой токен и чистый профиль в сторе.
-     * Не полагается на reload — токен снимается и сразу выдаётся новый.
-     */
+
     async restartSessionForTesting() {
       useWorkoutPlanStore().clearPlan()
       useWorkoutSessionStore().clear()

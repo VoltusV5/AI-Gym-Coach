@@ -73,7 +73,7 @@ func (r *UsersRepository) queryExerciseGroup(
 
 	if ex.Sub_group == nil {
 		rows, err = r.pool.Query(ctx, `
-			SELECT id, exercises_name, working_weights
+			SELECT id, exercises_name, working_weights, image_url, video_url
 			FROM sportapp.exercises
 			WHERE muscular_group = $1 AND muscular_subgroup IS NULL
 			ORDER BY id
@@ -81,7 +81,7 @@ func (r *UsersRepository) queryExerciseGroup(
 		`, ex.Group)
 	} else {
 		rows, err = r.pool.Query(ctx, `
-			SELECT id, exercises_name, working_weights
+			SELECT id, exercises_name, working_weights, image_url, video_url
 			FROM sportapp.exercises
 			WHERE muscular_group = $1 AND muscular_subgroup = $2
 			ORDER BY id
@@ -103,8 +103,10 @@ func (r *UsersRepository) queryExerciseGroup(
 			id         int
 			name       string
 			baseWeight *int
+			imageURL   *string
+			videoURL   *string
 		)
-		if err := rows.Scan(&id, &name, &baseWeight); err != nil {
+		if err := rows.Scan(&id, &name, &baseWeight, &imageURL, &videoURL); err != nil {
 			return nil, nil, fmt.Errorf("scan exercise: %w", err)
 		}
 
@@ -114,8 +116,8 @@ func (r *UsersRepository) queryExerciseGroup(
 			weight = &w
 		}
 
-		withWeight = append(withWeight, ExWithWeight{ID: id, EXName: name, Weight: weight})
-		noWeight = append(noWeight, ExNoWeight{ID: id, EXName: name})
+		withWeight = append(withWeight, ExWithWeight{ID: id, EXName: name, Weight: weight, ImageURL: imageURL, VideoURL: videoURL})
+		noWeight = append(noWeight, ExNoWeight{ID: id, EXName: name, ImageURL: imageURL, VideoURL: videoURL})
 	}
 	if err := rows.Err(); err != nil {
 		return nil, nil, fmt.Errorf("rows iteration: %w", err)
@@ -164,32 +166,38 @@ func computeUserWeight(baseWeight float64, profile Profile) float64 {
 }
 
 const (
-	gymPlateStepSmallKG     = 2.5
-	gymPlateStepLargeKG     = 5.0
+	gymPlateStepSmallKG     = 1.0
+	gymPlateStepLargeKG     = 2.5
 	gymPlateStepLargeFromKG = 50.0
 )
 
 func roundWeightDownToGymStep(kg float64) float64 {
-	if kg <= 0 {
-		return 0
+	if kg < 1.0 {
+		return 1.0
 	}
 	step := gymPlateStepSmallKG
 	if kg >= gymPlateStepLargeFromKG {
 		step = gymPlateStepLargeKG
 	}
 	rounded := math.Floor(kg/step) * step
+	if rounded < 1.0 {
+		return 1.0
+	}
 	return math.Round(rounded*10) / 10
 }
 
 func RoundWeightToNearestGymStep(kg float64) float64 {
-	if kg <= 0 {
-		return 0
+	if kg < 1.0 {
+		return 1.0
 	}
 	step := gymPlateStepSmallKG
 	if kg >= gymPlateStepLargeFromKG {
 		step = gymPlateStepLargeKG
 	}
 	rounded := math.Round(kg/step) * step
+	if rounded < 1.0 {
+		return 1.0
+	}
 	return math.Round(rounded*10) / 10
 }
 

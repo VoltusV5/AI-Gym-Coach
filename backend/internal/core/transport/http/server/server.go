@@ -89,3 +89,7 @@ func (h *HTTPServer) RegisterAPIRouters(routers ...*APIVersionRouter) {
 		)
 	}
 }
+func (h *HTTPServer) RegisterStaticDir(urlPrefix, localDir string) {
+	fs := http.FileServer(http.Dir(localDir))
+	h.mux.Handle(urlPrefix, http.StripPrefix(urlPrefix, fs))
+}

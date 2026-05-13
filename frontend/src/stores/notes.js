@@ -68,7 +68,7 @@ export const useNotesStore = defineStore('notes', {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(this.notes))
       } catch (_) {
-        /* ignore */
+
       }
     },
 
@@ -168,7 +168,7 @@ export const useNotesStore = defineStore('notes', {
       try {
         await api.delete(`/api/v1/notes/${id}`)
       } catch (_) {
-        /* keep local delete even if API failed */
+
       }
     },
 
@@ -176,7 +176,7 @@ export const useNotesStore = defineStore('notes', {
       try {
         await this.fetchNotesFromApi()
       } catch (_) {
-        /* offline or endpoint not ready: keep local notes */
+
       }
     }
   }

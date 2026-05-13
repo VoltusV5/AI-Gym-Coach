@@ -6,12 +6,12 @@ function toNum(v) {
   return Number.isFinite(n) ? n : 0
 }
 
-/** Календарная дата дневника YYYY-MM-DD в Europe/Moscow — как query `day` у API дневника. */
+
 export function nutritionJournalDayISO(d = new Date()) {
   return new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Moscow' }).format(d).slice(0, 10)
 }
 
-/** Валидная строка YYYY-MM-DD или «сегодня» по МСК. Защита от бага, когда в hydrateAll передавали объект `{ page }` и ломали store.day. */
+
 function resolveJournalDay(day, storeDay) {
   const tryOne = (v) => {
     if (typeof v !== 'string') return ''
@@ -53,7 +53,7 @@ export const useNutritionStore = defineStore('nutrition', {
       }
     },
 
-    /** Нормализует одну запись с API и вставляет/обновляет в списке (на случай рассинхрона GET). */
+
     mergeServerEntry(row) {
       if (row == null || row.id == null) return
       const id = Number(row.id)
@@ -161,7 +161,6 @@ export const useNutritionStore = defineStore('nutrition', {
           updated_at: d?.updated_at ?? null
         }
       }
-      // Цели из дашборда (после sync на бэкенде) подставляем, если /goals пустой или без калорий.
       this.applyGoalFallbackFromDashboard()
     },
 
@@ -180,7 +179,6 @@ export const useNutritionStore = defineStore('nutrition', {
         }
         return
       }
-      // Дополняем нулевые макросы из дашборда, если GET /goals отдал только калории.
       const pg = toNum(this.goal.protein_g)
       const fg = toNum(this.goal.fat_g)
       const cg = toNum(this.goal.carbs_g)
@@ -236,7 +234,6 @@ export const useNutritionStore = defineStore('nutrition', {
     },
 
     async addEntry(payload) {
-      // Актуальная «сегодня» по МСК — иначе store.day мог остаться со вчера при открытой вкладке.
       if (!payload?.day) {
         this.day = nutritionJournalDayISO()
       }
@@ -258,7 +255,6 @@ export const useNutritionStore = defineStore('nutrition', {
       const { data } = await api.post('/api/v1/nutrition/entries', body)
       if (data) this.mergeServerEntry(data)
       await this.hydrateAll(this.day)
-      // Если список за день не содержит только что созданную запись — оставляем merge + тянем дашборд ещё раз.
       if (data?.id != null && !this.entries.some((e) => Number(e.id) === Number(data.id))) {
         this.mergeServerEntry(data)
         await this.fetchDashboard(this.day)
@@ -266,7 +262,7 @@ export const useNutritionStore = defineStore('nutrition', {
       try {
         await this.fetchStats()
       } catch {
-        /* ignore */
+
       }
       return data
     },
@@ -340,4 +336,3 @@ export const useNutritionStore = defineStore('nutrition', {
     }
   }
 })
-

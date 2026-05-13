@@ -36,7 +36,7 @@ CREATE TABLE sportapp.profile (
     training_days_map TEXT[],
     created_at TIMESTAMPTZ NOT NULL,
     updated_at TIMESTAMPTZ,
-    FOREIGN KEY (user_id) REFERENCES sportapp.users(id) ON DELETE CASCADE    
+    FOREIGN KEY (user_id) REFERENCES sportapp.users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE sportapp.user_data (

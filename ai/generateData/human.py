@@ -129,8 +129,7 @@ def generate_user():
 with open("users.json", "w") as file:
     json.dump(generate_user(), file, indent=4, ensure_ascii=False)
 
-#Примеры с очень высокой активностью
-#Примеры детишек 14 лет и наоборот постарше
-#Интересные случаи 
+
+
 
 

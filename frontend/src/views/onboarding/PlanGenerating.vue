@@ -82,13 +82,11 @@ let quoteInterval
 const startGeneration = async () => {
   errorMsg.value = null
   progress.value = 0
-  
+
   try {
     const planPayload = await authStore.generatePlan()
     workoutPlanStore.setPlanFromApi(planPayload)
     workoutSessionStore.buildFromApiPlan(planPayload)
-
-    // Дождемся пока прогресс дойдет до 100% для красоты
     progress.value = 1
     setTimeout(() => {
       router.replace('/home')
@@ -113,14 +111,11 @@ const retry = () => {
 }
 
 onMounted(async () => {
-  // Интервал для прогресс-бара
   progressInterval = setInterval(() => {
     if (!errorMsg.value && progress.value < 0.95) {
       progress.value += 0.01 + Math.random() * 0.02
     }
   }, 100)
-
-  // Интервал для смены цитат
   quoteInterval = setInterval(() => {
     currentQuoteIndex.value = (currentQuoteIndex.value + 1) % quotes.length
   }, 2500)
@@ -221,7 +216,7 @@ onUnmounted(() => {
   text-align: center;
 }
 
-/* Анимация перехода текста */
+
 .fade-enter-active, .fade-leave-active {
   transition: opacity 0.5s ease;
 }
@@ -229,7 +224,7 @@ onUnmounted(() => {
   opacity: 0;
 }
 
-/* Ошибки */
+
 .error-content {
   display: flex;
   flex-direction: column;

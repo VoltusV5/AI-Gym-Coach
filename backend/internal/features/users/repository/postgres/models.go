@@ -35,9 +35,11 @@ type Profile struct {
 }
 
 type ExWithWeight struct {
-	ID     int      `json:"id"`
-	EXName string   `json:"exercise_name"`
-	Weight *float64 `json:"weight"`
+	ID       int      `json:"id"`
+	EXName   string   `json:"exercise_name"`
+	Weight   *float64 `json:"weight"`
+	ImageURL *string  `json:"image_url"`
+	VideoURL *string  `json:"video_url"`
 }
 
 type EDaysWithWeight struct {
@@ -52,8 +54,10 @@ type EPlanWithWeight struct {
 }
 
 type ExNoWeight struct {
-	ID     int    `json:"id"`
-	EXName string `json:"exercise_name"`
+	ID       int     `json:"id"`
+	EXName   string  `json:"exercise_name"`
+	ImageURL *string `json:"image_url"`
+	VideoURL *string `json:"video_url"`
 }
 
 type EDaysNoWeight struct {

@@ -113,7 +113,6 @@ async function showToast(message, color = 'success') {
 function applySelectedDish() {
   const dish = nutrition.selectedDish
   if (!dish) return
-  // Поиск кладёт в стор dish_id; старый формат — только id
   const catalogId = dish.dish_id ?? dish.id
   form.dishId =
     catalogId != null && catalogId !== '' && Number.isFinite(Number(catalogId)) ? Number(catalogId) : null

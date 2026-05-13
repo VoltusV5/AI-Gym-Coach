@@ -2,10 +2,7 @@ import { SecureStorage } from '@aparajita/capacitor-secure-storage';
 
 const TOKEN_KEY = 'auth_token';
 
-/**
- * Сохранить токен в secure-storage
- * @param {string} token
- */
+
 export async function saveToken(token) {
   try {
     await SecureStorage.set({ key: TOKEN_KEY, value: token });
@@ -15,10 +12,7 @@ export async function saveToken(token) {
   }
 }
 
-/**
- * Достать токен из secure-storage
- * @returns {Promise<string|null>}
- */
+
 export async function getToken() {
   try {
     const { value } = await SecureStorage.get({ key: TOKEN_KEY });
@@ -28,11 +22,8 @@ export async function getToken() {
   }
 }
 
-/**
- * Удалить токен из secure-storage
- */
+
 export async function removeToken() {
-  // Всегда чистим localStorage (fallback при сохранении и в браузере без плагина)
   localStorage.removeItem(TOKEN_KEY);
   try {
     await SecureStorage.remove({ key: TOKEN_KEY });

@@ -2,18 +2,14 @@ import { defineStore } from 'pinia'
 
 const STORAGE_KEY = 'sportik_workout_plan'
 
-/**
- * Ответ POST /api/v1/plans/generate (ТЗ):
- * { split, plan: [{ day, day_name, exercises: [[вариации...]] }] }
- * exercises[j] — слот; внутри вариации { id, exercise_name, weight }.
- */
+
 export const useWorkoutPlanStore = defineStore('workoutPlan', {
   state: () => ({
     plan: null
   }),
 
   getters: {
-    /** День A: по одному «главному» упражнению на слот (первая вариация). */
+
     flatExercises(state) {
       if (!state.plan?.plan?.length) return []
       const dayA = state.plan.plan.find(
@@ -42,7 +38,7 @@ export const useWorkoutPlanStore = defineStore('workoutPlan', {
       return this.flatExercises.length
     },
 
-    /** Заглушка длительности: ~6 мин на блок + база */
+
     estimatedMinutes() {
       const n = this.exerciseCount
       if (n === 0) return 0
@@ -60,7 +56,7 @@ export const useWorkoutPlanStore = defineStore('workoutPlan', {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
       } catch (_) {
-        /* ignore */
+
       }
     },
 
@@ -78,7 +74,7 @@ export const useWorkoutPlanStore = defineStore('workoutPlan', {
       try {
         localStorage.removeItem(STORAGE_KEY)
       } catch (_) {
-        /* ignore */
+
       }
     }
   }

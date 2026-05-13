@@ -2,9 +2,9 @@ import json
 import random
 import jsonlines
 
-# ------------------------------------------------
-# МЫШЦЫ
-# ------------------------------------------------
+
+
+
 
 MUSCLES = {
     "Шея": [None],
@@ -28,9 +28,9 @@ def add_group(exercises, group):
             exercises.append({"группа": group, "подгруппа": sub})
 
 
-# ------------------------------------------------
-# ВЫБОР ПОДГРУППЫ БЕЗ ПОВТОРА
-# ------------------------------------------------
+
+
+
 
 def choose_sub(group, used):
 
@@ -39,10 +39,10 @@ def choose_sub(group, used):
     if options == [None]:
         return None
 
-    # available = [o for o in options if o not in used]
 
-    # if not available:
-    #     available = options
+
+
+
 
     available = [o for o in options if o not in used]
 
@@ -63,9 +63,9 @@ def ex(group, used):
         "подгруппа": choose_sub(group, used)
     }
 
-# ------------------------------------------------
-# FULLBODY
-# ------------------------------------------------
+
+
+
 
 def fullbody(label):
 
@@ -89,9 +89,9 @@ def fullbody(label):
         "упражнения": exercises
     }
 
-# ------------------------------------------------
-# ВЕРХ
-# ------------------------------------------------
+
+
+
 
 def upper(label):
 
@@ -112,9 +112,9 @@ def upper(label):
         "упражнения": exercises
     }
 
-# ------------------------------------------------
-# НИЗ
-# ------------------------------------------------
+
+
+
 
 def lower(label):
 
@@ -134,9 +134,9 @@ def lower(label):
         "упражнения": exercises
     }
 
-# ------------------------------------------------
-# PUSH
-# ------------------------------------------------
+
+
+
 
 def push(label):
 
@@ -157,9 +157,9 @@ def push(label):
         "упражнения": exercises
     }
 
-# ------------------------------------------------
-# PULL
-# ------------------------------------------------
+
+
+
 
 def pull(label):
 
@@ -179,9 +179,9 @@ def pull(label):
         "упражнения": exercises
     }
 
-# ------------------------------------------------
-# СПЛИТ
-# ------------------------------------------------
+
+
+
 
 def split_day(label, template):
 
@@ -207,9 +207,9 @@ def split_day(label, template):
         "упражнения": exercises
     }
 
-# ------------------------------------------------
-# ВЫБОР СПЛИТА
-# ------------------------------------------------
+
+
+
 
 def choose_split(user):
 
@@ -245,9 +245,9 @@ def choose_split(user):
 
     return random.choice(["Фулбади", "ВерхНиз", "Тяни-толкай"])
 
-# ------------------------------------------------
-# ГЕНЕРАЦИЯ ПЛАНА
-# ------------------------------------------------
+
+
+
 
 def generate_plan(user):
 
@@ -293,9 +293,9 @@ def generate_plan(user):
         "еженедельный_план": week
     }
 
-# ------------------------------------------------
-# ОСНОВНОЙ КОД
-# ------------------------------------------------
+
+
+
 
 with open("ai/generateData/users.json", "r",encoding="utf-8") as f:
     users = json.load(f)
@@ -313,4 +313,3 @@ for user in users:
 
 with jsonlines.open("dataset_with_targets.jsonlines",mode="w") as f:
     f.write_all(dataset)
-    

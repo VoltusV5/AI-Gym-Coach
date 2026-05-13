@@ -15,6 +15,7 @@ const (
 	achWeekWarrior        = "week_warrior"
 	achConsistentMonth    = "consistent_month"
 	achComeback           = "comeback"
+	achEarlyBird          = "early_bird"
 	achNightOwl           = "night_owl"
 	achVolume5k           = "volume_session_5k"
 	achVolume10k          = "volume_session_10k"
@@ -151,6 +152,9 @@ func earnedAchievementTitles(
 
 	for _, w := range workouts {
 		h := w.FinishedAt.Hour()
+		if h >= 5 && h < 10 {
+			earned[achEarlyBird] = struct{}{}
+		}
 		if h >= 20 || h < 5 {
 			earned[achNightOwl] = struct{}{}
 		}

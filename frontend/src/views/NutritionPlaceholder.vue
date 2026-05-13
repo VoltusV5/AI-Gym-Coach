@@ -384,4 +384,3 @@ async function resetFilters() {
   .triple-row, .goal-row { grid-template-columns: 1fr; }
 }
 </style>
-

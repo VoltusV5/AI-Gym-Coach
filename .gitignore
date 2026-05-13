@@ -44,3 +44,6 @@ frontend/ios/
 frontend/www/TgBotEditData/client_secret.json
 TgBotEditData/.env
 TgBotEditData/client_secret.json
+
+# Datasets
+exercises-dataset-main/

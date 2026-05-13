@@ -29,9 +29,9 @@ func (r *UsersRepository) GetListNotes(
 	defer cancel()
 
 	rows, err := r.pool.Query(ctx,
-		`SELECT id, version, user_id, title, body, created_at, updated_at, deleted_at 
-		 FROM sportapp.notes 
-		 WHERE user_id = $1 AND deleted_at IS NULL 
+		`SELECT id, version, user_id, title, body, created_at, updated_at, deleted_at
+		 FROM sportapp.notes
+		 WHERE user_id = $1 AND deleted_at IS NULL
 		 ORDER BY created_at DESC;`,
 		userID,
 	)
@@ -92,8 +92,8 @@ func (r *UsersRepository) CreateNotesUser(
 
 	var n Note
 	if err := r.pool.QueryRow(ctx,
-		`INSERT INTO sportapp.notes (user_id, title, body, created_at, updated_at) 
-		 VALUES ($1, $2, $3, NOW(), NOW()) 
+		`INSERT INTO sportapp.notes (user_id, title, body, created_at, updated_at)
+		 VALUES ($1, $2, $3, NOW(), NOW())
 		 RETURNING id, version, user_id, title, body, created_at, updated_at, deleted_at;`,
 		userID, title, body,
 	).Scan(&n.ID, &n.Version, &n.UserID, &n.Title, &n.Body, &n.CreatedAt, &n.UpdatedAt, &n.DeletedAt); err != nil {
@@ -116,9 +116,9 @@ func (r *UsersRepository) UpdateNotesUser(
 
 	var n Note
 	if err := r.pool.QueryRow(ctx,
-		`UPDATE sportapp.notes 
+		`UPDATE sportapp.notes
 		 SET title = $1, body = $2, updated_at = NOW(), version = version + 1
-		 WHERE id = $3 AND user_id = $4 AND version = $5 AND deleted_at IS NULL 
+		 WHERE id = $3 AND user_id = $4 AND version = $5 AND deleted_at IS NULL
 		 RETURNING id, version, user_id, title, body, created_at, updated_at, deleted_at;`,
 		title, body, noteID, userID, expectedVersion,
 	).Scan(&n.ID, &n.Version, &n.UserID, &n.Title, &n.Body, &n.CreatedAt, &n.UpdatedAt, &n.DeletedAt); err != nil {

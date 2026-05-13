@@ -32,8 +32,8 @@
             :class="msg.role === 'user' ? 'message-wrapper--user' : 'message-wrapper--assistant'"
           >
             <div class="message-bubble">
-              <div 
-                class="message-text md-rendered-content" 
+              <div
+                class="message-text md-rendered-content"
                 v-html="renderMarkdown(msg.displayedContent !== undefined ? msg.displayedContent : msg.content)"
               ></div>
               <span v-if="animatingMessageIndex === index" class="blinking-cursor"></span>
@@ -98,8 +98,6 @@ async function fetchHistory() {
   try {
     const { data } = await api.get('/api/v1/ai_chat/history')
     const rawMessages = Array.isArray(data) ? data : []
-    
-    // Map objects to preserve reactivity and initialize displayedContent
     messages.value = rawMessages.map(m => ({
       ...m,
       displayedContent: m.content
@@ -121,14 +119,14 @@ async function fetchHistory() {
 
 function startTypingAnimation(index) {
   if (animationInterval) clearInterval(animationInterval)
-  
+
   animatingMessageIndex.value = index
   const fullText = messages.value[index].content || ''
   messages.value[index].displayedContent = ''
   let currentCharIdx = 0
-  
+
   const charsPerTick = Math.max(1, Math.floor(fullText.length / 80))
-  
+
   animationInterval = setInterval(() => {
     currentCharIdx += charsPerTick
     if (currentCharIdx >= fullText.length) {
@@ -145,8 +143,6 @@ function startTypingAnimation(index) {
 async function sendMessage() {
   const txt = inputMessage.value.trim()
   if (!txt || isLoading.value) return
-
-  // Optimistically append user message
   messages.value.push({ role: 'user', content: txt, displayedContent: txt })
   inputMessage.value = ''
   scrollToBottom()
@@ -155,7 +151,6 @@ async function sendMessage() {
   error.value = null
 
   try {
-    // Call backend endpoint to trigger LLM response processing
     await api.post('/api/v1/ai_chat/generate_answer', {
       model: 'llama3.1-8b',
       messages: messages.value.map(m => ({ role: m.role, content: m.content }))
@@ -174,28 +169,18 @@ async function sendMessage() {
 
 function renderMarkdown(text) {
   if (!text) return ''
-  
+
   let html = text
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
-
-  // Bold: **text**
   html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-  
-  // Italic: *text*
   html = html.replace(/\*(.*?)\*/g, '<em>$1</em>')
-  
-  // Headers: ### text
   html = html.replace(/^### (.*$)/gim, '<h3 class="md-header">$1</h3>')
   html = html.replace(/^## (.*$)/gim, '<h2 class="md-header">$1</h2>')
-  
-  // List items: - text or • text
   html = html.replace(/^[•\-] (.*$)/gim, '<li class="md-list-item">$1</li>')
-  
-  // Line breaks
   html = html.replace(/\n/g, '<br>')
-  
+
   return html
 }
 
@@ -441,7 +426,7 @@ function scrollToBottom() {
   margin-left: 1px;
 }
 
-/* Стили для отрендеренного Markdown контента */
+
 .message-bubble :deep(strong) {
   font-weight: 700;
   color: inherit;
