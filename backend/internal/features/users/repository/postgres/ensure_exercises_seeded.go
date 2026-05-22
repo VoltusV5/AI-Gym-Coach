@@ -3,6 +3,9 @@ package users_postgres_repository
 import (
 	"context"
 	"fmt"
+	"os"
+	"strconv"
+	"strings"
 )
 
 func (r *UsersRepository) EnsureExercisesSeeded(ctx context.Context) error {
@@ -13,11 +16,13 @@ func (r *UsersRepository) EnsureExercisesSeeded(ctx context.Context) error {
 	if err := r.pool.QueryRow(ctx, `SELECT COUNT(*) FROM sportapp.exercises`).Scan(&n); err != nil {
 		return fmt.Errorf("count exercises: %w", err)
 	}
-	if n > 0 {
-		return nil
+	if n == 0 {
+		if err := r.insertExercises(ctx); err != nil {
+			return err
+		}
 	}
 
-	return r.insertExercises(ctx)
+	return r.SyncExerciseMedia(ctx)
 }
 
 func (r *UsersRepository) insertExercises(ctx context.Context) error {
@@ -118,3 +123,54 @@ func (r *UsersRepository) insertExercises(ctx context.Context) error {
 func strPtr(s string) *string { return &s }
 
 func intPtr(n int) *int { return &n }
+
+func getStaticImagesDir() string {
+	paths := []string{"/app/static/images", "backend/static/images", "static/images", "../backend/static/images", "../../backend/static/images"}
+	for _, p := range paths {
+		if fi, err := os.Stat(p); err == nil && fi.IsDir() {
+			return p
+		}
+	}
+	return ""
+}
+
+func (r *UsersRepository) SyncExerciseMedia(ctx context.Context) error {
+	dir := getStaticImagesDir()
+	if dir == "" {
+		fmt.Println("Warning: static images directory not found, skipping exercise media sync")
+		return nil
+	}
+
+	files, err := os.ReadDir(dir)
+	if err != nil {
+		return fmt.Errorf("read static images dir: %w", err)
+	}
+
+	for _, fi := range files {
+		if fi.IsDir() {
+			continue
+		}
+		name := fi.Name()
+		parts := strings.SplitN(name, " ", 2)
+		if len(parts) < 2 {
+			continue
+		}
+		id, err := strconv.Atoi(parts[0])
+		if err != nil {
+			continue
+		}
+
+		imagePath := "/static/images/" + name
+		_, err = r.pool.Exec(ctx, `
+			UPDATE sportapp.exercises
+			SET image_url = $1, video_url = $2
+			WHERE id = $3
+		`, imagePath, imagePath, id)
+		if err != nil {
+			return fmt.Errorf("update exercise %d media: %w", id, err)
+		}
+	}
+
+	fmt.Println("Successfully synchronized exercise media from static/images to the database")
+	return nil
+}

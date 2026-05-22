@@ -29,7 +29,14 @@
           :class="{ 'alt-card--active': Number(alt.id) === Number(slot.selectedId) }"
           @click="pick(alt.id)"
         >
-          <div class="alt-thumb" aria-hidden="true"></div>
+          <div class="alt-thumb">
+            <img
+              v-if="alt.imageUrl"
+              :src="staticUrl(alt.imageUrl)"
+              :alt="alt.name"
+              class="alt-thumb-img"
+            />
+          </div>
           <p class="alt-card-name">{{ alt.name }}</p>
           <p class="alt-card-desc">{{ alt.description }}</p>
         </button>
@@ -48,6 +55,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { IonHeader, IonToolbar, IonTitle, IonButtons, IonBackButton, IonButton } from '@ionic/vue'
 import WorkoutChrome from '@/components/workout/WorkoutChrome.vue'
 import { useWorkoutSessionStore } from '@/stores/workoutSession'
+import { staticUrl } from '@/api/api'
 
 const props = defineProps({
   slotIndex: {
@@ -176,11 +184,22 @@ function pick(alternativeId) {
   width: 100%;
   aspect-ratio: 4 / 3;
   border-radius: 10px;
+  overflow: hidden;
   background: linear-gradient(
     135deg,
     color-mix(in srgb, var(--sportik-brand) 28%, var(--sportik-surface)) 0%,
     color-mix(in srgb, var(--sportik-brand-2) 20%, var(--sportik-surface)) 100%
   );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.alt-thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .alt-card-name {

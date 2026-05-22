@@ -183,7 +183,7 @@ const currentSlot = computed(() => session.currentSlot)
 const exercise = computed(() => session.selectedExercise)
 const statusList = computed(() => session.slotStatusList)
 const exerciseVideoUrl = computed(() => {
-  const vUrl = exercise.value?.videoUrl
+  const vUrl = exercise.value?.imageUrl || exercise.value?.videoUrl
   return vUrl ? staticUrl(vUrl) : null
 })
 
