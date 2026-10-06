@@ -1,0 +1,2370 @@
+[
+  {
+    "stage": 0,
+    "name": "01 · Создать аккаунт user",
+    "operation": "v1_post_auth_register",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": "{email:R('user_email'),password:R('user_password')}",
+    "test": "check('Новый аккаунт и токен',()=>{present(data.token);present(data.user.id);save('user_token',data.token);save('user_id',data.user.id);});",
+    "pre": "Object.keys(S.toObject()).filter(k=>k.startsWith('state_')).forEach(k=>S.unset(k));save('run_id',guid());save('user_email','pm-user-'+R('run_id')+'@example.test');save('user_password',guid()+'Aa1!');",
+    "ids": {},
+    "idem": null,
+    "role": null
+  },
+  {
+    "stage": 0,
+    "name": "02 · Создать аккаунт stranger",
+    "operation": "v1_post_auth_register",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": "{email:R('stranger_email'),password:R('stranger_password')}",
+    "test": "check('Новый аккаунт и токен',()=>{present(data.token);present(data.user.id);save('stranger_token',data.token);save('stranger_id',data.user.id);});",
+    "pre": "save('stranger_email','pm-stranger-'+R('run_id')+'@example.test');save('stranger_password',guid()+'Aa1!');",
+    "ids": {},
+    "idem": null,
+    "role": null
+  },
+  {
+    "stage": 0,
+    "name": "03 · Создать аккаунт trainer",
+    "operation": "v1_post_auth_register",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": "{email:R('trainer_email'),password:R('trainer_password')}",
+    "test": "check('Новый аккаунт и токен',()=>{present(data.token);present(data.user.id);save('trainer_token',data.token);save('trainer_id',data.user.id);});",
+    "pre": "save('trainer_email','pm-trainer-'+R('run_id')+'@example.test');save('trainer_password',guid()+'Aa1!');",
+    "ids": {},
+    "idem": null,
+    "role": null
+  },
+  {
+    "stage": 1,
+    "name": "01 · Администратор видит пользователей",
+    "operation": "v2_get_admin_users",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "admin"
+  },
+  {
+    "stage": 1,
+    "name": "02 · Обычный пользователь не видит админку",
+    "operation": "v2_get_admin_users",
+    "expected": [
+      403
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 1,
+    "name": "03 · Без JWT нет доступа к профилю",
+    "operation": "v2_get_me_profile",
+    "expected": [
+      401
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": null
+  },
+  {
+    "stage": 1,
+    "name": "04 · Назначить созданному автору роль тренера",
+    "operation": "v2_patch_admin_users_user_id",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": "{roles:['user','trainer'],reason:'Postman fixture'}",
+    "test": "check('Роль trainer сохранена',()=>pm.expect(data.roles).to.include('trainer'));",
+    "pre": "",
+    "ids": {
+      "user_id": "trainer_id"
+    },
+    "idem": null,
+    "role": "admin"
+  },
+  {
+    "stage": 1,
+    "name": "05 · Заблокировать постороннего пользователя",
+    "operation": "v2_patch_admin_users_user_id",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": "{blocked:true,reason:'Postman block test'}",
+    "test": "check('blocked=true',()=>eq(data.blocked,true));",
+    "pre": "",
+    "ids": {
+      "user_id": "stranger_id"
+    },
+    "idem": null,
+    "role": "admin"
+  },
+  {
+    "stage": 1,
+    "name": "06 · Заблокированный токен отвергается",
+    "operation": "v2_get_me_profile",
+    "expected": [
+      401,
+      403
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "stranger"
+  },
+  {
+    "stage": 1,
+    "name": "07 · Разблокировать постороннего пользователя",
+    "operation": "v2_patch_admin_users_user_id",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": "{blocked:false,reason:'Postman unblock'}",
+    "test": "check('blocked=false',()=>eq(data.blocked,false));",
+    "pre": "",
+    "ids": {
+      "user_id": "stranger_id"
+    },
+    "idem": null,
+    "role": "admin"
+  },
+  {
+    "stage": 2,
+    "name": "01 · Создать упражнение без оборудования",
+    "operation": "v2_post_admin_exercises",
+    "expected": [
+      201
+    ],
+    "gate": null,
+    "body_expression": "{name:'Postman '+R('run_id'),muscle_group:'chest',equipment_ids:[],is_active:true}",
+    "test": "check('Сохраняем exercise_id',()=>{present(data.id);save('exercise_id',data.id);});",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "admin"
+  },
+  {
+    "stage": 2,
+    "name": "02 · Справочник упражнений администратора",
+    "operation": "v2_get_admin_exercises",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "admin"
+  },
+  {
+    "stage": 2,
+    "name": "03 · Изменить созданное упражнение",
+    "operation": "v2_patch_admin_exercises_exercise_id",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": "{name:'Postman updated '+R('run_id'),equipment_ids:[],is_active:true}",
+    "test": "check('Имя упражнения обновлено',()=>eq(data.name,submitted.name));",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "admin"
+  },
+  {
+    "stage": 2,
+    "name": "04 · Поиск созданного упражнения",
+    "operation": "v2_get_exercises",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "check('Поиск возвращает созданное упражнение',()=>includesItem(data.items,R('exercise_id')));",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 2,
+    "name": "05 · Оборудование",
+    "operation": "v2_get_equipment",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 2,
+    "name": "06 · Создать категорию",
+    "operation": "v2_post_admin_categories",
+    "expected": [
+      201
+    ],
+    "gate": null,
+    "body_expression": "{slug:'pm-'+R('run_id'),name:'Postman category',position:0,is_active:true}",
+    "test": "check('Сохраняем category_id',()=>{present(data.id);save('category_id',data.id);});",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "admin"
+  },
+  {
+    "stage": 2,
+    "name": "07 · Категории администратора",
+    "operation": "v2_get_admin_categories",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "admin"
+  },
+  {
+    "stage": 2,
+    "name": "08 · Переименовать категорию",
+    "operation": "v2_patch_admin_categories_category_id",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": "{slug:'pm-'+R('run_id'),name:'Postman updated',position:0,is_active:true}",
+    "test": "check('Имя категории обновлено',()=>eq(data.name,submitted.name));",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "admin"
+  },
+  {
+    "stage": 2,
+    "name": "09 · Категории каталога",
+    "operation": "v2_get_catalog_categories",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 2,
+    "name": "10 · Недопустимая пагинация",
+    "operation": "v2_get_exercises",
+    "expected": [
+      400,
+      422
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 3,
+    "name": "01 · Прочитать версию профиля",
+    "operation": "v2_get_me_profile",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "check('Сохраняем profile_version',()=>{present(data.version);save('profile_version',data.version);});",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 3,
+    "name": "02 · Заполнить профиль",
+    "operation": "v2_patch_me_profile",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": "{version:Number(R('profile_version')),age:25,height_cm:180,weight_kg:80.5,gender:'male',activity_level:'moderate',goal:'muscle_gain',level:'beginner',training_days:[1,3,5],equipment_ids:[],session_duration_min:60,excluded_exercise_ids:[]}",
+    "test": "check('Версия выросла',()=>pm.expect(data.version).to.be.above(Number(R('old_profile_version'))));check('Вес дробный',()=>eq(data.weight_kg,80.5));check('Сохраняем profile_version',()=>{present(data.version);save('profile_version',data.version);});",
+    "pre": "save('old_profile_version',R('profile_version'));",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 3,
+    "name": "03 · Профиль действительно сохранён",
+    "operation": "v2_get_me_profile",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "check('Сохранённые параметры',()=>{eq(data.weight_kg,80.5);eq(data.training_days,[1,3,5]);eq(data.version,Number(R('profile_version')));});",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 3,
+    "name": "04 · Устаревшая версия профиля",
+    "operation": "v2_patch_me_profile",
+    "expected": [
+      409
+    ],
+    "gate": null,
+    "body_expression": "{version:Number(R('old_profile_version')),weight_kg:90}",
+    "test": "",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 3,
+    "name": "05 · Недопустимый день недели",
+    "operation": "v2_patch_me_profile",
+    "expected": [
+      400,
+      422
+    ],
+    "gate": null,
+    "body_expression": "{version:Number(R('profile_version')),training_days:[8]}",
+    "test": "",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 4,
+    "name": "01 · Создать личный план",
+    "operation": "v2_post_me_plans",
+    "expected": [
+      201
+    ],
+    "gate": null,
+    "body_expression": "planInput('Postman plan '+R('run_id'))",
+    "test": "check('Сохраняем plan_id',()=>{present(data.id);save('plan_id',data.id);});save('plan',data);save('plan_ready_at',new Date().toISOString());",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 4,
+    "name": "02 · Прочитать созданный план",
+    "operation": "v2_get_me_plans_plan_id",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "check('ID, дни и упражнения',()=>{eq(data.id,R('plan_id'));eq(data.days[0].exercises[0].exercise_id,Number(R('exercise_id')));present(data.days[0].id);});save('plan',data);save('plan_ready_at',new Date().toISOString());",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 4,
+    "name": "03 · Чужой пользователь не читает план",
+    "operation": "v2_get_me_plans_plan_id",
+    "expected": [
+      403,
+      404
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "stranger"
+  },
+  {
+    "stage": 4,
+    "name": "04 · Чужой пользователь не меняет план",
+    "operation": "v2_patch_me_plans_plan_id",
+    "expected": [
+      403,
+      404
+    ],
+    "gate": null,
+    "body_expression": "{version:J('plan').version,title:'hacked',days:J('plan').days,schedule:J('plan').schedule}",
+    "test": "",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "stranger"
+  },
+  {
+    "stage": 4,
+    "name": "05 · Редактировать план и расписание",
+    "operation": "v2_patch_me_plans_plan_id",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": "{version:J('plan').version,title:'Postman edited',days:J('plan').days,schedule:{time_zone:'Europe/Moscow',start_date:day(),entries:[{weekday:1,plan_day_id:J('plan').days[0].id}]}}",
+    "test": "check('Название, расписание и новая версия',()=>{eq(data.title,'Postman edited');pm.expect(data.version).to.be.above(Number(R('old_plan_version')));});save('plan',data);save('plan_ready_at',new Date().toISOString());",
+    "pre": "save('old_plan_version',J('plan').version);",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 4,
+    "name": "06 · Проверить сохранённые изменения",
+    "operation": "v2_get_me_plans_plan_id",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "check('Изменения сохранились',()=>{eq(data.title,'Postman edited');eq(data.schedule.entries[0].plan_day_id,data.days[0].id);});save('plan',data);save('plan_ready_at',new Date().toISOString());",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 4,
+    "name": "07 · Устаревшая версия плана",
+    "operation": "v2_patch_me_plans_plan_id",
+    "expected": [
+      409
+    ],
+    "gate": null,
+    "body_expression": "{version:Number(R('old_plan_version')),title:'stale',days:J('plan').days,schedule:J('plan').schedule}",
+    "test": "",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 4,
+    "name": "08 · Нельзя задать ноль подходов",
+    "operation": "v2_patch_me_plans_plan_id",
+    "expected": [
+      400,
+      422
+    ],
+    "gate": null,
+    "body_expression": "{version:J('plan').version,title:'invalid',days:J('invalid_plan').days,schedule:J('plan').schedule}",
+    "test": "",
+    "pre": "const invalid=J('plan');invalid.days[0].exercises[0].sets=0;save('invalid_plan',invalid);",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 4,
+    "name": "09 · Активировать первый план",
+    "operation": "v2_post_me_plans_plan_id_activate",
+    "expected": [
+      201
+    ],
+    "gate": null,
+    "body_expression": "{version:J('plan').version}",
+    "test": "check('План активен',()=>eq(data.is_active,true));save('plan',data);save('plan_ready_at',new Date().toISOString());",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 4,
+    "name": "10 · Создать второй план",
+    "operation": "v2_post_me_plans",
+    "expected": [
+      201
+    ],
+    "gate": null,
+    "body_expression": "planInput('Postman spare')",
+    "test": "check('Сохраняем spare_id',()=>{present(data.id);save('spare_id',data.id);});save('spare',data);",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 4,
+    "name": "11 · Активировать второй план",
+    "operation": "v2_post_me_plans_plan_id_activate",
+    "expected": [
+      201
+    ],
+    "gate": null,
+    "body_expression": "{version:J('spare').version}",
+    "test": "check('Второй план активен',()=>eq(data.is_active,true));save('spare',data);",
+    "pre": "",
+    "ids": {
+      "plan_id": "spare_id"
+    },
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 4,
+    "name": "12 · Первый план стал неактивным",
+    "operation": "v2_get_me_plans_plan_id",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "check('Первый план деактивирован',()=>eq(data.is_active,false));save('plan',data);save('plan_ready_at',new Date().toISOString());",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 4,
+    "name": "13 · Список личных планов",
+    "operation": "v2_get_me_plans",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "check('Оба плана присутствуют',()=>{includesItem(data.items,R('plan_id'));includesItem(data.items,R('spare_id'));});",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 4,
+    "name": "14 · Первая страница личных планов",
+    "operation": "v2_get_me_plans",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "check('Одна запись и курсор следующей страницы',()=>{eq(data.items.length,1);present(data.next_cursor);save('plans_cursor',data.next_cursor);save('first_page_plan_id',data.items[0].id);});",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 4,
+    "name": "15 · Следующая страница без повторов",
+    "operation": "v2_get_me_plans",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "check('Курсор не повторяет первую страницу',()=>{eq(data.items.length,1);pm.expect(data.items[0].id).not.to.eql(R('first_page_plan_id'));pm.expect([R('plan_id'),R('spare_id')]).to.include(data.items[0].id);});",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 4,
+    "name": "16 · Архивировать второй план",
+    "operation": "v2_delete_me_plans_plan_id",
+    "expected": [
+      204
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "",
+    "pre": "",
+    "ids": {
+      "plan_id": "spare_id"
+    },
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 5,
+    "name": "01 · Сгенерировать AI-план",
+    "operation": "v2_post_plans_generate",
+    "expected": [
+      201
+    ],
+    "gate": null,
+    "body_expression": "{profile_version:Number(R('profile_version'))}",
+    "test": "check('Сохраняем ai_plan_id',()=>{present(data.plan_id);save('ai_plan_id',data.plan_id);});save('generated',data);",
+    "pre": "save('generate_key',guid());",
+    "ids": {},
+    "idem": "generate_key",
+    "role": "user"
+  },
+  {
+    "stage": 5,
+    "name": "02 · Повтор генерации не создаёт второй план",
+    "operation": "v2_post_plans_generate",
+    "expected": [
+      201
+    ],
+    "gate": null,
+    "body_expression": "{profile_version:Number(R('profile_version'))}",
+    "test": "check('Тот же результат генерации',()=>eq(data,J('generated')));",
+    "pre": "",
+    "ids": {},
+    "idem": "generate_key",
+    "role": "user"
+  },
+  {
+    "stage": 5,
+    "name": "03 · AI-план сохранён и редактируем",
+    "operation": "v2_get_me_plans_plan_id",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "check('Источник AI и непустая программа',()=>{eq(data.source_type,'ai');pm.expect(data.days.length).to.be.above(0);data.days.forEach(d=>pm.expect(d.exercises.length).to.be.above(0));});",
+    "pre": "",
+    "ids": {
+      "plan_id": "ai_plan_id"
+    },
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 6,
+    "name": "01 · Базовый прогресс до занятия",
+    "operation": "v2_get_progress",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "save('progress_before',data);",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 6,
+    "name": "02 · Завершить тренировку",
+    "operation": "v2_post_workouts_complete",
+    "expected": [
+      201
+    ],
+    "gate": null,
+    "body_expression": "J('workout_body')",
+    "test": "check('Объём без разминки = 1080 кг',()=>eq(data.metrics.volume_kg,1080));check('Сохраняем session_id',()=>{present(data.session_id);save('session_id',data.session_id);});save('workout_result',data);",
+    "pre": "save('workout_key',guid());save('workout_body',workout(J('plan')));",
+    "ids": {},
+    "idem": "workout_key",
+    "role": "user"
+  },
+  {
+    "stage": 6,
+    "name": "03 · Повтор занятия возвращает исходный результат",
+    "operation": "v2_post_workouts_complete",
+    "expected": [
+      201
+    ],
+    "gate": null,
+    "body_expression": "J('workout_body')",
+    "test": "check('Нет дублирования',()=>eq(data,J('workout_result')));",
+    "pre": "",
+    "ids": {},
+    "idem": "workout_key",
+    "role": "user"
+  },
+  {
+    "stage": 6,
+    "name": "04 · Тот же client_session_id с новым ключом не дублируется",
+    "operation": "v2_post_workouts_complete",
+    "expected": [
+      201,
+      409
+    ],
+    "gate": null,
+    "body_expression": "J('workout_body')",
+    "test": "if(pm.response.code===201)check('Сессия уже существует',()=>eq(data.session_id,R('session_id')));",
+    "pre": "save('workout_alternate_key',guid());",
+    "ids": {},
+    "idem": "workout_alternate_key",
+    "role": "user"
+  },
+  {
+    "stage": 6,
+    "name": "05 · Тот же ключ с другим телом — конфликт",
+    "operation": "v2_post_workouts_complete",
+    "expected": [
+      409
+    ],
+    "gate": null,
+    "body_expression": "J('conflicting_workout')",
+    "test": "",
+    "pre": "const b=J('workout_body');b.slots[0].sets[1].weight_kg=65;save('conflicting_workout',b);",
+    "ids": {},
+    "idem": "workout_key",
+    "role": "user"
+  },
+  {
+    "stage": 6,
+    "name": "06 · История тренировок",
+    "operation": "v2_get_workouts",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "check('Занятие ровно одно',()=>eq(data.items.filter(x=>x.id===R('session_id')).length,1));",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 6,
+    "name": "07 · Подходы завершённого занятия",
+    "operation": "v2_get_workouts_session_id",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "check('Подходы не потеряны',()=>{eq(data.id,R('session_id'));eq(data.slots,J('workout_body').slots);});",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 6,
+    "name": "08 · Чужую тренировку нельзя прочитать",
+    "operation": "v2_get_workouts_session_id",
+    "expected": [
+      403,
+      404
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "stranger"
+  },
+  {
+    "stage": 6,
+    "name": "09 · Записать дробный вес тела",
+    "operation": "v2_post_progress_weight",
+    "expected": [
+      201
+    ],
+    "gate": null,
+    "body_expression": "{day:day(),weight_kg:80.5}",
+    "test": "",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 6,
+    "name": "10 · Нулевой вес тела запрещён",
+    "operation": "v2_post_progress_weight",
+    "expected": [
+      400,
+      422
+    ],
+    "gate": null,
+    "body_expression": "{day:day(),weight_kg:0}",
+    "test": "",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 6,
+    "name": "11 · Прогресс после повторного запроса",
+    "operation": "v2_get_progress",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "check('Повтор не увеличил счётчик и объём',()=>{eq(data.workout_count,J('progress_before').workout_count+1);eq(data.volume_kg,J('progress_before').volume_kg+1080);});",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 6,
+    "name": "12 · Динамика упражнения",
+    "operation": "v2_get_progress_exercises_exercise_id",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "check('Точка занятия присутствует',()=>pm.expect(data.points.some(x=>x.session_id===R('session_id'))).to.eql(true));",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 6,
+    "name": "13 · Недельные сводки",
+    "operation": "v2_get_progress_summaries",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 6,
+    "name": "14 · Месячные сводки",
+    "operation": "v2_get_progress_summaries",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 7,
+    "name": "01 · Заполнить профиль тренера",
+    "operation": "v2_patch_trainer_profile",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": "{display_name:'Postman trainer '+R('run_id'),bio:'Тестовый автор',specializations:['strength'],experience_years:3,qualifications:'Тестовая квалификация'}",
+    "test": "check('Профиль автора',()=>eq(data.display_name,submitted.display_name));",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "trainer"
+  },
+  {
+    "stage": 7,
+    "name": "02 · Профиль тренера",
+    "operation": "v2_get_trainer_profile",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "check('ID автора',()=>eq(data.id,Number(R('trainer_id'))));",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "trainer"
+  },
+  {
+    "stage": 7,
+    "name": "03 · Подать заявку на проверку",
+    "operation": "v2_post_trainer_verification",
+    "expected": [
+      201
+    ],
+    "gate": null,
+    "body_expression": "{qualification:'Test certificate',document_refs:[pm.environment.get('verification_document_ref')]}",
+    "test": "check('Сохраняем verification_id',()=>{present(data.id);save('verification_id',data.id);});check('Заявка pending',()=>eq(data.status,'pending'));",
+    "pre": "if(!pm.environment.get('verification_document_ref'))throw Error('Нужен verification_document_ref загруженного тестового документа');",
+    "ids": {},
+    "idem": null,
+    "role": "trainer"
+  },
+  {
+    "stage": 7,
+    "name": "04 · Прочитать свою заявку",
+    "operation": "v2_get_trainer_verification",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "check('Это созданная заявка',()=>eq(data.id,R('verification_id')));",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "trainer"
+  },
+  {
+    "stage": 7,
+    "name": "05 · Очередь проверки тренеров",
+    "operation": "v2_get_admin_verifications",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "admin"
+  },
+  {
+    "stage": 7,
+    "name": "06 · Подтвердить тренера",
+    "operation": "v2_patch_admin_verifications_verification_id",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": "{status:'approved',reason:'Postman verification'}",
+    "test": "check('Статус approved',()=>eq(data.status,'approved'));",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "admin"
+  },
+  {
+    "stage": 7,
+    "name": "07 · Список тренеров администратора",
+    "operation": "v2_get_admin_trainers",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "admin"
+  },
+  {
+    "stage": 7,
+    "name": "08 · Публичный проверенный профиль",
+    "operation": "v2_get_trainers_trainer_id",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "check('Проверенный тренер',()=>{eq(data.id,Number(R('trainer_id')));eq(data.verified,true);});",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 8,
+    "name": "01 · Создать free программу",
+    "operation": "v2_post_trainer_programs",
+    "expected": [
+      201
+    ],
+    "gate": null,
+    "body_expression": "draft(0)",
+    "test": "check('Сохраняем free_program_id',()=>{present(data.id);save('free_program_id',data.id);});save('free_author',data);",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "trainer"
+  },
+  {
+    "stage": 8,
+    "name": "02 · Прочитать free черновик",
+    "operation": "v2_get_trainer_programs_program_id",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "save('free_author',data);",
+    "pre": "",
+    "ids": {
+      "program_id": "free_program_id"
+    },
+    "idem": null,
+    "role": "trainer"
+  },
+  {
+    "stage": 8,
+    "name": "03 · Отправить free программу на модерацию",
+    "operation": "v2_post_trainer_programs_program_id_publish",
+    "expected": [
+      202
+    ],
+    "gate": null,
+    "body_expression": "{version:J('free_author').version}",
+    "test": "check('Заявка принята',()=>present(data.status));",
+    "pre": "",
+    "ids": {
+      "program_id": "free_program_id"
+    },
+    "idem": null,
+    "role": "trainer"
+  },
+  {
+    "stage": 8,
+    "name": "04 · Одобрить free программу",
+    "operation": "v2_patch_admin_programs_program_id_moderation",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": "{status:'approved',reason:'Postman publication'}",
+    "test": "",
+    "pre": "",
+    "ids": {
+      "program_id": "free_program_id"
+    },
+    "idem": null,
+    "role": "admin"
+  },
+  {
+    "stage": 8,
+    "name": "05 · Зафиксировать опубликованную free версию",
+    "operation": "v2_get_catalog_programs_program_id",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "check('Сохраняем free_version_id',()=>{present(data.published_version_id);save('free_version_id',data.published_version_id);});check('Цена опубликованной версии',()=>eq(data.price_minor,0));save('free_card',data);",
+    "pre": "",
+    "ids": {
+      "program_id": "free_program_id"
+    },
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 8,
+    "name": "06 · Создать paid программу",
+    "operation": "v2_post_trainer_programs",
+    "expected": [
+      201
+    ],
+    "gate": null,
+    "body_expression": "draft(100000)",
+    "test": "check('Сохраняем paid_program_id',()=>{present(data.id);save('paid_program_id',data.id);});save('paid_author',data);",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "trainer"
+  },
+  {
+    "stage": 8,
+    "name": "07 · Прочитать paid черновик",
+    "operation": "v2_get_trainer_programs_program_id",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "save('paid_author',data);",
+    "pre": "",
+    "ids": {
+      "program_id": "paid_program_id"
+    },
+    "idem": null,
+    "role": "trainer"
+  },
+  {
+    "stage": 8,
+    "name": "08 · Отправить paid программу на модерацию",
+    "operation": "v2_post_trainer_programs_program_id_publish",
+    "expected": [
+      202
+    ],
+    "gate": null,
+    "body_expression": "{version:J('paid_author').version}",
+    "test": "check('Заявка принята',()=>present(data.status));",
+    "pre": "",
+    "ids": {
+      "program_id": "paid_program_id"
+    },
+    "idem": null,
+    "role": "trainer"
+  },
+  {
+    "stage": 8,
+    "name": "09 · Одобрить paid программу",
+    "operation": "v2_patch_admin_programs_program_id_moderation",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": "{status:'approved',reason:'Postman publication'}",
+    "test": "",
+    "pre": "",
+    "ids": {
+      "program_id": "paid_program_id"
+    },
+    "idem": null,
+    "role": "admin"
+  },
+  {
+    "stage": 8,
+    "name": "10 · Зафиксировать опубликованную paid версию",
+    "operation": "v2_get_catalog_programs_program_id",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "check('Сохраняем paid_version_id',()=>{present(data.published_version_id);save('paid_version_id',data.published_version_id);});check('Цена опубликованной версии',()=>eq(data.price_minor,100000));save('paid_card',data);",
+    "pre": "",
+    "ids": {
+      "program_id": "paid_program_id"
+    },
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 8,
+    "name": "11 · Список программ автора",
+    "operation": "v2_get_trainer_programs",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "check('Обе программы автора',()=>{includesItem(data.items,R('free_program_id'));includesItem(data.items,R('paid_program_id'));});",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "trainer"
+  },
+  {
+    "stage": 8,
+    "name": "12 · Обычный пользователь не читает черновик автора",
+    "operation": "v2_get_trainer_programs_program_id",
+    "expected": [
+      403,
+      404
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "",
+    "pre": "",
+    "ids": {
+      "program_id": "free_program_id"
+    },
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 8,
+    "name": "13 · Очередь модерации программ",
+    "operation": "v2_get_admin_programs",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "admin"
+  },
+  {
+    "stage": 8,
+    "name": "14 · Создать черновик новой версии",
+    "operation": "v2_post_trainer_programs_program_id_versions",
+    "expected": [
+      201
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "save('free_new_author',data);",
+    "pre": "",
+    "ids": {
+      "program_id": "free_program_id"
+    },
+    "idem": null,
+    "role": "trainer"
+  },
+  {
+    "stage": 8,
+    "name": "15 · Изменить новый черновик",
+    "operation": "v2_patch_trainer_programs_program_id",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": "{version:J('free_new_author').version,title:'Postman next version'}",
+    "test": "save('free_new_author',data);",
+    "pre": "",
+    "ids": {
+      "program_id": "free_program_id"
+    },
+    "idem": null,
+    "role": "trainer"
+  },
+  {
+    "stage": 8,
+    "name": "16 · Черновик не меняет опубликованный оригинал",
+    "operation": "v2_get_catalog_programs_program_id",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "check('Публичная версия и название прежние',()=>{eq(data.published_version_id,R('free_version_id'));eq(data.title,J('free_card').title);});",
+    "pre": "",
+    "ids": {
+      "program_id": "free_program_id"
+    },
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 9,
+    "name": "01 · Каталог по автору, цели, уровню и длительности",
+    "operation": "v2_get_catalog_programs",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "check('Фильтры соблюдены',()=>{includesItem(data.items,R('free_program_id'));data.items.forEach(x=>{eq(x.goal,'muscle_gain');eq(x.level,'beginner');eq(x.duration_weeks,4);eq(x.trainer.id,Number(R('trainer_id')));});});",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 9,
+    "name": "02 · Добавить в избранное",
+    "operation": "v2_put_me_favorites_program_id",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "",
+    "pre": "",
+    "ids": {
+      "program_id": "free_program_id"
+    },
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 9,
+    "name": "03 · Повтор добавления в избранное",
+    "operation": "v2_put_me_favorites_program_id",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "",
+    "pre": "",
+    "ids": {
+      "program_id": "free_program_id"
+    },
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 9,
+    "name": "04 · В избранном одна запись",
+    "operation": "v2_get_me_favorites",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "check('Избранное не дублируется',()=>eq(data.items.filter(x=>x.id===R('free_program_id')).length,1));",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 9,
+    "name": "05 · Удалить из избранного",
+    "operation": "v2_delete_me_favorites_program_id",
+    "expected": [
+      204
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "",
+    "pre": "",
+    "ids": {
+      "program_id": "free_program_id"
+    },
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 9,
+    "name": "06 · Удаление из избранного сохранилось",
+    "operation": "v2_get_me_favorites",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "check('Программа удалена',()=>eq(data.items.some(x=>x.id===R('free_program_id')),false));",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 9,
+    "name": "07 · Получить бесплатный доступ",
+    "operation": "v2_post_programs_program_id_access",
+    "expected": [
+      201
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "check('Доступ active к нужной программе',()=>{eq(data.program_id,R('free_program_id'));eq(data.status,'active');});",
+    "pre": "",
+    "ids": {
+      "program_id": "free_program_id"
+    },
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 9,
+    "name": "08 · Бесплатная программа доступна полностью",
+    "operation": "v2_get_catalog_programs_program_id",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "check('Состав программы доступен',()=>pm.expect(data.days.length).to.be.above(0));save('free_access_card',data);",
+    "pre": "",
+    "ids": {
+      "program_id": "free_program_id"
+    },
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 9,
+    "name": "09 · Нельзя бесплатно получить платную программу",
+    "operation": "v2_post_programs_program_id_access",
+    "expected": [
+      403,
+      422
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "",
+    "pre": "",
+    "ids": {
+      "program_id": "paid_program_id"
+    },
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 10,
+    "name": "01 · Прочитать комиссию",
+    "operation": "v2_get_admin_settings_commission",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "save('commission',data);",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "admin"
+  },
+  {
+    "stage": 10,
+    "name": "02 · Сохранить комиссию 20 процентов",
+    "operation": "v2_patch_admin_settings_commission",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": "{commission_bps:2000,effective_at:new Date().toISOString(),version:J('commission').version}",
+    "test": "check('Ставка 2000 bps',()=>eq(data.commission_bps,2000));",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "admin"
+  },
+  {
+    "stage": 10,
+    "name": "03 · Создать заказ с фиксацией цены",
+    "operation": "v2_post_orders",
+    "expected": [
+      201
+    ],
+    "gate": null,
+    "body_expression": "{program_id:R('paid_program_id'),program_version_id:R('paid_version_id')}",
+    "test": "check('Сохраняем order_id',()=>{present(data.id);save('order_id',data.id);});save('order',data);check('Цена и валюта заказа',()=>{eq(data.amount_minor,100000);eq(data.currency,'RUB');pm.expect(data.status).to.be.oneOf(['created','pending']);});",
+    "pre": "save('order_key',guid());",
+    "ids": {},
+    "idem": "order_key",
+    "role": "user"
+  },
+  {
+    "stage": 10,
+    "name": "04 · Повтор заказа с тем же ключом",
+    "operation": "v2_post_orders",
+    "expected": [
+      201
+    ],
+    "gate": null,
+    "body_expression": "{program_id:R('paid_program_id'),program_version_id:R('paid_version_id')}",
+    "test": "check('Заказ не дублируется',()=>eq(data.id,R('order_id')));",
+    "pre": "",
+    "ids": {},
+    "idem": "order_key",
+    "role": "user"
+  },
+  {
+    "stage": 10,
+    "name": "05 · Статус созданного заказа",
+    "operation": "v2_get_orders_order_id",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "check('Заказ пользователя',()=>eq(data.id,R('order_id')));",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 10,
+    "name": "06 · Чужой заказ недоступен",
+    "operation": "v2_get_orders_order_id",
+    "expected": [
+      403,
+      404
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "stranger"
+  },
+  {
+    "stage": 10,
+    "name": "07 · История покупок пользователя",
+    "operation": "v2_get_me_orders",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "check('Заказ в истории',()=>includesItem(data.items,R('order_id')));",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 10,
+    "name": "08 · Заказы администратора",
+    "operation": "v2_get_admin_orders",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "admin"
+  },
+  {
+    "stage": 10,
+    "name": "09 · Реестр выплат",
+    "operation": "v2_get_admin_payouts",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "admin"
+  },
+  {
+    "stage": 10,
+    "name": "10 · Выплаты тренеру",
+    "operation": "v2_get_trainer_payouts",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "trainer"
+  },
+  {
+    "stage": 10,
+    "name": "11 · Pending заказ не даёт права копировать программу",
+    "operation": "v2_post_programs_program_id_fork",
+    "expected": [
+      403,
+      404
+    ],
+    "gate": null,
+    "body_expression": "{source_version_id:R('paid_version_id'),title:'unpaid copy'}",
+    "test": "",
+    "pre": "save('pending_fork_key',guid());",
+    "ids": {
+      "program_id": "paid_program_id"
+    },
+    "idem": "pending_fork_key",
+    "role": "user"
+  },
+  {
+    "stage": 11,
+    "name": "01 · Создать личную копию бесплатной программы",
+    "operation": "v2_post_programs_program_id_fork",
+    "expected": [
+      201
+    ],
+    "gate": null,
+    "body_expression": "{source_version_id:R('free_version_id'),title:'Postman fork'}",
+    "test": "check('Сохраняем fork_id',()=>{present(data.plan_id);save('fork_id',data.plan_id);});save('fork_result',data);check('Происхождение сохранено',()=>eq(data.source_program_version_id,R('free_version_id')));",
+    "pre": "save('fork_key',guid());",
+    "ids": {
+      "program_id": "free_program_id"
+    },
+    "idem": "fork_key",
+    "role": "user"
+  },
+  {
+    "stage": 11,
+    "name": "02 · Повтор Fork возвращает ту же копию",
+    "operation": "v2_post_programs_program_id_fork",
+    "expected": [
+      201
+    ],
+    "gate": null,
+    "body_expression": "{source_version_id:R('free_version_id'),title:'Postman fork'}",
+    "test": "check('Не создана вторая копия',()=>eq(data,J('fork_result')));",
+    "pre": "",
+    "ids": {
+      "program_id": "free_program_id"
+    },
+    "idem": "fork_key",
+    "role": "user"
+  },
+  {
+    "stage": 11,
+    "name": "03 · Прочитать копию",
+    "operation": "v2_get_me_plans_plan_id",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "check('Новые ID дней',()=>{present(data.days[0].id);eq(data.source_program_version_id,R('free_version_id'));pm.expect(data.days[0].id).not.to.eql(J('free_access_card').days[0].id);});save('fork',data);save('fork_ready_at',new Date().toISOString());",
+    "pre": "",
+    "ids": {
+      "plan_id": "fork_id"
+    },
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 11,
+    "name": "04 · Изменить упражнения в копии",
+    "operation": "v2_patch_me_plans_plan_id",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": "{version:J('fork').version,title:'Postman remixed',days:J('fork_edit').days,schedule:J('fork').schedule}",
+    "test": "save('fork',data);save('fork_ready_at',new Date().toISOString());",
+    "pre": "const b=J('fork');b.days[0].exercises[0].sets=4;save('fork_edit',b);",
+    "ids": {
+      "plan_id": "fork_id"
+    },
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 11,
+    "name": "05 · Правки копии сохранены",
+    "operation": "v2_get_me_plans_plan_id",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "check('Копия изменена',()=>{eq(data.title,'Postman remixed');eq(data.days[0].exercises[0].sets,4);});save('fork',data);save('fork_ready_at',new Date().toISOString());",
+    "pre": "",
+    "ids": {
+      "plan_id": "fork_id"
+    },
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 11,
+    "name": "06 · Оригинал не изменился",
+    "operation": "v2_get_catalog_programs_program_id",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "check('Исходные название, дни и версия',()=>{eq(data.title,J('free_access_card').title);eq(data.days,J('free_access_card').days);eq(data.published_version_id,R('free_version_id'));});",
+    "pre": "",
+    "ids": {
+      "program_id": "free_program_id"
+    },
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 11,
+    "name": "07 · Создать публичную ссылку на собственный план",
+    "operation": "v2_post_shares",
+    "expected": [
+      201
+    ],
+    "gate": null,
+    "body_expression": "{target_type:'plan',target_id:R('plan_id'),expires_at:null}",
+    "test": "check('Сохраняем share_id',()=>{present(data.id);save('share_id',data.id);});check('Извлечь токен ссылки',()=>{const url=data.url;present(url);const token=url.split('?')[0].replace(/\\/$/,'').split('/').pop();present(token);save('share_token',decodeURIComponent(token));});",
+    "pre": "save('share_key',guid());",
+    "ids": {},
+    "idem": "share_key",
+    "role": "user"
+  },
+  {
+    "stage": 11,
+    "name": "08 · Открыть ссылку без авторизации",
+    "operation": "v2_get_shares_token",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "check('Снимок плана доступен',()=>{eq(data.title,J('plan').title);pm.expect(data.days.length).to.be.above(0);});check('Публичный ответ без токена и email',()=>{pm.expect(data).not.to.have.property('email');pm.expect(data).not.to.have.property('token');});",
+    "pre": "",
+    "ids": {
+      "token": "share_token"
+    },
+    "idem": null,
+    "role": null
+  },
+  {
+    "stage": 11,
+    "name": "09 · Получатель сохраняет ссылку",
+    "operation": "v2_post_shares_token_save",
+    "expected": [
+      201
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "",
+    "pre": "",
+    "ids": {
+      "token": "share_token"
+    },
+    "idem": null,
+    "role": "stranger"
+  },
+  {
+    "stage": 11,
+    "name": "10 · Получатель создаёт свою копию",
+    "operation": "v2_post_shares_token_fork",
+    "expected": [
+      201
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "check('Сохраняем recipient_plan_id',()=>{present(data.plan_id);save('recipient_plan_id',data.plan_id);});",
+    "pre": "save('share_fork_key',guid());",
+    "ids": {
+      "token": "share_token"
+    },
+    "idem": "share_fork_key",
+    "role": "stranger"
+  },
+  {
+    "stage": 11,
+    "name": "11 · Копия принадлежит получателю",
+    "operation": "v2_get_me_plans_plan_id",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "check('Это отдельный план',()=>pm.expect(data.id).not.to.eql(R('plan_id')));",
+    "pre": "",
+    "ids": {
+      "plan_id": "recipient_plan_id"
+    },
+    "idem": null,
+    "role": "stranger"
+  },
+  {
+    "stage": 11,
+    "name": "12 · Отозвать публичную ссылку",
+    "operation": "v2_delete_shares_share_id",
+    "expected": [
+      204
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 11,
+    "name": "13 · Отозванная ссылка недоступна",
+    "operation": "v2_get_shares_token",
+    "expected": [
+      404
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "",
+    "pre": "",
+    "ids": {
+      "token": "share_token"
+    },
+    "idem": null,
+    "role": null
+  },
+  {
+    "stage": 12,
+    "name": "01 · До использования программы отзыв недоступен",
+    "operation": "v2_get_programs_program_id_review_eligibility",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "check('Ручная тренировка не считается использованием программы',()=>{eq(data.eligible,false);eq(data.completed_workouts,0);eq(data.required_workouts,3);});",
+    "pre": "",
+    "ids": {
+      "program_id": "free_program_id"
+    },
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 12,
+    "name": "02 · Нельзя оставить отзыв до тренировок",
+    "operation": "v2_post_programs_program_id_reviews",
+    "expected": [
+      403,
+      422
+    ],
+    "gate": null,
+    "body_expression": "{overall:5,text:'too early'}",
+    "test": "",
+    "pre": "",
+    "ids": {
+      "program_id": "free_program_id"
+    },
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 12,
+    "name": "03 · Выполнить тренировку программы 1/3",
+    "operation": "v2_post_workouts_complete",
+    "expected": [
+      201
+    ],
+    "gate": null,
+    "body_expression": "J('review_workout')",
+    "test": "check('Объём занятия',()=>eq(data.metrics.volume_kg,1080));",
+    "pre": "save('review_workout_key',guid());save('review_workout',workout(J('fork')));",
+    "ids": {},
+    "idem": "review_workout_key",
+    "role": "user"
+  },
+  {
+    "stage": 12,
+    "name": "04 · Право на отзыв после 1 занятий",
+    "operation": "v2_get_programs_program_id_review_eligibility",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "check('Порог отзыва соблюдён',()=>{eq(data.completed_workouts,1);eq(data.required_workouts,3);eq(data.eligible,false);});",
+    "pre": "",
+    "ids": {
+      "program_id": "free_program_id"
+    },
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 12,
+    "name": "05 · Выполнить тренировку программы 2/3",
+    "operation": "v2_post_workouts_complete",
+    "expected": [
+      201
+    ],
+    "gate": null,
+    "body_expression": "J('review_workout')",
+    "test": "check('Объём занятия',()=>eq(data.metrics.volume_kg,1080));",
+    "pre": "save('review_workout_key',guid());save('review_workout',workout(J('fork')));",
+    "ids": {},
+    "idem": "review_workout_key",
+    "role": "user"
+  },
+  {
+    "stage": 12,
+    "name": "06 · Право на отзыв после 2 занятий",
+    "operation": "v2_get_programs_program_id_review_eligibility",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "check('Порог отзыва соблюдён',()=>{eq(data.completed_workouts,2);eq(data.required_workouts,3);eq(data.eligible,false);});",
+    "pre": "",
+    "ids": {
+      "program_id": "free_program_id"
+    },
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 12,
+    "name": "07 · Выполнить тренировку программы 3/3",
+    "operation": "v2_post_workouts_complete",
+    "expected": [
+      201
+    ],
+    "gate": null,
+    "body_expression": "J('review_workout')",
+    "test": "check('Объём занятия',()=>eq(data.metrics.volume_kg,1080));",
+    "pre": "save('review_workout_key',guid());save('review_workout',workout(J('fork')));",
+    "ids": {},
+    "idem": "review_workout_key",
+    "role": "user"
+  },
+  {
+    "stage": 12,
+    "name": "08 · Право на отзыв после 3 занятий",
+    "operation": "v2_get_programs_program_id_review_eligibility",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "check('Порог отзыва соблюдён',()=>{eq(data.completed_workouts,3);eq(data.required_workouts,3);eq(data.eligible,true);});",
+    "pre": "",
+    "ids": {
+      "program_id": "free_program_id"
+    },
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 12,
+    "name": "09 · Создать отзыв после трёх занятий",
+    "operation": "v2_post_programs_program_id_reviews",
+    "expected": [
+      201
+    ],
+    "gate": null,
+    "body_expression": "{overall:5,structure:5,description_match:4,text:'Postman verified review'}",
+    "test": "check('Сохраняем review_id',()=>{present(data.id);save('review_id',data.id);});check('Оценка и программа',()=>{eq(data.overall,5);eq(data.program_id,R('free_program_id'));});",
+    "pre": "",
+    "ids": {
+      "program_id": "free_program_id"
+    },
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 12,
+    "name": "10 · Отзывы программы",
+    "operation": "v2_get_programs_program_id_reviews",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "",
+    "pre": "",
+    "ids": {
+      "program_id": "free_program_id"
+    },
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 12,
+    "name": "11 · Чужой пользователь не меняет отзыв",
+    "operation": "v2_patch_reviews_review_id",
+    "expected": [
+      403,
+      404
+    ],
+    "gate": null,
+    "body_expression": "{overall:1,text:'hacked'}",
+    "test": "",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "stranger"
+  },
+  {
+    "stage": 12,
+    "name": "12 · Редактировать свой отзыв",
+    "operation": "v2_patch_reviews_review_id",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": "{overall:4,text:'Postman edited review'}",
+    "test": "check('Оценка обновлена',()=>eq(data.overall,4));",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 12,
+    "name": "13 · Отзывы для модерации",
+    "operation": "v2_get_admin_reviews",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "admin"
+  },
+  {
+    "stage": 12,
+    "name": "14 · Скрыть отзыв администратором",
+    "operation": "v2_patch_admin_reviews_review_id_moderation",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": "{status:'hidden',reason:'Postman moderation'}",
+    "test": "check('Отзыв hidden',()=>eq(data.status,'hidden'));",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "admin"
+  },
+  {
+    "stage": 12,
+    "name": "15 · Скрытый отзыв не виден постороннему",
+    "operation": "v2_get_programs_program_id_reviews",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "check('Скрытый отзыв исключён',()=>eq(data.items.some(x=>x.id===R('review_id')),false));",
+    "pre": "",
+    "ids": {
+      "program_id": "free_program_id"
+    },
+    "idem": null,
+    "role": "stranger"
+  },
+  {
+    "stage": 12,
+    "name": "16 · Подать жалобу на программу",
+    "operation": "v2_post_reports",
+    "expected": [
+      201
+    ],
+    "gate": null,
+    "body_expression": "{target_type:'program',target_id:R('free_program_id'),reason:'Postman report'}",
+    "test": "check('Сохраняем report_id',()=>{present(data.id);save('report_id',data.id);});",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 12,
+    "name": "17 · Жалобы для администратора",
+    "operation": "v2_get_admin_reports",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "admin"
+  },
+  {
+    "stage": 12,
+    "name": "18 · Закрыть жалобу",
+    "operation": "v2_patch_admin_reports_report_id",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": "{status:'resolved',reason:'Postman handled'}",
+    "test": "check('Жалоба resolved',()=>eq(data.status,'resolved'));",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "admin"
+  },
+  {
+    "stage": 12,
+    "name": "19 · Удалить собственный отзыв",
+    "operation": "v2_delete_reviews_review_id",
+    "expected": [
+      204
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 13,
+    "name": "01 · Подписаться на тренера",
+    "operation": "v2_put_trainers_trainer_id_follow",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "check('Подписка активна',()=>eq(data.following,true));",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 13,
+    "name": "02 · Повтор подписки",
+    "operation": "v2_put_trainers_trainer_id_follow",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "check('Подписка остаётся активной',()=>eq(data.following,true));",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 13,
+    "name": "03 · Мои тренеры без дублей",
+    "operation": "v2_get_me_trainers",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "check('Автор в списке один раз',()=>eq(data.items.filter(x=>x.id===Number(R('trainer_id'))).length,1));",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 13,
+    "name": "04 · Уведомления пользователя",
+    "operation": "v2_get_notifications",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 13,
+    "name": "05 · Отписаться от тренера",
+    "operation": "v2_delete_trainers_trainer_id_follow",
+    "expected": [
+      204
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 13,
+    "name": "06 · Отписка сохранена",
+    "operation": "v2_get_me_trainers",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "check('Автор отсутствует',()=>eq(data.items.some(x=>x.id===Number(R('trainer_id'))),false));",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 14,
+    "name": "01 · Отправить событие просмотра",
+    "operation": "v2_post_events",
+    "expected": [
+      202
+    ],
+    "gate": null,
+    "body_expression": "J('event_body')",
+    "test": "",
+    "pre": "save('event_body',{events:[{event_id:guid(),type:'view',program_id:R('free_program_id'),occurred_at:new Date().toISOString(),context:{source:'postman'}}]});",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 14,
+    "name": "02 · Повтор события с тем же event_id",
+    "operation": "v2_post_events",
+    "expected": [
+      202
+    ],
+    "gate": null,
+    "body_expression": "J('event_body')",
+    "test": "",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 14,
+    "name": "03 · Персональные рекомендации",
+    "operation": "v2_get_recommendations_programs",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "check('Список и версия модели присутствуют',()=>{pm.expect(data.items).to.be.an('array');present(data.model_version);pm.expect(data.fallback).to.be.a('boolean');});check('Каждая рекомендация объяснена',()=>data.items.forEach(x=>{present(x.program_id);pm.expect(x.reason_codes).to.be.an('array');pm.expect(x.reason_codes.length).to.be.above(0);present(x.explanation);}));",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 15,
+    "name": "01 · Персональный дашборд",
+    "operation": "v2_get_dashboard",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "check('Состояние и блоки дашборда',()=>{present(data.state);pm.expect(data.blocks).to.be.an('array');present(data.generated_at);data.blocks.forEach(b=>{present(b.id);present(b.type);pm.expect(b.priority).to.be.a('number');});});",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 15,
+    "name": "02 · Аналитика автора",
+    "operation": "v2_get_trainer_analytics",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "trainer"
+  },
+  {
+    "stage": 15,
+    "name": "03 · Аналитика администратора",
+    "operation": "v2_get_admin_analytics",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "admin"
+  },
+  {
+    "stage": 15,
+    "name": "04 · Аналитика администратора запрещена обычному пользователю",
+    "operation": "v2_get_admin_analytics",
+    "expected": [
+      403
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 16,
+    "name": "01 · Подписанный webhook выбранного провайдера",
+    "operation": "v2_post_payments_webhook",
+    "expected": [
+      200
+    ],
+    "gate": "enable_provider_tests",
+    "body_expression": "J('provider_body')",
+    "test": "",
+    "pre": "const raw=pm.environment.get('provider_webhook_body');if(!raw)throw Error('Нужны provider_webhook_body и provider_signature');if(!pm.environment.get('provider_signature'))throw Error('Нужна подпись провайдера');pm.request.headers.upsert({key:pm.environment.get('provider_signature_header')||'X-Signature',value:pm.environment.get('provider_signature')});save('provider_body',JSON.parse(raw));",
+    "ids": {},
+    "idem": null,
+    "role": null
+  },
+  {
+    "stage": 16,
+    "name": "02 · Создать выплату из тестового подтверждённого баланса",
+    "operation": "v2_post_admin_payouts",
+    "expected": [
+      201
+    ],
+    "gate": "enable_payout_tests",
+    "body_expression": "{trainer_id:Number(pm.environment.get('payout_trainer_id')),amount_minor:Number(pm.environment.get('payout_amount_minor')),currency:'RUB'}",
+    "test": "check('Сохраняем payout_id',()=>{present(data.id);save('payout_id',data.id);});",
+    "pre": "if(!pm.environment.get('payout_trainer_id')||!pm.environment.get('payout_amount_minor'))throw Error('Нужны payout_trainer_id и payout_amount_minor, тестовый доступный баланс');save('payout_key',guid());",
+    "ids": {},
+    "idem": "payout_key",
+    "role": "admin"
+  },
+  {
+    "stage": 16,
+    "name": "03 · Сверить созданную тестовую выплату",
+    "operation": "v2_patch_admin_payouts_payout_id",
+    "expected": [
+      200
+    ],
+    "gate": "enable_payout_tests",
+    "body_expression": "{action:'reconcile',reason:'Postman sandbox reconciliation'}",
+    "test": "",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "admin"
+  },
+  {
+    "stage": 16,
+    "name": "04 · Пометить доставленное уведомление прочитанным",
+    "operation": "v2_patch_notifications_notification_id",
+    "expected": [
+      200
+    ],
+    "gate": "enable_notification_tests",
+    "body_expression": "{read:true}",
+    "test": "check('Есть время прочтения',()=>present(data.read_at));",
+    "pre": "const id=pm.environment.get('notification_id');if(!id)throw Error('Нужен notification_id для пользователя этого прогона');save('notification_id',id);",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  }
+]

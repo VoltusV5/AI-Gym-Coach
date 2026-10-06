@@ -8,7 +8,10 @@ Thumbs.db
 .idea/
 client_secret.json
 .env
-docs/*
+# Local documentation QA dependencies and caches
+docs/api/.qa/
+docs/**/__pycache__/
+docs/**/*.pyc
 
 # AI (Python)
 ai/generateData/dataset*

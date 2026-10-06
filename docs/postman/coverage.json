@@ -1,0 +1,15 @@
+{
+  "contract_sha256": "73c58d5aeaa70c575bb4f04a7b3b8d34e1b200951cd39701597d839a25acebec",
+  "requests": 151,
+  "automated_requests": 147,
+  "negative_requests": 21,
+  "planned_operations": 86,
+  "automated_planned_operations": 82,
+  "fixture_only_operations": [
+    "v2_patch_admin_payouts_payout_id",
+    "v2_patch_notifications_notification_id",
+    "v2_post_admin_payouts",
+    "v2_post_payments_webhook"
+  ],
+  "backend_execution": "NOT_RUN: semester endpoints are planned; offline validation is not acceptance of backend"
+}

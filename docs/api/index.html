@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ru">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Спортик — Swagger</title>
+<link rel="stylesheet" href="vendor/swagger-ui.css">
+<style>body{margin:0;background:#f4f7ff;font-family:system-ui,sans-serif;color:#131a2a}header{padding:20px 28px;background:#131a2a;color:#fff}h1{font-size:22px;margin:0 0 8px}header p{margin:8px 0;line-height:1.5}header a{color:#accdff}nav{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}button{border:1px solid #6c768f;border-radius:8px;padding:10px 16px;background:transparent;color:white;font-size:15px;cursor:pointer}button[aria-pressed=true]{background:#3f8cff;border-color:#3f8cff}#error{color:#9b1530;padding:16px 28px}.swagger-ui .information-container{padding-top:12px}[hidden]{display:none!important}</style></head>
+<body><header><h1>Спортик — Swagger</h1>
+<p><a href="openapi.yml" download>Скачать OpenAPI YAML</a> · <a href="openapi.json" download>JSON</a> · <a href="../02_API.md">Как использовать</a></p>
+<nav aria-label="Раздел API"><button type="button" data-view="current" aria-pressed="true">Go API · сейчас</button><button type="button" data-view="ml" aria-pressed="false">ML · сейчас</button><button type="button" data-view="semester" aria-pressed="false">Новый семестр</button></nav>
+<nav id="audience" aria-label="Фильтр нового семестра" hidden><button type="button" data-audience="all" aria-pressed="true">Все</button><button type="button" data-audience="go" aria-pressed="false">Backend / Frontend</button><button type="button" data-audience="ml" aria-pressed="false">ML</button></nav></header>
+<div id="error" role="alert" hidden></div><div id="swagger-ui"></div>
+<script src="vendor/swagger-ui-bundle.js"></script>
+<script>
+const views={current:'current.json',ml:'ml.json',semester:'semester.json'};
+let revision=0;
+async function show(view,audience='all',clearHash=false){
+  if(!views[view])view='current';if(!['all','go','ml'].includes(audience))audience='all';
+  if(view!=='semester')audience='all';const ticket=++revision;
+  document.querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.view===view)));
+  document.getElementById('audience').hidden=view!=='semester';
+  document.querySelectorAll('[data-audience]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.audience===audience)));
+  document.getElementById('error').hidden=true;
+  const url=new URL(location.href);url.searchParams.set('view',view);if(audience==='all')url.searchParams.delete('audience');else url.searchParams.set('audience',audience);if(clearHash)url.hash='';history.replaceState(null,'',url);
+  try{
+    const response=await fetch(views[view],{cache:'no-store'});if(!response.ok)throw Error('HTTP '+response.status);
+    const spec=await response.json();if(ticket!==revision)return;
+    if(view==='semester'&&audience!=='all'){
+      const tags=new Set();
+      for(const [path,item] of Object.entries(spec.paths)){
+        const selected={};
+        for(const [method,op] of Object.entries(item)){
+          if(audience==='go'?op['x-service']==='go':op['x-service']?.startsWith('ml-')){selected[method]=op;(op.tags||[]).forEach(t=>tags.add(t));}
+        }
+        if(Object.keys(selected).length)spec.paths[path]=selected;else delete spec.paths[path];
+      }
+      spec.tags=(spec.tags||[]).filter(t=>tags.has(t.name));
+      const needed=new Set();
+      function collect(value){
+        if(!value||typeof value!=='object')return;
+        if(value.$ref?.startsWith('#/components/schemas/')){
+          const name=value.$ref.split('/').pop();if(!needed.has(name)){needed.add(name);collect(spec.components.schemas[name]);}
+        }
+        Object.values(value).forEach(collect);
+      }
+      collect(spec.paths);
+      spec.components.schemas=Object.fromEntries(Object.entries(spec.components.schemas).filter(([name])=>needed.has(name)));
+    }
+    SwaggerUIBundle({spec,dom_id:'#swagger-ui',deepLinking:true,filter:true,operationsSorter:(a,b)=>(a.get('operation').get('x-implementation-order')??10000)-(b.get('operation').get('x-implementation-order')??10000),displayOperationId:true,defaultModelsExpandDepth:0,docExpansion:'none',validatorUrl:null,persistAuthorization:false,supportedSubmitMethods:view==='semester'?[]:['get','post','put','patch','delete'],requestInterceptor:req=>{if(view==='semester'&&!req.loadSpec)throw Error('Метод нового семестра ещё не реализован');return req;}});
+  }catch(e){document.getElementById('error').hidden=false;document.getElementById('error').textContent='Не удалось открыть Swagger. '+e.message;}
+}
+document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>show(b.dataset.view,'all',true)));
+document.querySelectorAll('[data-audience]').forEach(b=>b.addEventListener('click',()=>show('semester',b.dataset.audience,true)));
+const initial=new URLSearchParams(location.search);show(initial.get('view')||'current',initial.get('audience')||'all');
+</script></body></html>

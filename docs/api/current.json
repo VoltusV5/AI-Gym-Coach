@@ -1,0 +1,5282 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Спортик — действующий Go API",
+    "version": "2026.10.05-2"
+  },
+  "servers": [
+    {
+      "url": "/proxy/backend",
+      "description": "Локальный Go через сервер Swagger: порт 5050"
+    },
+    {
+      "url": "http://localhost:5050",
+      "description": "Прямой локальный Go (нужен CORS)"
+    }
+  ],
+  "paths": {
+    "/api/v1/notes/{id}": {
+      "delete": {
+        "summary": "Изменить или удалить свою заметку",
+        "description": "**Действующий маршрут.** Изменить или удалить свою заметку. Форматы описаны ниже по текущему Go-коду.\n\nОшибки users/чат обычно JSON {message,error}; nutrition/middleware могут вернуть text/plain. Коды ошибок перечислены как общие возможные ответы текущего слоя.",
+        "operationId": "v1_delete_notes_id",
+        "tags": [
+          "Go v1 · Заметки"
+        ],
+        "x-status": "existing",
+        "responses": {
+          "204": {
+            "description": "Успех, без тела"
+          },
+          "400": {
+            "description": "Некорректный запрос — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Нужен действительный JWT — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Объект не найден или недоступен — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт состояния или версии — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Превышен лимит — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка текущего сервиса/зависимости — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "x-service": "go",
+        "x-source": "backend/internal/features/users/transport/http/notes.go"
+      },
+      "patch": {
+        "summary": "Изменить или удалить свою заметку",
+        "description": "**Действующий маршрут.** Изменить или удалить свою заметку. Форматы описаны ниже по текущему Go-коду.\n\nОшибки users/чат обычно JSON {message,error}; nutrition/middleware могут вернуть text/plain. Коды ошибок перечислены как общие возможные ответы текущего слоя.",
+        "operationId": "v1_patch_notes_id",
+        "tags": [
+          "Go v1 · Заметки"
+        ],
+        "x-status": "existing",
+        "responses": {
+          "200": {
+            "description": "Успешный результат",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Note"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Нужен действительный JWT — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Объект не найден или недоступен — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт состояния или версии — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Превышен лимит — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка текущего сервиса/зависимости — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NoteInput"
+              }
+            }
+          }
+        },
+        "x-service": "go",
+        "x-source": "backend/internal/features/users/transport/http/notes.go"
+      }
+    },
+    "/api/v1/nutrition/dishes/{id}": {
+      "delete": {
+        "summary": "Изменить или удалить собственное блюдо",
+        "description": "**Действующий маршрут.** Изменить или удалить собственное блюдо. Форматы описаны ниже по текущему Go-коду.\n\nОшибки users/чат обычно JSON {message,error}; nutrition/middleware могут вернуть text/plain. Коды ошибок перечислены как общие возможные ответы текущего слоя.",
+        "operationId": "v1_delete_nutrition_dishes_id",
+        "tags": [
+          "Go v1 · Питание"
+        ],
+        "x-status": "existing",
+        "responses": {
+          "204": {
+            "description": "Успех, без тела"
+          },
+          "400": {
+            "description": "Некорректный запрос — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Нужен действительный JWT — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Объект не найден или недоступен — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт состояния или версии — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Превышен лимит — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка текущего сервиса/зависимости — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "x-service": "go",
+        "x-source": "backend/internal/features/nutrition/nutrition.go"
+      },
+      "patch": {
+        "summary": "Изменить или удалить собственное блюдо",
+        "description": "**Действующий маршрут.** Изменить или удалить собственное блюдо. Форматы описаны ниже по текущему Go-коду.\n\nОшибки users/чат обычно JSON {message,error}; nutrition/middleware могут вернуть text/plain. Коды ошибок перечислены как общие возможные ответы текущего слоя.",
+        "operationId": "v1_patch_nutrition_dishes_id",
+        "tags": [
+          "Go v1 · Питание"
+        ],
+        "x-status": "existing",
+        "responses": {
+          "200": {
+            "description": "Успешный результат",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NutritionDish"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Нужен действительный JWT — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Объект не найден или недоступен — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт состояния или версии — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Превышен лимит — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка текущего сервиса/зависимости — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NutritionDishInput"
+              }
+            }
+          }
+        },
+        "x-service": "go",
+        "x-source": "backend/internal/features/nutrition/nutrition.go"
+      }
+    },
+    "/api/v1/nutrition/entries/{id}": {
+      "delete": {
+        "summary": "Изменить или удалить запись питания",
+        "description": "**Действующий маршрут.** Изменить или удалить запись питания. Форматы описаны ниже по текущему Go-коду.\n\nОшибки users/чат обычно JSON {message,error}; nutrition/middleware могут вернуть text/plain. Коды ошибок перечислены как общие возможные ответы текущего слоя.",
+        "operationId": "v1_delete_nutrition_entries_id",
+        "tags": [
+          "Go v1 · Питание"
+        ],
+        "x-status": "existing",
+        "responses": {
+          "200": {
+            "description": "Успешный результат",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OK"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Нужен действительный JWT — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Объект не найден или недоступен — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт состояния или версии — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Превышен лимит — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка текущего сервиса/зависимости — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "x-service": "go",
+        "x-source": "backend/internal/features/nutrition/nutrition.go"
+      },
+      "patch": {
+        "summary": "Изменить или удалить запись питания",
+        "description": "**Действующий маршрут.** Изменить или удалить запись питания. Форматы описаны ниже по текущему Go-коду.\n\nОшибки users/чат обычно JSON {message,error}; nutrition/middleware могут вернуть text/plain. Коды ошибок перечислены как общие возможные ответы текущего слоя.",
+        "operationId": "v1_patch_nutrition_entries_id",
+        "tags": [
+          "Go v1 · Питание"
+        ],
+        "x-status": "existing",
+        "responses": {
+          "200": {
+            "description": "Успешный результат",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OK"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Нужен действительный JWT — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Объект не найден или недоступен — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт состояния или версии — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Превышен лимит — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка текущего сервиса/зависимости — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NutritionEntryInput"
+              }
+            }
+          }
+        },
+        "x-service": "go",
+        "x-source": "backend/internal/features/nutrition/nutrition.go"
+      }
+    },
+    "/api/v1/nutrition/favorites/{id}": {
+      "delete": {
+        "summary": "Удалить избранный продукт",
+        "description": "**Действующий маршрут.** Удалить избранный продукт. Форматы описаны ниже по текущему Go-коду.\n\nОшибки users/чат обычно JSON {message,error}; nutrition/middleware могут вернуть text/plain. Коды ошибок перечислены как общие возможные ответы текущего слоя.",
+        "operationId": "v1_delete_nutrition_favorites_id",
+        "tags": [
+          "Go v1 · Питание"
+        ],
+        "x-status": "existing",
+        "responses": {
+          "200": {
+            "description": "Успешный результат",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OK"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Нужен действительный JWT — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Объект не найден или недоступен — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт состояния или версии — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Превышен лимит — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка текущего сервиса/зависимости — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "x-service": "go",
+        "x-source": "backend/internal/features/nutrition/nutrition.go"
+      }
+    },
+    "/api/v1/achievements/get_achievements": {
+      "get": {
+        "summary": "Получить открытые достижения",
+        "description": "**Действующий маршрут.** Получить открытые достижения. Форматы описаны ниже по текущему Go-коду.\n\nОшибки users/чат обычно JSON {message,error}; nutrition/middleware могут вернуть text/plain. Коды ошибок перечислены как общие возможные ответы текущего слоя.",
+        "operationId": "v1_get_achievements_get_achievements",
+        "tags": [
+          "Go v1 · Достижения"
+        ],
+        "x-status": "existing",
+        "responses": {
+          "200": {
+            "description": "Успешный результат",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AchievementsV1"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Нужен действительный JWT — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Объект не найден или недоступен — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт состояния или версии — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Превышен лимит — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка текущего сервиса/зависимости — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "x-service": "go",
+        "x-source": "backend/internal/features/users/transport/http/get_achievements.go"
+      }
+    },
+    "/api/v1/ai_chat/history": {
+      "get": {
+        "summary": "Получить последние 50 сообщений чата",
+        "description": "**Действующий маршрут.** Получить последние 50 сообщений чата. Форматы описаны ниже по текущему Go-коду.\n\nОшибки users/чат обычно JSON {message,error}; nutrition/middleware могут вернуть text/plain. Коды ошибок перечислены как общие возможные ответы текущего слоя.",
+        "operationId": "v1_get_ai_chat_history",
+        "tags": [
+          "Go v1 · AI-чат"
+        ],
+        "x-status": "existing",
+        "responses": {
+          "200": {
+            "description": "Последние 50 сообщений",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChatMessage"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Нужен действительный JWT — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Объект не найден или недоступен — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт состояния или версии — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Превышен лимит — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка текущего сервиса/зависимости — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "x-service": "go",
+        "x-source": "backend/internal/features/mlclient/aichat/service.go"
+      }
+    },
+    "/api/v1/notes": {
+      "get": {
+        "summary": "Личные заметки",
+        "description": "**Действующий маршрут.** Личные заметки. Форматы описаны ниже по текущему Go-коду.\n\nОшибки users/чат обычно JSON {message,error}; nutrition/middleware могут вернуть text/plain. Коды ошибок перечислены как общие возможные ответы текущего слоя.",
+        "operationId": "v1_get_notes",
+        "tags": [
+          "Go v1 · Заметки"
+        ],
+        "x-status": "existing",
+        "responses": {
+          "200": {
+            "description": "Успешный результат",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotesV1"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Нужен действительный JWT — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Объект не найден или недоступен — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт состояния или версии — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Превышен лимит — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка текущего сервиса/зависимости — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "x-service": "go",
+        "x-source": "backend/internal/features/users/transport/http/notes.go"
+      },
+      "post": {
+        "summary": "Личные заметки",
+        "description": "**Действующий маршрут.** Личные заметки. Форматы описаны ниже по текущему Go-коду.\n\nОшибки users/чат обычно JSON {message,error}; nutrition/middleware могут вернуть text/plain. Коды ошибок перечислены как общие возможные ответы текущего слоя.",
+        "operationId": "v1_post_notes",
+        "tags": [
+          "Go v1 · Заметки"
+        ],
+        "x-status": "existing",
+        "responses": {
+          "200": {
+            "description": "Успешный результат",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Note"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Нужен действительный JWT — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Объект не найден или недоступен — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт состояния или версии — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Превышен лимит — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка текущего сервиса/зависимости — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NoteInput"
+              }
+            }
+          }
+        },
+        "x-service": "go",
+        "x-source": "backend/internal/features/users/transport/http/notes.go"
+      }
+    },
+    "/api/v1/nutrition/analytics": {
+      "get": {
+        "summary": "Получить ряды питания, воды и веса",
+        "description": "**Действующий маршрут.** Дневные серии питания, веса и воды. days default 30; текущий Go группирует food по DATE(consumed_at) в БД, а dashboard по Europe/Moscow. Не считать эти временные границы одинаковыми автоматически.\n\nОшибки users/чат обычно JSON {message,error}; nutrition/middleware могут вернуть text/plain. Коды ошибок перечислены как общие возможные ответы текущего слоя.",
+        "operationId": "v1_get_nutrition_analytics",
+        "tags": [
+          "Go v1 · Питание"
+        ],
+        "x-status": "existing",
+        "responses": {
+          "200": {
+            "description": "Успешный результат",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NutritionAnalytics"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Нужен действительный JWT — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Объект не найден или недоступен — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт состояния или версии — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Превышен лимит — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка текущего сервиса/зависимости — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 4000,
+              "default": 30
+            }
+          }
+        ],
+        "x-service": "go",
+        "x-source": "backend/internal/features/nutrition/nutrition.go"
+      }
+    },
+    "/api/v1/nutrition/dashboard": {
+      "get": {
+        "summary": "Получить дневную сводку питания",
+        "description": "**Действующий маршрут.** Получить дневную сводку питания. Форматы описаны ниже по текущему Go-коду.\n\nОшибки users/чат обычно JSON {message,error}; nutrition/middleware могут вернуть text/plain. Коды ошибок перечислены как общие возможные ответы текущего слоя.",
+        "operationId": "v1_get_nutrition_dashboard",
+        "tags": [
+          "Go v1 · Питание"
+        ],
+        "x-status": "existing",
+        "responses": {
+          "200": {
+            "description": "Успешный результат",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NutritionDashboard"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Нужен действительный JWT — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Объект не найден или недоступен — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт состояния или версии — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Превышен лимит — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка текущего сервиса/зависимости — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "day",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "x-service": "go",
+        "x-source": "backend/internal/features/nutrition/nutrition.go"
+      }
+    },
+    "/api/v1/nutrition/dishes/mine": {
+      "get": {
+        "summary": "Получить собственные блюда",
+        "description": "**Действующий маршрут.** Получить собственные блюда. Форматы описаны ниже по текущему Go-коду.\n\nОшибки users/чат обычно JSON {message,error}; nutrition/middleware могут вернуть text/plain. Коды ошибок перечислены как общие возможные ответы текущего слоя.",
+        "operationId": "v1_get_nutrition_dishes_mine",
+        "tags": [
+          "Go v1 · Питание"
+        ],
+        "x-status": "existing",
+        "responses": {
+          "200": {
+            "description": "Успешный результат",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NutritionDishes"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Нужен действительный JWT — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Объект не найден или недоступен — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт состояния или версии — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Превышен лимит — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка текущего сервиса/зависимости — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "x-service": "go",
+        "x-source": "backend/internal/features/nutrition/nutrition.go"
+      }
+    },
+    "/api/v1/nutrition/dishes/search": {
+      "get": {
+        "summary": "Найти блюда",
+        "description": "**Действующий маршрут.** Найти блюда. Форматы описаны ниже по текущему Go-коду.\n\nОшибки users/чат обычно JSON {message,error}; nutrition/middleware могут вернуть text/plain. Коды ошибок перечислены как общие возможные ответы текущего слоя.",
+        "operationId": "v1_get_nutrition_dishes_search",
+        "tags": [
+          "Go v1 · Питание"
+        ],
+        "x-status": "existing",
+        "responses": {
+          "200": {
+            "description": "Успешный результат",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NutritionDishes"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Нужен действительный JWT — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Объект не найден или недоступен — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт состояния или версии — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Превышен лимит — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка текущего сервиса/зависимости — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 30
+            }
+          }
+        ],
+        "x-service": "go",
+        "x-source": "backend/internal/features/nutrition/nutrition.go"
+      }
+    },
+    "/api/v1/nutrition/entries": {
+      "get": {
+        "summary": "Дневник питания",
+        "description": "**Действующий маршрут.** Дневник питания. Форматы описаны ниже по текущему Go-коду.\n\nОшибки users/чат обычно JSON {message,error}; nutrition/middleware могут вернуть text/plain. Коды ошибок перечислены как общие возможные ответы текущего слоя.",
+        "operationId": "v1_get_nutrition_entries",
+        "tags": [
+          "Go v1 · Питание"
+        ],
+        "x-status": "existing",
+        "responses": {
+          "200": {
+            "description": "Успешный результат",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NutritionEntries"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Нужен действительный JWT — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Объект не найден или недоступен — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт состояния или версии — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Превышен лимит — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка текущего сервиса/зависимости — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "day",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "x-service": "go",
+        "x-source": "backend/internal/features/nutrition/nutrition.go"
+      },
+      "post": {
+        "summary": "Дневник питания",
+        "description": "**Действующий маршрут.** Дневник питания. Форматы описаны ниже по текущему Go-коду.\n\nОшибки users/чат обычно JSON {message,error}; nutrition/middleware могут вернуть text/plain. Коды ошибок перечислены как общие возможные ответы текущего слоя.",
+        "operationId": "v1_post_nutrition_entries",
+        "tags": [
+          "Go v1 · Питание"
+        ],
+        "x-status": "existing",
+        "responses": {
+          "200": {
+            "description": "Успешный результат",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NutritionEntry"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Нужен действительный JWT — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Объект не найден или недоступен — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт состояния или версии — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Превышен лимит — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка текущего сервиса/зависимости — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NutritionEntryInput"
+              }
+            }
+          }
+        },
+        "x-service": "go",
+        "x-source": "backend/internal/features/nutrition/nutrition.go"
+      }
+    },
+    "/api/v1/nutrition/favorites": {
+      "get": {
+        "summary": "Избранные продукты",
+        "description": "**Действующий маршрут.** Избранные продукты. Форматы описаны ниже по текущему Go-коду.\n\nОшибки users/чат обычно JSON {message,error}; nutrition/middleware могут вернуть text/plain. Коды ошибок перечислены как общие возможные ответы текущего слоя.",
+        "operationId": "v1_get_nutrition_favorites",
+        "tags": [
+          "Go v1 · Питание"
+        ],
+        "x-status": "existing",
+        "responses": {
+          "200": {
+            "description": "Успешный результат",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NutritionFavorites"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Нужен действительный JWT — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Объект не найден или недоступен — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт состояния или версии — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Превышен лимит — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка текущего сервиса/зависимости — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "x-service": "go",
+        "x-source": "backend/internal/features/nutrition/nutrition.go"
+      },
+      "post": {
+        "summary": "Избранные продукты",
+        "description": "**Действующий маршрут.** Избранные продукты. Форматы описаны ниже по текущему Go-коду.\n\nОшибки users/чат обычно JSON {message,error}; nutrition/middleware могут вернуть text/plain. Коды ошибок перечислены как общие возможные ответы текущего слоя.",
+        "operationId": "v1_post_nutrition_favorites",
+        "tags": [
+          "Go v1 · Питание"
+        ],
+        "x-status": "existing",
+        "responses": {
+          "200": {
+            "description": "Успешный результат",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatedOK"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Нужен действительный JWT — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Объект не найден или недоступен — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт состояния или версии — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Превышен лимит — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка текущего сервиса/зависимости — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NutritionFavoriteInput"
+              }
+            }
+          }
+        },
+        "x-service": "go",
+        "x-source": "backend/internal/features/nutrition/nutrition.go"
+      }
+    },
+    "/api/v1/nutrition/goals": {
+      "get": {
+        "summary": "Получить цели БЖУ и калорий",
+        "description": "**Действующий маршрут.** При отсутствии целей пытается рассчитать по профилю; если это невозможно, может вернуть 204 без тела.\n\nОшибки users/чат обычно JSON {message,error}; nutrition/middleware могут вернуть text/plain. Коды ошибок перечислены как общие возможные ответы текущего слоя.",
+        "operationId": "v1_get_nutrition_goals",
+        "tags": [
+          "Go v1 · Питание"
+        ],
+        "x-status": "existing",
+        "responses": {
+          "200": {
+            "description": "Успешный результат",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NutritionGoal"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Цели отсутствуют, пересчёт невозможен; тела нет"
+          },
+          "400": {
+            "description": "Некорректный запрос — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Нужен действительный JWT — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Объект не найден или недоступен — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт состояния или версии — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Превышен лимит — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка текущего сервиса/зависимости — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "x-service": "go",
+        "x-source": "backend/internal/features/nutrition/nutrition.go"
+      }
+    },
+    "/api/v1/nutrition/stats": {
+      "get": {
+        "summary": "Сводка сегодня и средние за 7/30 дней",
+        "description": "**Действующий маршрут.** Сводка сегодня и средние за 7/30 дней. Форматы описаны ниже по текущему Go-коду.\n\nОшибки users/чат обычно JSON {message,error}; nutrition/middleware могут вернуть text/plain. Коды ошибок перечислены как общие возможные ответы текущего слоя.",
+        "operationId": "v1_get_nutrition_stats",
+        "tags": [
+          "Go v1 · Питание"
+        ],
+        "x-status": "existing",
+        "responses": {
+          "200": {
+            "description": "Успешный результат",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NutritionStats"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Нужен действительный JWT — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Объект не найден или недоступен — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт состояния или версии — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Превышен лимит — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка текущего сервиса/зависимости — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "x-service": "go",
+        "x-source": "backend/internal/features/nutrition/nutrition.go"
+      }
+    },
+    "/api/v1/profile": {
+      "get": {
+        "summary": "Профиль пользователя",
+        "description": "**Действующий маршрут.** GET возвращает текущую анкету. POST принимает изменяемые поля с обязательной числовой version. Пустое изменение даёт 400, несовпадение версии — 409.\n\nОшибки users/чат обычно JSON {message,error}; nutrition/middleware могут вернуть text/plain. Коды ошибок перечислены как общие возможные ответы текущего слоя.",
+        "operationId": "v1_get_profile",
+        "tags": [
+          "Go v1 · Профиль"
+        ],
+        "x-status": "existing",
+        "responses": {
+          "200": {
+            "description": "Успешный результат",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Profile"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Нужен действительный JWT — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Объект не найден или недоступен — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт состояния или версии — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Превышен лимит — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка текущего сервиса/зависимости — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "x-service": "go",
+        "x-source": "backend/internal/features/users/transport/http"
+      },
+      "post": {
+        "summary": "Профиль пользователя",
+        "description": "**Действующий маршрут.** GET возвращает текущую анкету. POST принимает изменяемые поля с обязательной числовой version. Пустое изменение даёт 400, несовпадение версии — 409.\n\nОшибки users/чат обычно JSON {message,error}; nutrition/middleware могут вернуть text/plain. Коды ошибок перечислены как общие возможные ответы текущего слоя.",
+        "operationId": "v1_post_profile",
+        "tags": [
+          "Go v1 · Профиль"
+        ],
+        "x-status": "existing",
+        "responses": {
+          "200": {
+            "description": "Успешный результат",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Profile"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Нужен действительный JWT — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Объект не найден или недоступен — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт состояния или версии — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Превышен лимит — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка текущего сервиса/зависимости — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfileUpdate"
+              }
+            }
+          }
+        },
+        "x-service": "go",
+        "x-source": "backend/internal/features/users/transport/http"
+      }
+    },
+    "/api/v1/ai_chat/generate_answer": {
+      "post": {
+        "summary": "Получить поток ответа AI-тренера",
+        "description": "**Действующий маршрут.** Go добавляет профиль и план и обращается к Python. Ответ — text/plain поток из текущего ML, не обязательно SSE. Не парсить как JSON. Лимит 30/мин на пользователя. После начала потока HTTP status нельзя изменить; завершение соединения не доказывает полный ответ.\n\nОшибки users/чат обычно JSON {message,error}; nutrition/middleware могут вернуть text/plain. Коды ошибок перечислены как общие возможные ответы текущего слоя.",
+        "operationId": "v1_post_ai_chat_generate_answer",
+        "tags": [
+          "Go v1 · AI-чат"
+        ],
+        "x-status": "existing",
+        "responses": {
+          "200": {
+            "description": "Текстовый поток; Content-Type берётся из ML upstream",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/event-stream": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Нужен действительный JWT — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Объект не найден или недоступен — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт состояния или версии — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Превышен лимит — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка текущего сервиса/зависимости — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatInput"
+              }
+            }
+          }
+        },
+        "x-service": "go",
+        "x-source": "backend/internal/features/mlclient/aichat/service.go"
+      }
+    },
+    "/api/v1/auth/change-password": {
+      "post": {
+        "summary": "Изменить пароль",
+        "description": "**Действующий маршрут.** Изменить пароль. Форматы описаны ниже по текущему Go-коду.\n\nОшибки users/чат обычно JSON {message,error}; nutrition/middleware могут вернуть text/plain. Коды ошибок перечислены как общие возможные ответы текущего слоя.",
+        "operationId": "v1_post_auth_change_password",
+        "tags": [
+          "Go v1 · Авторизация"
+        ],
+        "x-status": "existing",
+        "responses": {
+          "204": {
+            "description": "Успех, без тела"
+          },
+          "400": {
+            "description": "Некорректный запрос — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Нужен действительный JWT — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Объект не найден или недоступен — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт состояния или версии — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Превышен лимит — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка текущего сервиса/зависимости — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordInput"
+              }
+            }
+          }
+        },
+        "x-service": "go",
+        "x-source": "backend/internal/features/users/transport/http"
+      }
+    },
+    "/api/v1/auth/guest": {
+      "post": {
+        "summary": "Создать гостевую учётную запись",
+        "description": "**Действующий маршрут.** Без JWT. Создаёт пользователя и возвращает гостевой JWT. Лимит 10 запросов в минуту. Это запись в БД, не просмотр.\n\nОшибки users/чат обычно JSON {message,error}; nutrition/middleware могут вернуть text/plain. Коды ошибок перечислены как общие возможные ответы текущего слоя.",
+        "operationId": "v1_post_auth_guest",
+        "tags": [
+          "Go v1 · Авторизация"
+        ],
+        "x-status": "existing",
+        "responses": {
+          "200": {
+            "description": "Успешный результат",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Token"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Нужен действительный JWT — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Объект не найден или недоступен — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт состояния или версии — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Превышен лимит — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка текущего сервиса/зависимости — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "x-service": "go",
+        "x-source": "backend/internal/features/users/transport/http"
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "summary": "Войти по email и паролю",
+        "description": "**Действующий маршрут.** Без JWT. Возвращает JWT и сокращённые данные пользователя. Лимит 30/мин.\n\nОшибки users/чат обычно JSON {message,error}; nutrition/middleware могут вернуть text/plain. Коды ошибок перечислены как общие возможные ответы текущего слоя.",
+        "operationId": "v1_post_auth_login",
+        "tags": [
+          "Go v1 · Авторизация"
+        ],
+        "x-status": "existing",
+        "responses": {
+          "200": {
+            "description": "Успешный результат",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Нужен действительный JWT — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Объект не найден или недоступен — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт состояния или версии — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Превышен лимит — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка текущего сервиса/зависимости — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Credentials"
+              }
+            }
+          }
+        },
+        "security": [],
+        "x-service": "go",
+        "x-source": "backend/internal/features/users/transport/http"
+      }
+    },
+    "/api/v1/auth/register": {
+      "post": {
+        "summary": "Зарегистрировать текущего гостя",
+        "description": "**Действующий маршрут.** Нужен JWT анонимного пользователя. Преобразует текущего гостя, сохраняя его данные; JWT зарегистрированного пользователя здесь даёт 409. Лимит 20/мин. frontend name сейчас не используется Go DTO.\n\nОшибки users/чат обычно JSON {message,error}; nutrition/middleware могут вернуть text/plain. Коды ошибок перечислены как общие возможные ответы текущего слоя.",
+        "operationId": "v1_post_auth_register",
+        "tags": [
+          "Go v1 · Авторизация"
+        ],
+        "x-status": "existing",
+        "responses": {
+          "200": {
+            "description": "Успешный результат",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Нужен действительный JWT — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Объект не найден или недоступен — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт состояния или версии — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Превышен лимит — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка текущего сервиса/зависимости — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Credentials"
+              }
+            }
+          }
+        },
+        "x-service": "go",
+        "x-source": "backend/internal/features/users/transport/http"
+      }
+    },
+    "/api/v1/nutrition/dishes": {
+      "post": {
+        "summary": "Создать или обновить блюдо по названию",
+        "description": "**Действующий маршрут.** Создать или обновить блюдо по названию. Форматы описаны ниже по текущему Go-коду.\n\nОшибки users/чат обычно JSON {message,error}; nutrition/middleware могут вернуть text/plain. Коды ошибок перечислены как общие возможные ответы текущего слоя.",
+        "operationId": "v1_post_nutrition_dishes",
+        "tags": [
+          "Go v1 · Питание"
+        ],
+        "x-status": "existing",
+        "responses": {
+          "200": {
+            "description": "Успешный результат",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NutritionDish"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Нужен действительный JWT — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Объект не найден или недоступен — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт состояния или версии — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Превышен лимит — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка текущего сервиса/зависимости — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NutritionDishInput"
+              }
+            }
+          }
+        },
+        "x-service": "go",
+        "x-source": "backend/internal/features/nutrition/nutrition.go"
+      }
+    },
+    "/api/v1/nutrition/goals/recalculate": {
+      "post": {
+        "summary": "Пересчитать цели по профилю",
+        "description": "**Действующий маршрут.** Пересчитать цели по профилю. Форматы описаны ниже по текущему Go-коду.\n\nОшибки users/чат обычно JSON {message,error}; nutrition/middleware могут вернуть text/plain. Коды ошибок перечислены как общие возможные ответы текущего слоя.",
+        "operationId": "v1_post_nutrition_goals_recalculate",
+        "tags": [
+          "Go v1 · Питание"
+        ],
+        "x-status": "existing",
+        "responses": {
+          "200": {
+            "description": "Успешный результат",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NutritionGoal"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Нужен действительный JWT — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Объект не найден или недоступен — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт состояния или версии — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Превышен лимит — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка текущего сервиса/зависимости — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NutritionGoalInput"
+              }
+            }
+          }
+        },
+        "x-service": "go",
+        "x-source": "backend/internal/features/nutrition/nutrition.go"
+      }
+    },
+    "/api/v1/nutrition/water": {
+      "post": {
+        "summary": "Установить дневное количество воды",
+        "description": "**Действующий маршрут.** Установить дневное количество воды. Форматы описаны ниже по текущему Go-коду.\n\nОшибки users/чат обычно JSON {message,error}; nutrition/middleware могут вернуть text/plain. Коды ошибок перечислены как общие возможные ответы текущего слоя.",
+        "operationId": "v1_post_nutrition_water",
+        "tags": [
+          "Go v1 · Питание"
+        ],
+        "x-status": "existing",
+        "responses": {
+          "200": {
+            "description": "Успешный результат",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OK"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Нужен действительный JWT — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Объект не найден или недоступен — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт состояния или версии — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Превышен лимит — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка текущего сервиса/зависимости — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NutritionWaterInput"
+              }
+            }
+          }
+        },
+        "x-service": "go",
+        "x-source": "backend/internal/features/nutrition/nutrition.go"
+      }
+    },
+    "/api/v1/nutrition/weight": {
+      "post": {
+        "summary": "Сохранить измерение веса за день",
+        "description": "**Действующий маршрут.** Сохранить измерение веса за день. Форматы описаны ниже по текущему Go-коду.\n\nОшибки users/чат обычно JSON {message,error}; nutrition/middleware могут вернуть text/plain. Коды ошибок перечислены как общие возможные ответы текущего слоя.",
+        "operationId": "v1_post_nutrition_weight",
+        "tags": [
+          "Go v1 · Питание"
+        ],
+        "x-status": "existing",
+        "responses": {
+          "200": {
+            "description": "Успешный результат",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OK"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Нужен действительный JWT — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Объект не найден или недоступен — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт состояния или версии — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Превышен лимит — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка текущего сервиса/зависимости — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NutritionWeightInput"
+              }
+            }
+          }
+        },
+        "x-service": "go",
+        "x-source": "backend/internal/features/nutrition/nutrition.go"
+      }
+    },
+    "/api/v1/plans/generate": {
+      "post": {
+        "summary": "Сгенерировать и сохранить текущий план",
+        "description": "**Действующий маршрут.** Тело не требуется: профиль берётся из PostgreSQL. Go вызывает ML /plan/user с deadline 52 секунды, подбирает упражнения и сохраняет текущий план. exercises[][] — альтернативы упражнения в слоте, не подходы. Это изменяет текущую программу.\n\nОшибки users/чат обычно JSON {message,error}; nutrition/middleware могут вернуть text/plain. Коды ошибок перечислены как общие возможные ответы текущего слоя.",
+        "operationId": "v1_post_plans_generate",
+        "tags": [
+          "Go v1 · AI-план"
+        ],
+        "x-status": "existing",
+        "responses": {
+          "200": {
+            "description": "Успешный результат",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanV1"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Нужен действительный JWT — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Объект не найден или недоступен — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт состояния или версии — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Превышен лимит — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка текущего сервиса/зависимости — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "x-service": "go",
+        "x-source": "backend/internal/features/users/service/generate_plan.go"
+      }
+    },
+    "/api/v1/workouts/complete": {
+      "post": {
+        "summary": "Сохранить результаты тренировки",
+        "description": "**Действующий маршрут.** Сохраняет фактические подходы, обновляет веса и достижения. saved_id генерируется из текущего времени; идемпотентность не гарантирована. plan_updates не включён в HTTP-ответ.\n\nОшибки users/чат обычно JSON {message,error}; nutrition/middleware могут вернуть text/plain. Коды ошибок перечислены как общие возможные ответы текущего слоя.",
+        "operationId": "v1_post_workouts_complete",
+        "tags": [
+          "Go v1 · Тренировки"
+        ],
+        "x-status": "existing",
+        "responses": {
+          "200": {
+            "description": "Успешный результат",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkoutResultV1"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Нужен действительный JWT — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Объект не найден или недоступен — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт состояния или версии — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Превышен лимит — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка текущего сервиса/зависимости — возможный общий ответ; не все коды применимы к каждой операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV1"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkoutV1"
+              }
+            }
+          }
+        },
+        "x-service": "go",
+        "x-source": "backend/internal/features/users/transport/http/complete_workout.go"
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "ErrorV1": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "error": {
+            "type": "string"
+          }
+        }
+      },
+      "Credentials": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 200
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 72
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ],
+        "example": {
+          "email": "user@example.com",
+          "password": "example-password"
+        }
+      },
+      "Token": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ]
+      },
+      "AuthResponse": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string"
+          },
+          "user": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer"
+              },
+              "email": {
+                "type": "string",
+                "nullable": true
+              },
+              "is_anonymous": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        "required": [
+          "token",
+          "user"
+        ]
+      },
+      "Profile": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "user_id": {
+            "type": "integer"
+          },
+          "version": {
+            "type": "integer"
+          },
+          "age": {
+            "type": "integer",
+            "nullable": true
+          },
+          "gender": {
+            "type": "string",
+            "nullable": true
+          },
+          "height_cm": {
+            "type": "integer",
+            "nullable": true
+          },
+          "weight_kg": {
+            "type": "integer",
+            "nullable": true
+          },
+          "activity_level": {
+            "type": "string",
+            "nullable": true
+          },
+          "injuries_notes": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "goal": {
+            "type": "string",
+            "nullable": true
+          },
+          "fitness_level": {
+            "type": "string",
+            "nullable": true
+          },
+          "training_days_map": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "NoteInput": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          }
+        },
+        "description": "Пустые title/body принимаются транспортным слоем; ограничения сервиса применяются отдельно."
+      },
+      "Note": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "version": {
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "user_id": {
+            "type": "integer"
+          },
+          "deleted_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "SetV1": {
+        "type": "object",
+        "properties": {
+          "weight_kg": {
+            "type": "number",
+            "minimum": 0
+          },
+          "reps": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "weight_kg",
+          "reps"
+        ]
+      },
+      "WorkoutV1": {
+        "type": "object",
+        "properties": {
+          "day_code": {
+            "type": "string"
+          },
+          "finished_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "slots": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "properties": {
+                "slot_index": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "exercise_id": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "sets": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "$ref": "#/components/schemas/SetV1"
+                  }
+                }
+              },
+              "required": [
+                "slot_index",
+                "exercise_id",
+                "sets"
+              ]
+            }
+          }
+        },
+        "required": [
+          "day_code",
+          "finished_at",
+          "slots"
+        ],
+        "example": {
+          "day_code": "A",
+          "finished_at": "2026-10-05T15:00:00Z",
+          "slots": [
+            {
+              "slot_index": 0,
+              "exercise_id": 46,
+              "sets": [
+                {
+                  "weight_kg": 60,
+                  "reps": 10
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "WorkoutResultV1": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "saved_id": {
+            "type": "string"
+          },
+          "new_achievements": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer"
+                },
+                "title": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "session_highlights": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "exercise_id": {
+                  "type": "integer"
+                },
+                "exercise_name": {
+                  "type": "string"
+                },
+                "metric": {
+                  "type": "string"
+                },
+                "previous": {
+                  "type": "number"
+                },
+                "current": {
+                  "type": "number"
+                },
+                "delta_percent": {
+                  "type": "number"
+                },
+                "message_key": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "ExerciseV1": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "exercise_name": {
+            "type": "string"
+          },
+          "weight": {
+            "type": "number",
+            "nullable": true
+          },
+          "image_url": {
+            "type": "string",
+            "nullable": true
+          },
+          "video_url": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "PlanV1": {
+        "type": "object",
+        "properties": {
+          "split": {
+            "type": "string"
+          },
+          "plan": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "day": {
+                  "type": "string"
+                },
+                "day_name": {
+                  "type": "string"
+                },
+                "exercises": {
+                  "type": "array",
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/ExerciseV1"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "ChatMessage": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "user",
+              "assistant"
+            ]
+          },
+          "content": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "role",
+          "content"
+        ]
+      },
+      "ChatInput": {
+        "type": "object",
+        "properties": {
+          "model": {
+            "type": "string"
+          },
+          "messages": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/ChatMessage"
+            }
+          }
+        },
+        "required": [
+          "model",
+          "messages"
+        ],
+        "example": {
+          "model": "default",
+          "messages": [
+            {
+              "role": "user",
+              "content": "Как заменить упражнение в моём плане?"
+            }
+          ]
+        }
+      },
+      "ProfileUpdate": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer"
+          },
+          "age": {
+            "type": "integer",
+            "nullable": true
+          },
+          "gender": {
+            "type": "string",
+            "nullable": true
+          },
+          "height_cm": {
+            "type": "integer",
+            "nullable": true
+          },
+          "weight_kg": {
+            "type": "integer",
+            "nullable": true
+          },
+          "activity_level": {
+            "type": "string",
+            "nullable": true
+          },
+          "injuries_notes": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "goal": {
+            "type": "string",
+            "nullable": true
+          },
+          "fitness_level": {
+            "type": "string",
+            "nullable": true
+          },
+          "training_days_map": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "example": {
+          "version": 1,
+          "age": 26,
+          "height_cm": 175,
+          "weight_kg": 75,
+          "goal": "Набрать мышцы",
+          "fitness_level": "новичок",
+          "training_days_map": [
+            "Пн",
+            "Ср",
+            "Пт"
+          ]
+        }
+      },
+      "PasswordInput": {
+        "type": "object",
+        "properties": {
+          "current_password": {
+            "type": "string"
+          },
+          "new_password": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 72
+          }
+        },
+        "required": [
+          "new_password"
+        ]
+      },
+      "NotesV1": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Note"
+            },
+            "nullable": true
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "AchievementV1": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "unlocked_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AchievementsV1": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/AchievementV1"
+        }
+      },
+      "OK": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ok"
+        ]
+      },
+      "CreatedOK": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "ok": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "ok"
+        ]
+      },
+      "Macros": {
+        "type": "object",
+        "properties": {
+          "protein_g": {
+            "type": "number"
+          },
+          "fat_g": {
+            "type": "number"
+          },
+          "carbs_g": {
+            "type": "number"
+          },
+          "calories": {
+            "type": "number"
+          }
+        }
+      },
+      "NutritionEntryInput": {
+        "type": "object",
+        "properties": {
+          "dish_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "grams": {
+            "type": "number",
+            "nullable": true
+          },
+          "meal_type": {
+            "type": "string",
+            "default": "snack",
+            "description": "breakfast/lunch/dinner/snack; неизвестное значение превращается в snack"
+          },
+          "title": {
+            "type": "string"
+          },
+          "protein_g": {
+            "type": "number"
+          },
+          "fat_g": {
+            "type": "number"
+          },
+          "carbs_g": {
+            "type": "number"
+          },
+          "calories": {
+            "type": "number",
+            "nullable": true
+          },
+          "consumed_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "day": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        "required": [
+          "protein_g",
+          "fat_g",
+          "carbs_g"
+        ],
+        "description": "БЖУ обязательны даже при dish_id. POST масштабирует пищевую ценность по grams; при dish_id берёт значения блюда. day имеет приоритет над consumed_at; использует Europe/Moscow. grams по умолчанию 100. PATCH — не произвольный partial update: БЖУ также обязательны.",
+        "example": {
+          "title": "Куриная грудка",
+          "grams": 150,
+          "meal_type": "lunch",
+          "protein_g": 22.5,
+          "fat_g": 1.9,
+          "carbs_g": 0,
+          "day": "2026-10-05"
+        }
+      },
+      "NutritionEntry": {
+        "type": "object",
+        "properties": {
+          "protein_g": {
+            "type": "number"
+          },
+          "fat_g": {
+            "type": "number"
+          },
+          "carbs_g": {
+            "type": "number"
+          },
+          "calories": {
+            "type": "number"
+          },
+          "id": {
+            "type": "integer"
+          },
+          "dish_id": {
+            "type": "integer"
+          },
+          "grams": {
+            "type": "number"
+          },
+          "meal_type": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "consumed_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "NutritionEntries": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NutritionEntry"
+            }
+          },
+          "day": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        "required": [
+          "items",
+          "day"
+        ]
+      },
+      "NutritionFavoriteInput": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "protein_g": {
+            "type": "number"
+          },
+          "fat_g": {
+            "type": "number"
+          },
+          "carbs_g": {
+            "type": "number"
+          },
+          "unit_type": {
+            "type": "string",
+            "default": "gram"
+          }
+        },
+        "required": [
+          "protein_g",
+          "fat_g",
+          "carbs_g"
+        ]
+      },
+      "NutritionFavorite": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "protein_g": {
+            "type": "number"
+          },
+          "fat_g": {
+            "type": "number"
+          },
+          "carbs_g": {
+            "type": "number"
+          },
+          "unit_type": {
+            "type": "string"
+          }
+        }
+      },
+      "NutritionFavorites": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NutritionFavorite"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "NutritionGoal": {
+        "type": "object",
+        "properties": {
+          "protein_g": {
+            "type": "number"
+          },
+          "fat_g": {
+            "type": "number"
+          },
+          "carbs_g": {
+            "type": "number"
+          },
+          "calories": {
+            "type": "number"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "NutritionGoalInput": {
+        "type": "object",
+        "properties": {
+          "target": {
+            "type": "string"
+          },
+          "target_delta_kg": {
+            "type": "number",
+            "nullable": true
+          }
+        },
+        "description": "Пересчёт по профилю. Параметры необязательны; неизвестный target обрабатывается текущими правилами сервиса."
+      },
+      "NutritionStats": {
+        "type": "object",
+        "properties": {
+          "day": {
+            "$ref": "#/components/schemas/Macros"
+          },
+          "week_avg": {
+            "$ref": "#/components/schemas/Macros"
+          },
+          "month_avg": {
+            "$ref": "#/components/schemas/Macros"
+          }
+        }
+      },
+      "NutritionDishInput": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "protein_g": {
+            "type": "number"
+          },
+          "fat_g": {
+            "type": "number"
+          },
+          "carbs_g": {
+            "type": "number"
+          },
+          "calories": {
+            "type": "number"
+          },
+          "base_grams": {
+            "type": "number",
+            "default": 100
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "description": "PATCH требует title; отсутствующие БЖУ превращаются в 0, это не partial PATCH. calories по умолчанию рассчитываются как 4P+9F+4C. При POST существующее название обновляет общую запись через upsert."
+      },
+      "NutritionDish": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "protein_g": {
+            "type": "number"
+          },
+          "fat_g": {
+            "type": "number"
+          },
+          "carbs_g": {
+            "type": "number"
+          },
+          "calories": {
+            "type": "number"
+          },
+          "base_grams": {
+            "type": "number"
+          }
+        }
+      },
+      "NutritionDishes": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NutritionDish"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "NutritionWaterInput": {
+        "type": "object",
+        "properties": {
+          "amount_ml": {
+            "type": "integer"
+          },
+          "day": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        "description": "Заменяет итог за день, не прибавляет. Отрицательное количество превращается в 0; невалидная дата заменяется текущей датой Moscow."
+      },
+      "NutritionWeightInput": {
+        "type": "object",
+        "properties": {
+          "weight_kg": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true
+          },
+          "day": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        "required": [
+          "weight_kg"
+        ]
+      },
+      "NutritionDashboard": {
+        "type": "object",
+        "properties": {
+          "day": {
+            "type": "string",
+            "format": "date"
+          },
+          "today": {
+            "$ref": "#/components/schemas/Macros"
+          },
+          "goal": {
+            "type": "object",
+            "properties": {
+              "protein_g": {
+                "type": "number"
+              },
+              "fat_g": {
+                "type": "number"
+              },
+              "carbs_g": {
+                "type": "number"
+              },
+              "calories": {
+                "type": "number"
+              },
+              "remaining_calories": {
+                "type": "number"
+              }
+            }
+          },
+          "water": {
+            "type": "object",
+            "properties": {
+              "amount_ml": {
+                "type": "integer"
+              },
+              "goal_ml": {
+                "type": "integer"
+              },
+              "goal_liters": {
+                "type": "number"
+              }
+            }
+          },
+          "weight": {
+            "type": "object",
+            "properties": {
+              "last_weight_kg": {
+                "type": "number",
+                "nullable": true
+              },
+              "last_weight_day": {
+                "type": "string",
+                "format": "date-time",
+                "nullable": true
+              },
+              "need_weight_reminder": {
+                "type": "boolean"
+              }
+            }
+          },
+          "streak_days": {
+            "type": "integer"
+          },
+          "burned_calories": {
+            "type": "number"
+          }
+        }
+      },
+      "NutritionAnalytics": {
+        "type": "object",
+        "properties": {
+          "days": {
+            "type": "integer"
+          },
+          "food": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "day": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "protein_g": {
+                  "type": "number"
+                },
+                "fat_g": {
+                  "type": "number"
+                },
+                "carbs_g": {
+                  "type": "number"
+                },
+                "calories": {
+                  "type": "number"
+                }
+              }
+            }
+          },
+          "weight": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "day": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "weight_kg": {
+                  "type": "number"
+                }
+              }
+            }
+          },
+          "water": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "day": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "amount_ml": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "security": [
+    {
+      "BearerAuth": []
+    }
+  ],
+  "externalDocs": {
+    "description": "Официальная документация Swagger / OpenAPI",
+    "url": "https://swagger.io/docs/specification/v3_0/about/"
+  },
+  "x-conventions": {
+    "ids": "Новые UUID, существующие users/exercises integer",
+    "time": "RFC3339 UTC; calendar date YYYY-MM-DD, IANA time_zone",
+    "money": "Целые минимальные единицы; RUB — копейки",
+    "commission_bps": 2000,
+    "review_required_workouts": 3,
+    "idempotency": "Для v2 заказа, генерации, Fork, complete и выплаты обязателен Idempotency-Key. Тот же ключ+тело возвращает исходный результат, другое тело 409; хранение минимум 24 часа — проектный параметр. provider_event_id дедуплицируется независимо."
+  },
+  "tags": [
+    {
+      "name": "Go v1 · AI-план"
+    },
+    {
+      "name": "Go v1 · AI-чат"
+    },
+    {
+      "name": "Go v1 · Авторизация"
+    },
+    {
+      "name": "Go v1 · Достижения"
+    },
+    {
+      "name": "Go v1 · Заметки"
+    },
+    {
+      "name": "Go v1 · Питание"
+    },
+    {
+      "name": "Go v1 · Профиль"
+    },
+    {
+      "name": "Go v1 · Тренировки"
+    }
+  ]
+}

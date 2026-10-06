@@ -1,0 +1,16 @@
+{
+  "offline_only": true,
+  "official_collection_schema": "PASS",
+  "compiled_scripts": 303,
+  "requests": 151,
+  "executed_synthetic_cases": 147,
+  "skipped_integration_templates": 4,
+  "validated_request_bodies": 59,
+  "negative_cases": 21,
+  "assertion_executions": 1747,
+  "rejected_500_mutations": 147,
+  "rejected_schema_mutations": 142,
+  "rejected_business_mutations": 13,
+  "newman_sandbox_bootstrap": "PASS",
+  "newman_assertions": 15
+}

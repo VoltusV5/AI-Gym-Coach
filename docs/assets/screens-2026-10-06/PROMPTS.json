@@ -1,0 +1,516 @@
+{
+  "date": "2026-10-06",
+  "tool": "built-in imagegen",
+  "format": "PNG contact sheets",
+  "screens": 74,
+  "boards": [
+    {
+      "file": "01-onboarding.png",
+      "title": "Начало и анкета",
+      "screens": [
+        [
+          "/",
+          "Добро пожаловать",
+          "Спортик, описание AI тренера, Начать и Войти"
+        ],
+        [
+          "/body-metrics",
+          "Параметры тела",
+          "рост 178 см, вес 76 кг, Далее"
+        ],
+        [
+          "/gender",
+          "Пол",
+          "карточки выбора пола, выбран Мужской"
+        ],
+        [
+          "/age",
+          "Возраст",
+          "числовое поле 24 года"
+        ],
+        [
+          "/activity-type",
+          "Активность",
+          "Сидячая, Умеренная, Высокая; выбрана Умеренная"
+        ],
+        [
+          "/health-restrictions",
+          "Ограничения",
+          "Есть ограничения? Да/Нет, без медицинских рекомендаций"
+        ]
+      ],
+      "source": "C:\\Users\\sheri\\.codex\\generated_images\\01a10aed-d2fc-7383-add7-3f8401f3744b\\exec-76dfc934-5936-477d-af5f-92b21eecf762.png",
+      "prompt": "Create a polished high-fidelity UI design presentation for the Russian fitness application «Спортик». Consistent white/light icy-blue background, deep navy text, bright blue primary buttons, rounded white cards, thin subtle borders, tidy sans-serif Russian typography, restrained lilac highlights, mint green success. Actual flat screen mockups, no device hardware, no perspective, no decorative artwork or extra pages. Each screen separated by generous margins and numbered left to right, top to bottom. All screens fully visible from header to bottom actions, not overlapping, not cropped. Text concise and readable in Russian. Demo data only. Use coherent repeated fictional users Алексей and trainer Анна Волкова and program Сила: 3 дня. Mobile user pages use bottom nav Главная Планы Каталог Прогресс Профиль when appropriate; onboarding and auth no bottom nav. Clear distinct page titles and correct controls. This is a single contact-sheet image asset containing precisely the specified distinct screens, each screen has its number and short title ABOVE the mockup. Maximum possible image resolution.  Board: Начало и анкета. Layout: 3 columns by 2 rows of six tall mobile screens. Screens in exact order:\n1. Title Добро пожаловать. Route /. Content: Спортик, описание AI тренера, Начать и Войти.\n2. Title Параметры тела. Route /body-metrics. Content: рост 178 см, вес 76 кг, Далее.\n3. Title Пол. Route /gender. Content: карточки выбора пола, выбран Мужской.\n4. Title Возраст. Route /age. Content: числовое поле 24 года.\n5. Title Активность. Route /activity-type. Content: Сидячая, Умеренная, Высокая; выбрана Умеренная.\n6. Title Ограничения. Route /health-restrictions. Content: Есть ограничения? Да/Нет, без медицинских рекомендаций.",
+      "refinement": null
+    },
+    {
+      "file": "02-goals.png",
+      "title": "Цель, генерация и вход",
+      "screens": [
+        [
+          "/goal-selection",
+          "Ваша цель",
+          "Набор мышц, Снижение веса, Выносливость"
+        ],
+        [
+          "/fitness-level",
+          "Подготовка",
+          "Начинающий, Средний, Опытный"
+        ],
+        [
+          "/training-days",
+          "Дни тренировок",
+          "Пн Ср Пт выбраны, 3 раза в неделю"
+        ],
+        [
+          "/equipment",
+          "Оборудование",
+          "Гантели, Штанга, Стойка, длительность 45 минут"
+        ],
+        [
+          "/plan-generating",
+          "Создаём ваш план",
+          "индикатор обработки, Подбираем упражнения"
+        ],
+        [
+          "/auth/login",
+          "Вход",
+          "email пароль, Войти, регистрация вкладка"
+        ]
+      ],
+      "source": "C:\\Users\\sheri\\.codex\\generated_images\\01a10aed-d2fc-7383-add7-3f8401f3744b\\exec-eec28a97-97d1-459c-883f-a16d8f44142f.png",
+      "prompt": "Create a polished high-fidelity UI design presentation for the Russian fitness application «Спортик». Consistent white/light icy-blue background, deep navy text, bright blue primary buttons, rounded white cards, thin subtle borders, tidy sans-serif Russian typography, restrained lilac highlights, mint green success. Actual flat screen mockups, no device hardware, no perspective, no decorative artwork or extra pages. Each screen separated by generous margins and numbered left to right, top to bottom. All screens fully visible from header to bottom actions, not overlapping, not cropped. Text concise and readable in Russian. Demo data only. Use coherent repeated fictional users Алексей and trainer Анна Волкова and program Сила: 3 дня. Mobile user pages use bottom nav Главная Планы Каталог Прогресс Профиль when appropriate; onboarding and auth no bottom nav. Clear distinct page titles and correct controls. This is a single contact-sheet image asset containing precisely the specified distinct screens, each screen has its number and short title ABOVE the mockup. Maximum possible image resolution.  Board: Цель, генерация и вход. Layout: 3 columns by 2 rows of six tall mobile screens. Screens in exact order:\n1. Title Ваша цель. Route /goal-selection. Content: Набор мышц, Снижение веса, Выносливость.\n2. Title Подготовка. Route /fitness-level. Content: Начинающий, Средний, Опытный.\n3. Title Дни тренировок. Route /training-days. Content: Пн Ср Пт выбраны, 3 раза в неделю.\n4. Title Оборудование. Route /equipment. Content: Гантели, Штанга, Стойка, длительность 45 минут.\n5. Title Создаём ваш план. Route /plan-generating. Content: индикатор обработки, Подбираем упражнения.\n6. Title Вход. Route /auth/login. Content: email пароль, Войти, регистрация вкладка.",
+      "refinement": "Edit this UI contact sheet precisely. Keep all six panels. In panel 6 Вход remove Apple and Google sign-in and their separator completely: this project uses email/password auth with Вход and Регистрация tabs only. Add blank white space instead. No social providers, no forgot-password link. Preserve five other panels. Maintain Спортик white and blue style and crisp Russian typography. Do not add any extra features or screens."
+    },
+    {
+      "file": "03-home-settings.png",
+      "title": "Главная и профиль",
+      "screens": [
+        [
+          "/home",
+          "Сегодня",
+          "Тренировка А Начать, прогресс, AI совет, достижение и рекомендации"
+        ],
+        [
+          "/workout-tools",
+          "Инструменты",
+          "Изменить план, AI чат, Параметры тела"
+        ],
+        [
+          "/settings",
+          "Профиль",
+          "Алексей, достижения, Мои тренеры, Питание, Заметки, настройки"
+        ],
+        [
+          "/settings/profile",
+          "Мои данные",
+          "рост вес цель уровень оборудование, Сохранить"
+        ],
+        [
+          "/ai-chat",
+          "AI-тренер",
+          "чат о тренировках, поле сообщения"
+        ],
+        [
+          "/notifications",
+          "Уведомления",
+          "новая программа Анны, новая версия используемой программы, прочитано"
+        ]
+      ],
+      "source": "C:\\Users\\sheri\\.codex\\generated_images\\01a10aed-d2fc-7383-add7-3f8401f3744b\\exec-2c91495d-353d-453d-b15c-d04c4b03ed94.png",
+      "prompt": "Create a polished high-fidelity UI design presentation for the Russian fitness application «Спортик». Consistent white/light icy-blue background, deep navy text, bright blue primary buttons, rounded white cards, thin subtle borders, tidy sans-serif Russian typography, restrained lilac highlights, mint green success. Actual flat screen mockups, no device hardware, no perspective, no decorative artwork or extra pages. Each screen separated by generous margins and numbered left to right, top to bottom. All screens fully visible from header to bottom actions, not overlapping, not cropped. Text concise and readable in Russian. Demo data only. Use coherent repeated fictional users Алексей and trainer Анна Волкова and program Сила: 3 дня. Mobile user pages use bottom nav Главная Планы Каталог Прогресс Профиль when appropriate; onboarding and auth no bottom nav. Clear distinct page titles and correct controls. This is a single contact-sheet image asset containing precisely the specified distinct screens, each screen has its number and short title ABOVE the mockup. Maximum possible image resolution.  Board: Главная и профиль. Layout: 3 columns by 2 rows of six tall mobile screens. Screens in exact order:\n1. Title Сегодня. Route /home. Content: Тренировка А Начать, прогресс, AI совет, достижение и рекомендации.\n2. Title Инструменты. Route /workout-tools. Content: Изменить план, AI чат, Параметры тела.\n3. Title Профиль. Route /settings. Content: Алексей, достижения, Мои тренеры, Питание, Заметки, настройки.\n4. Title Мои данные. Route /settings/profile. Content: рост вес цель уровень оборудование, Сохранить.\n5. Title AI-тренер. Route /ai-chat. Content: чат о тренировках, поле сообщения.\n6. Title Уведомления. Route /notifications. Content: новая программа Анны, новая версия используемой программы, прочитано.",
+      "refinement": "Edit this UI contact sheet precisely. Keep six panels and all routes. Panel 2 Инструменты: remove the entire Pro subscription/Больше возможностей upsell card, leave whitespace. Panel 5 AI-тренер: replace human trainer photo with a simple abstract robot icon and header AI-тренер, remove name Анна Волкова and 24/7 claim; text-only AI chat, no attachments, no video suggestions or video analysis. Show user Как менять порядок упражнений? and AI Можно изменить порядок в конструкторе плана. Preserve all six page layouts. Maintain Спортик white and blue style and crisp Russian typography. Do not add any extra features or screens."
+    },
+    {
+      "file": "04-notes-nutrition.png",
+      "title": "Заметки и дневник питания",
+      "screens": [
+        [
+          "/notes",
+          "Заметки",
+          "список личных записей, Добавить"
+        ],
+        [
+          "/notes/:id",
+          "Заметка",
+          "название Техника жима, текст и Сохранить"
+        ],
+        [
+          "/nutrition",
+          "Питание",
+          "1820/2300 ккал, БЖУ, вода и приёмы пищи"
+        ],
+        [
+          "/nutrition/add-meal",
+          "Дневник",
+          "завтрак овсянка 200г, Добавить продукт"
+        ],
+        [
+          "/nutrition/add-meal/search",
+          "Поиск блюд",
+          "поиск Овсянка, список результатов"
+        ],
+        [
+          "/nutrition/add-meal/picker",
+          "Порция",
+          "овсянка, 200 г, Завтрак, БЖУ, Добавить"
+        ]
+      ],
+      "source": "C:\\Users\\sheri\\.codex\\generated_images\\01a10aed-d2fc-7383-add7-3f8401f3744b\\exec-8ad2a2e8-17be-473b-b090-c1fd3d415277.png",
+      "prompt": "Create a polished high-fidelity UI design presentation for the Russian fitness application «Спортик». Consistent white/light icy-blue background, deep navy text, bright blue primary buttons, rounded white cards, thin subtle borders, tidy sans-serif Russian typography, restrained lilac highlights, mint green success. Actual flat screen mockups, no device hardware, no perspective, no decorative artwork or extra pages. Each screen separated by generous margins and numbered left to right, top to bottom. All screens fully visible from header to bottom actions, not overlapping, not cropped. Text concise and readable in Russian. Demo data only. Use coherent repeated fictional users Алексей and trainer Анна Волкова and program Сила: 3 дня. Mobile user pages use bottom nav Главная Планы Каталог Прогресс Профиль when appropriate; onboarding and auth no bottom nav. Clear distinct page titles and correct controls. This is a single contact-sheet image asset containing precisely the specified distinct screens, each screen has its number and short title ABOVE the mockup. Maximum possible image resolution.  Board: Заметки и дневник питания. Layout: 3 columns by 2 rows of six tall mobile screens. Screens in exact order:\n1. Title Заметки. Route /notes. Content: список личных записей, Добавить.\n2. Title Заметка. Route /notes/:id. Content: название Техника жима, текст и Сохранить.\n3. Title Питание. Route /nutrition. Content: 1820/2300 ккал, БЖУ, вода и приёмы пищи.\n4. Title Дневник. Route /nutrition/add-meal. Content: завтрак овсянка 200г, Добавить продукт.\n5. Title Поиск блюд. Route /nutrition/add-meal/search. Content: поиск Овсянка, список результатов.\n6. Title Порция. Route /nutrition/add-meal/picker. Content: овсянка, 200 г, Завтрак, БЖУ, Добавить.",
+      "refinement": null
+    },
+    {
+      "file": "05-nutrition.png",
+      "title": "Настройки питания",
+      "screens": [
+        [
+          "/nutrition/goals",
+          "Цели питания",
+          "2300 ккал, БЖУ, вес по датам, Пересчитать"
+        ],
+        [
+          "/nutrition/water",
+          "Вода",
+          "1200/2000 мл, Добавить 250 мл"
+        ],
+        [
+          "/nutrition/favorites",
+          "Избранные блюда",
+          "овсянка, творог, банан, выбор блюда"
+        ],
+        [
+          "/nutrition/my-dishes",
+          "Мои блюда",
+          "омлет, салат, БЖУ, Создать блюдо"
+        ]
+      ],
+      "source": "C:\\Users\\sheri\\.codex\\generated_images\\01a10aed-d2fc-7383-add7-3f8401f3744b\\exec-d1f5af10-2865-43ee-aecb-d64cea49eb75.png",
+      "prompt": "Create a polished high-fidelity UI design presentation for the Russian fitness application «Спортик». Consistent white/light icy-blue background, deep navy text, bright blue primary buttons, rounded white cards, thin subtle borders, tidy sans-serif Russian typography, restrained lilac highlights, mint green success. Actual flat screen mockups, no device hardware, no perspective, no decorative artwork or extra pages. Each screen separated by generous margins and numbered left to right, top to bottom. All screens fully visible from header to bottom actions, not overlapping, not cropped. Text concise and readable in Russian. Demo data only. Use coherent repeated fictional users Алексей and trainer Анна Волкова and program Сила: 3 дня. Mobile user pages use bottom nav Главная Планы Каталог Прогресс Профиль when appropriate; onboarding and auth no bottom nav. Clear distinct page titles and correct controls. This is a single contact-sheet image asset containing precisely the specified distinct screens, each screen has its number and short title ABOVE the mockup. Maximum possible image resolution.  Board: Настройки питания. Layout: 4 tall mobile screens side by side. Screens in exact order:\n1. Title Цели питания. Route /nutrition/goals. Content: 2300 ккал, БЖУ, вес по датам, Пересчитать.\n2. Title Вода. Route /nutrition/water. Content: 1200/2000 мл, Добавить 250 мл.\n3. Title Избранные блюда. Route /nutrition/favorites. Content: овсянка, творог, банан, выбор блюда.\n4. Title Мои блюда. Route /nutrition/my-dishes. Content: омлет, салат, БЖУ, Создать блюдо.",
+      "refinement": null
+    },
+    {
+      "file": "06-marketplace.png",
+      "title": "Каталог и рекомендации",
+      "screens": [
+        [
+          "/marketplace",
+          "Программы",
+          "поиск фильтры цели уровня оборудования, карточки с ценой"
+        ],
+        [
+          "/marketplace/programs/:programId",
+          "Сила: 3 дня",
+          "Анна Волкова проверена, 8 недель, 1000 ₽, оборудование, Купить"
+        ],
+        [
+          "/marketplace/saved",
+          "Сохранённое",
+          "сохранённые программы платная и бесплатная"
+        ],
+        [
+          "/recommendations",
+          "Для вас",
+          "карточки и Почему рекомендуем: 3 раза, ваш уровень, ваши гантели"
+        ]
+      ],
+      "source": "C:\\Users\\sheri\\.codex\\generated_images\\01a10aed-d2fc-7383-add7-3f8401f3744b\\exec-45da9065-58a2-4157-bd7e-6435b2d9ba29.png",
+      "prompt": "Create a polished high-fidelity UI design presentation for the Russian fitness application «Спортик». Consistent white/light icy-blue background, deep navy text, bright blue primary buttons, rounded white cards, thin subtle borders, tidy sans-serif Russian typography, restrained lilac highlights, mint green success. Actual flat screen mockups, no device hardware, no perspective, no decorative artwork or extra pages. Each screen separated by generous margins and numbered left to right, top to bottom. All screens fully visible from header to bottom actions, not overlapping, not cropped. Text concise and readable in Russian. Demo data only. Use coherent repeated fictional users Алексей and trainer Анна Волкова and program Сила: 3 дня. Mobile user pages use bottom nav Главная Планы Каталог Прогресс Профиль when appropriate; onboarding and auth no bottom nav. Clear distinct page titles and correct controls. This is a single contact-sheet image asset containing precisely the specified distinct screens, each screen has its number and short title ABOVE the mockup. Maximum possible image resolution.  Do not invent OAuth, subscriptions billing or other integrations. Board: Каталог и рекомендации. Layout: 4 tall mobile screens side by side. Screens in exact order:\n1. Title Программы. Route /marketplace. Content: поиск фильтры цели уровня оборудования, карточки с ценой.\n2. Title Сила: 3 дня. Route /marketplace/programs/:programId. Content: Анна Волкова проверена, 8 недель, 1000 ₽, оборудование, Купить.\n3. Title Сохранённое. Route /marketplace/saved. Content: сохранённые программы платная и бесплатная.\n4. Title Для вас. Route /recommendations. Content: карточки и Почему рекомендуем: 3 раза, ваш уровень, ваши гантели.",
+      "refinement": "Edit this UI contact sheet precisely. Keep four panels. Correct bottom navigation active item: on Программы, Сохранённое and Для вас the third item Каталог is blue; second Планы neutral grey. Remove claims of чек-листы and included videos in product description. Preserve other controls. Maintain Спортик white and blue style and crisp Russian typography. Do not add any extra features or screens."
+    },
+    {
+      "file": "07-orders-reviews.png",
+      "title": "Покупки и отзывы",
+      "screens": [
+        [
+          "/marketplace/programs/:programId/buy",
+          "Покупка программы",
+          "Сила: 3 дня, Анна, версия 1, 1000 ₽, Перейти к оплате"
+        ],
+        [
+          "/orders/:orderId",
+          "Заказ оплачен",
+          "1000 ₽, номер заказа, Открыть программу"
+        ],
+        [
+          "/orders",
+          "Мои покупки",
+          "сумма дата статус, список заказов"
+        ],
+        [
+          "/marketplace/programs/:programId/reviews",
+          "Отзывы",
+          "4.8, 24 отзыва, использованные версии, Написать отзыв"
+        ],
+        [
+          "/marketplace/programs/:programId/review",
+          "Ваш отзыв",
+          "6 компактных строк звёзд: Общая, Сложность, Структура, Описание, Удобство, Результат; текст; Опубликовать; выполнено 3 из 3"
+        ]
+      ],
+      "source": "C:\\Users\\sheri\\.codex\\generated_images\\01a10aed-d2fc-7383-add7-3f8401f3744b\\exec-75ffe955-c617-422d-97d4-e254a93d33a1.png",
+      "prompt": "Create a polished high-fidelity UI design presentation for the Russian fitness application «Спортик». Consistent white/light icy-blue background, deep navy text, bright blue primary buttons, rounded white cards, thin subtle borders, tidy sans-serif Russian typography, restrained lilac highlights, mint green success. Actual flat screen mockups, no device hardware, no perspective, no decorative artwork or extra pages. Each screen separated by generous margins and numbered left to right, top to bottom. All screens fully visible from header to bottom actions, not overlapping, not cropped. Text concise and readable in Russian. Demo data only. Use coherent repeated fictional users Алексей and trainer Анна Волкова and program Сила: 3 дня. Mobile user pages use bottom nav Главная Планы Каталог Прогресс Профиль when appropriate; onboarding and auth no bottom nav. Clear distinct page titles and correct controls. This is a single contact-sheet image asset containing precisely the specified distinct screens, each screen has its number and short title ABOVE the mockup. Maximum possible image resolution.  Do not invent OAuth, subscriptions billing or other integrations. Board: Покупки и отзывы. Layout: 5 tall mobile screens side by side. Screens in exact order:\n1. Title Покупка программы. Route /marketplace/programs/:programId/buy. Content: Сила: 3 дня, Анна, версия 1, 1000 ₽, Перейти к оплате.\n2. Title Заказ оплачен. Route /orders/:orderId. Content: 1000 ₽, номер заказа, Открыть программу.\n3. Title Мои покупки. Route /orders. Content: сумма дата статус, список заказов.\n4. Title Отзывы. Route /marketplace/programs/:programId/reviews. Content: 4.8, 24 отзыва, использованные версии, Написать отзыв.\n5. Title Ваш отзыв. Route /marketplace/programs/:programId/review. Content: 6 компактных строк звёзд: Общая, Сложность, Структура, Описание, Удобство, Результат; текст; Опубликовать; выполнено 3 из 3.",
+      "refinement": null
+    },
+    {
+      "file": "08-plans.png",
+      "title": "Личные планы и конструктор",
+      "screens": [
+        [
+          "/plans",
+          "Мои планы",
+          "активный AI план, ручной план, личная версия тренера, Создать"
+        ],
+        [
+          "/plans/:planId",
+          "Мой план",
+          "дни А Б В, источник, расписание, Начать, Изменить, Поделиться"
+        ],
+        [
+          "/plans/new",
+          "Новый план",
+          "название, День А, Добавить упражнение, Создать"
+        ],
+        [
+          "/plans/:planId/edit",
+          "Конструктор",
+          "дни, жим 3х10 60кг отдых90с, перетаскивание, копировать день, Сохранить"
+        ],
+        [
+          "/plans/:planId/exercises",
+          "Выбор упражнения",
+          "поиск мышцы оборудование, жим присед тяга техника"
+        ],
+        [
+          "/plans/:planId/schedule",
+          "Расписание",
+          "Пн Ср Пт, дата начала, часовой пояс, Сохранить"
+        ]
+      ],
+      "source": "C:\\Users\\sheri\\.codex\\generated_images\\01a10aed-d2fc-7383-add7-3f8401f3744b\\exec-d8ead923-a6fc-4c2f-8099-47d53cf3e7d7.png",
+      "prompt": "Create a polished high-fidelity UI design presentation for the Russian fitness application «Спортик». Consistent white/light icy-blue background, deep navy text, bright blue primary buttons, rounded white cards, thin subtle borders, tidy sans-serif Russian typography, restrained lilac highlights, mint green success. Actual flat screen mockups, no device hardware, no perspective, no decorative artwork or extra pages. Each screen separated by generous margins and numbered left to right, top to bottom. All screens fully visible from header to bottom actions, not overlapping, not cropped. Text concise and readable in Russian. Demo data only. Use coherent repeated fictional users Алексей and trainer Анна Волкова and program Сила: 3 дня. Mobile user pages use bottom nav Главная Планы Каталог Прогресс Профиль when appropriate; onboarding and auth no bottom nav. Clear distinct page titles and correct controls. This is a single contact-sheet image asset containing precisely the specified distinct screens, each screen has its number and short title ABOVE the mockup. Maximum possible image resolution.  Do not invent OAuth, subscriptions billing or other integrations. Board: Личные планы и конструктор. Layout: 3 columns by 2 rows of six tall mobile screens. Screens in exact order:\n1. Title Мои планы. Route /plans. Content: активный AI план, ручной план, личная версия тренера, Создать.\n2. Title Мой план. Route /plans/:planId. Content: дни А Б В, источник, расписание, Начать, Изменить, Поделиться.\n3. Title Новый план. Route /plans/new. Content: название, День А, Добавить упражнение, Создать.\n4. Title Конструктор. Route /plans/:planId/edit. Content: дни, жим 3х10 60кг отдых90с, перетаскивание, копировать день, Сохранить.\n5. Title Выбор упражнения. Route /plans/:planId/exercises. Content: поиск мышцы оборудование, жим присед тяга техника.\n6. Title Расписание. Route /plans/:planId/schedule. Content: Пн Ср Пт, дата начала, часовой пояс, Сохранить.",
+      "refinement": "Edit this UI contact sheet precisely. Keep all six screens in 3 by 2 grid. Increase OUTER padding at bottom, slightly reduce screen height so all SIX screen bottoms fit entirely within canvas; no clipping on editor or exercise picker. In Конструктор show explicit small editable input boxes for 3 approaches, 10 reps, 60 kg, 90 sec rest in first exercise, keep add/copy/delete/save actions. Preserve other screens. Maintain Спортик white and blue style and crisp Russian typography. Do not add any extra features or screens."
+    },
+    {
+      "file": "09-workouts-share.png",
+      "title": "Тренировка и публичная программа",
+      "screens": [
+        [
+          "/workout/session",
+          "Тренировка А",
+          "жим лёжа, таблица подходов вес повторения галочка, таймер отдыха, Завершить"
+        ],
+        [
+          "/workout/alternatives/:slotIndex",
+          "Замена упражнения",
+          "жим гантелей, отжимания, техника, Выбрать"
+        ],
+        [
+          "/workout/success",
+          "Отличная тренировка",
+          "объём 4320 кг, +8% к сопоставимой прошлой, 45 мин, личный рекорд, Прогресс"
+        ],
+        [
+          "/share/:token",
+          "Программа по ссылке",
+          "автор, дата снимка, список дней и упражнений, подходы повторы, Сохранить, Создать свою версию; никаких личных данных"
+        ]
+      ],
+      "source": "C:\\Users\\sheri\\.codex\\generated_images\\01a10aed-d2fc-7383-add7-3f8401f3744b\\exec-091d55da-695e-42bc-8135-6b906b15069d.png",
+      "prompt": "Create a polished high-fidelity UI design presentation for the Russian fitness application «Спортик». Consistent white/light icy-blue background, deep navy text, bright blue primary buttons, rounded white cards, thin subtle borders, tidy sans-serif Russian typography, restrained lilac highlights, mint green success. Actual flat screen mockups, no device hardware, no perspective, no decorative artwork or extra pages. Each screen separated by generous margins and numbered left to right, top to bottom. All screens fully visible from header to bottom actions, not overlapping, not cropped. Text concise and readable in Russian. Demo data only. Use coherent repeated fictional users Алексей and trainer Анна Волкова and program Сила: 3 дня. Mobile user pages use bottom nav Главная Планы Каталог Прогресс Профиль when appropriate; onboarding and auth no bottom nav. Clear distinct page titles and correct controls. This is a single contact-sheet image asset containing precisely the specified distinct screens, each screen has its number and short title ABOVE the mockup. Maximum possible image resolution.  Do not invent OAuth, subscriptions billing or other integrations. Board: Тренировка и публичная программа. Layout: 4 tall mobile screens side by side. Screens in exact order:\n1. Title Тренировка А. Route /workout/session. Content: жим лёжа, таблица подходов вес повторения галочка, таймер отдыха, Завершить.\n2. Title Замена упражнения. Route /workout/alternatives/:slotIndex. Content: жим гантелей, отжимания, техника, Выбрать.\n3. Title Отличная тренировка. Route /workout/success. Content: объём 4320 кг, +8% к сопоставимой прошлой, 45 мин, личный рекорд, Прогресс.\n4. Title Программа по ссылке. Route /share/:token. Content: автор, дата снимка, список дней и упражнений, подходы повторы, Сохранить, Создать свою версию; никаких личных данных.",
+      "refinement": null
+    },
+    {
+      "file": "10-progress.png",
+      "title": "Прогресс и история",
+      "screens": [
+        [
+          "/progress",
+          "Прогресс",
+          "неделя месяц всё время, 10 тренировок, график веса, регулярность"
+        ],
+        [
+          "/progress/exercises/:exerciseId",
+          "Жим лёжа",
+          "график рабочих весов 60 до70кг по датам, повторы, рекорд, таблица"
+        ],
+        [
+          "/progress/history",
+          "История тренировок",
+          "даты завершённые тренировки объём и длительность"
+        ],
+        [
+          "/progress/workouts/:sessionId",
+          "Тренировка 5 октября",
+          "фактические упражнения вес повторы подходы, объём"
+        ],
+        [
+          "/progress/summaries",
+          "Сводки",
+          "недельный и месячный отчёты, 10 тренировок, 4 недели по плану"
+        ]
+      ],
+      "source": "C:\\Users\\sheri\\.codex\\generated_images\\01a10aed-d2fc-7383-add7-3f8401f3744b\\exec-0ed005d4-a971-41e2-8db6-5efbd4d0bc0c.png",
+      "prompt": "Create a polished high-fidelity UI design presentation for the Russian fitness application «Спортик». Consistent white/light icy-blue background, deep navy text, bright blue primary buttons, rounded white cards, thin subtle borders, tidy sans-serif Russian typography, restrained lilac highlights, mint green success. Actual flat screen mockups, no device hardware, no perspective, no decorative artwork or extra pages. Each screen separated by generous margins and numbered left to right, top to bottom. All screens fully visible from header to bottom actions, not overlapping, not cropped. Text concise and readable in Russian. Demo data only. Use coherent repeated fictional users Алексей and trainer Анна Волкова and program Сила: 3 дня. Mobile user pages use bottom nav Главная Планы Каталог Прогресс Профиль when appropriate; onboarding and auth no bottom nav. Clear distinct page titles and correct controls. This is a single contact-sheet image asset containing precisely the specified distinct screens, each screen has its number and short title ABOVE the mockup. Maximum possible image resolution.  Strictly do not add product features not listed (no Pro subscription, OAuth, video analysis or human-operated AI chat). Financial values must add correctly. Board: Прогресс и история. Layout: 5 tall mobile screens side by side. Screens in exact order:\n1. Title Прогресс. Route /progress. Content: неделя месяц всё время, 10 тренировок, график веса, регулярность.\n2. Title Жим лёжа. Route /progress/exercises/:exerciseId. Content: график рабочих весов 60 до70кг по датам, повторы, рекорд, таблица.\n3. Title История тренировок. Route /progress/history. Content: даты завершённые тренировки объём и длительность.\n4. Title Тренировка 5 октября. Route /progress/workouts/:sessionId. Content: фактические упражнения вес повторы подходы, объём.\n5. Title Сводки. Route /progress/summaries. Content: недельный и месячный отчёты, 10 тренировок, 4 недели по плану.",
+      "refinement": null
+    },
+    {
+      "file": "11-trainers.png",
+      "title": "Тренеры и кабинет автора",
+      "screens": [
+        [
+          "/trainers/:trainerId",
+          "Анна Волкова",
+          "фото проверенный тренер опыт специализация квалификация рейтинг программы, Подписаться; без суммы продаж"
+        ],
+        [
+          "/settings/trainers",
+          "Мои тренеры",
+          "подписки авторы новые программы, Отписаться"
+        ],
+        [
+          "/trainer",
+          "Кабинет тренера",
+          "программы продажи начисления проверка, Создать программу"
+        ],
+        [
+          "/trainer/programs",
+          "Мои программы",
+          "черновик на проверке опубликована, версия, Создать"
+        ],
+        [
+          "/trainer/programs/new",
+          "Новая программа",
+          "название цель уровень8недель3дня оборудование цена1000₽ дни, Сохранить черновик"
+        ],
+        [
+          "/trainer/programs/:programId/edit",
+          "Редактор программы",
+          "версия2 дни упражнения поля, public remix переключатель, Сохранить, На модерацию"
+        ]
+      ],
+      "source": "C:\\Users\\sheri\\.codex\\generated_images\\01a10aed-d2fc-7383-add7-3f8401f3744b\\exec-d5e2118f-db1f-45e8-9db3-61f30f17032f.png",
+      "prompt": "Create a polished high-fidelity UI design presentation for the Russian fitness application «Спортик». Consistent white/light icy-blue background, deep navy text, bright blue primary buttons, rounded white cards, thin subtle borders, tidy sans-serif Russian typography, restrained lilac highlights, mint green success. Actual flat screen mockups, no device hardware, no perspective, no decorative artwork or extra pages. Each screen separated by generous margins and numbered left to right, top to bottom. All screens fully visible from header to bottom actions, not overlapping, not cropped. Text concise and readable in Russian. Demo data only. Use coherent repeated fictional users Алексей and trainer Анна Волкова and program Сила: 3 дня. Mobile user pages use bottom nav Главная Планы Каталог Прогресс Профиль when appropriate; onboarding and auth no bottom nav. Clear distinct page titles and correct controls. This is a single contact-sheet image asset containing precisely the specified distinct screens, each screen has its number and short title ABOVE the mockup. Maximum possible image resolution.  Strictly do not add product features not listed (no Pro subscription, OAuth, video analysis or human-operated AI chat). Financial values must add correctly. Board: Тренеры и кабинет автора. Layout: 3 columns by 2 rows of six tall mobile screens. Screens in exact order:\n1. Title Анна Волкова. Route /trainers/:trainerId. Content: фото проверенный тренер опыт специализация квалификация рейтинг программы, Подписаться; без суммы продаж.\n2. Title Мои тренеры. Route /settings/trainers. Content: подписки авторы новые программы, Отписаться.\n3. Title Кабинет тренера. Route /trainer. Content: программы продажи начисления проверка, Создать программу.\n4. Title Мои программы. Route /trainer/programs. Content: черновик на проверке опубликована, версия, Создать.\n5. Title Новая программа. Route /trainer/programs/new. Content: название цель уровень8недель3дня оборудование цена1000₽ дни, Сохранить черновик.\n6. Title Редактор программы. Route /trainer/programs/:programId/edit. Content: версия2 дни упражнения поля, public remix переключатель, Сохранить, На модерацию.",
+      "refinement": null
+    },
+    {
+      "file": "12-trainer-finance.png",
+      "title": "Профиль, проверка и финансы тренера",
+      "screens": [
+        [
+          "/trainer/profile",
+          "Профессиональный профиль",
+          "фото имя опыт специализации квалификация, Сохранить"
+        ],
+        [
+          "/trainer/verification",
+          "Проверка статуса",
+          "документы квалификация загружены, На проверке; значок нельзя самому включить"
+        ],
+        [
+          "/trainer/analytics",
+          "Статистика",
+          "100 продаж, оборот100000₽, комиссия20000₽, доход80000₽, использование график период"
+        ],
+        [
+          "/trainer/payouts",
+          "Выплаты",
+          "доступно32000₽ выплачено48000₽ начислено80000₽, реестр статусов"
+        ]
+      ],
+      "source": "C:\\Users\\sheri\\.codex\\generated_images\\01a10aed-d2fc-7383-add7-3f8401f3744b\\exec-c66dd95d-fed7-418f-b7b2-39d9321246b0.png",
+      "prompt": "Create a polished high-fidelity UI design presentation for the Russian fitness application «Спортик». Consistent white/light icy-blue background, deep navy text, bright blue primary buttons, rounded white cards, thin subtle borders, tidy sans-serif Russian typography, restrained lilac highlights, mint green success. Actual flat screen mockups, no device hardware, no perspective, no decorative artwork or extra pages. Each screen separated by generous margins and numbered left to right, top to bottom. All screens fully visible from header to bottom actions, not overlapping, not cropped. Text concise and readable in Russian. Demo data only. Use coherent repeated fictional users Алексей and trainer Анна Волкова and program Сила: 3 дня. Mobile user pages use bottom nav Главная Планы Каталог Прогресс Профиль when appropriate; onboarding and auth no bottom nav. Clear distinct page titles and correct controls. This is a single contact-sheet image asset containing precisely the specified distinct screens, each screen has its number and short title ABOVE the mockup. Maximum possible image resolution.  Strictly do not add product features not listed (no Pro subscription, OAuth, video analysis or human-operated AI chat). Financial values must add correctly. Board: Профиль, проверка и финансы тренера. Layout: 4 tall mobile screens side by side. Screens in exact order:\n1. Title Профессиональный профиль. Route /trainer/profile. Content: фото имя опыт специализации квалификация, Сохранить.\n2. Title Проверка статуса. Route /trainer/verification. Content: документы квалификация загружены, На проверке; значок нельзя самому включить.\n3. Title Статистика. Route /trainer/analytics. Content: 100 продаж, оборот100000₽, комиссия20000₽, доход80000₽, использование график период.\n4. Title Выплаты. Route /trainer/payouts. Content: доступно32000₽ выплачено48000₽ начислено80000₽, реестр статусов.",
+      "refinement": "Edit this UI contact sheet precisely. Keep four screens. Panel 4 Выплаты: remove Вывести 32 000 ₽ button entirely; trainer sees payout balance and registry read-only, admin controls payouts. Registry exactly three rows 16 000 ₽ Выплачено, 12 000 ₽ Выплачено, 20 000 ₽ Выплачено = 48 000 ₽ paid. Available32 000 totalearned80 000. Panel2 Проверка remove promised 3-day SLA and statement 'проводить тренировки', show simply Документы отправлены; Ожидайте решения администратора. Remove profile-in-catalog toggle. Other panels preserved. Maintain Спортик white and blue style and crisp Russian typography. Do not add any extra features or screens."
+    },
+    {
+      "file": "13-admin-people.png",
+      "title": "Администратор: обзор и люди",
+      "desktop": true,
+      "screens": [
+        [
+          "/admin",
+          "Обзор платформы",
+          "метрики пользователи активные тренировки программы оборот комиссия, график, топ"
+        ],
+        [
+          "/admin/users",
+          "Пользователи",
+          "поиск таблица роль статус, блокировать с причиной, карточка пользователя в боковой панели"
+        ],
+        [
+          "/admin/trainers",
+          "Тренеры",
+          "таблица verified программы, карточка тренера справа"
+        ],
+        [
+          "/admin/verifications",
+          "Проверка тренеров",
+          "заявки, документы в карточке, Принять Отклонить причина"
+        ]
+      ],
+      "source": "C:\\Users\\sheri\\.codex\\generated_images\\01a10aed-d2fc-7383-add7-3f8401f3744b\\exec-bf192838-fb76-442a-b399-88c577af1d75.png",
+      "prompt": "Create a polished high-fidelity UI design presentation for the Russian fitness application «Спортик». Consistent white/light icy-blue background, deep navy text, bright blue primary buttons, rounded white cards, thin subtle borders, tidy sans-serif Russian typography, restrained lilac highlights, mint green success. Actual flat screen mockups, no device hardware, no perspective, no decorative artwork or extra pages. Each screen separated by generous margins and numbered left to right, top to bottom. All screens fully visible from header to bottom actions, not overlapping, not cropped. Text concise and readable in Russian. Demo data only. Use coherent repeated fictional users Алексей and trainer Анна Волкова and program Сила: 3 дня. Mobile user pages use bottom nav Главная Планы Каталог Прогресс Профиль when appropriate; onboarding and auth no bottom nav. Clear distinct page titles and correct controls. This is a single contact-sheet image asset containing precisely the specified distinct screens, each screen has its number and short title ABOVE the mockup. Maximum possible image resolution.  Board: Администратор: обзор и люди. Layout: 2 columns by 2 rows, EXACTLY FOUR landscape DESKTOP ADMIN screens, each 16:10 aspect ratio, all visible. Admin has LEFT sidebar (Обзор, Пользователи, Тренеры, Проверки, Программы, Упражнения, Категории, Отзывы, Жалобы, Покупки, Выплаты, Комиссия), NO MOBILE NAV. Each page's correct active menu selected. Show a distinct page-specific table/editor and a compact readable details pane where specified. No extra functions or invented integrations. Amounts in rubles, commission 20%. Screens in exact order:\n1. Title Обзор платформы. Route /admin. Content: метрики пользователи активные тренировки программы оборот комиссия, график, топ.\n2. Title Пользователи. Route /admin/users. Content: поиск таблица роль статус, блокировать с причиной, карточка пользователя в боковой панели.\n3. Title Тренеры. Route /admin/trainers. Content: таблица verified программы, карточка тренера справа.\n4. Title Проверка тренеров. Route /admin/verifications. Content: заявки, документы в карточке, Принять Отклонить причина.",
+      "refinement": null
+    },
+    {
+      "file": "14-admin-content.png",
+      "title": "Администратор: контент",
+      "desktop": true,
+      "screens": [
+        [
+          "/admin/programs",
+          "Модерация программ",
+          "таблица версия автор статус, карточка программы состав, Одобрить Отклонить Скрыть"
+        ],
+        [
+          "/admin/exercises",
+          "Упражнения",
+          "таблица мышц оборудования, Добавить, редактор упражнения справа"
+        ],
+        [
+          "/admin/categories",
+          "Категории",
+          "название slug порядок active, Создать, редактор справа"
+        ],
+        [
+          "/admin/reviews",
+          "Отзывы",
+          "таблица оценки текст версия статус, карточка, Скрыть Восстановить"
+        ]
+      ],
+      "source": "C:\\Users\\sheri\\.codex\\generated_images\\01a10aed-d2fc-7383-add7-3f8401f3744b\\exec-73757616-e141-4eea-b25b-3e65293475df.png",
+      "prompt": "Create a polished high-fidelity UI design presentation for the Russian fitness application «Спортик». Consistent white/light icy-blue background, deep navy text, bright blue primary buttons, rounded white cards, thin subtle borders, tidy sans-serif Russian typography, restrained lilac highlights, mint green success. Actual flat screen mockups, no device hardware, no perspective, no decorative artwork or extra pages. Each screen separated by generous margins and numbered left to right, top to bottom. All screens fully visible from header to bottom actions, not overlapping, not cropped. Text concise and readable in Russian. Demo data only. Use coherent repeated fictional users Алексей and trainer Анна Волкова and program Сила: 3 дня. Mobile user pages use bottom nav Главная Планы Каталог Прогресс Профиль when appropriate; onboarding and auth no bottom nav. Clear distinct page titles and correct controls. This is a single contact-sheet image asset containing precisely the specified distinct screens, each screen has its number and short title ABOVE the mockup. Maximum possible image resolution.  Board: Администратор: контент. Layout: 2 columns by 2 rows, EXACTLY FOUR landscape DESKTOP ADMIN screens, each 16:10 aspect ratio, all visible. Admin has LEFT sidebar (Обзор, Пользователи, Тренеры, Проверки, Программы, Упражнения, Категории, Отзывы, Жалобы, Покупки, Выплаты, Комиссия), NO MOBILE NAV. Each page's correct active menu selected. Show a distinct page-specific table/editor and a compact readable details pane where specified. No extra functions or invented integrations. Amounts in rubles, commission 20%. Screens in exact order:\n1. Title Модерация программ. Route /admin/programs. Content: таблица версия автор статус, карточка программы состав, Одобрить Отклонить Скрыть.\n2. Title Упражнения. Route /admin/exercises. Content: таблица мышц оборудования, Добавить, редактор упражнения справа.\n3. Title Категории. Route /admin/categories. Content: название slug порядок active, Создать, редактор справа.\n4. Title Отзывы. Route /admin/reviews. Content: таблица оценки текст версия статус, карточка, Скрыть Восстановить.",
+      "refinement": null
+    },
+    {
+      "file": "15-admin-finance.png",
+      "title": "Администратор: жалобы и финансы",
+      "desktop": true,
+      "screens": [
+        [
+          "/admin/reports",
+          "Жалобы",
+          "таблица объект причина статус, карточка история, Закрыть"
+        ],
+        [
+          "/admin/orders",
+          "Покупки",
+          "номер сумма валюта статус дата, карточка события"
+        ],
+        [
+          "/admin/payouts",
+          "Выплаты тренерам",
+          "начисления доступный баланс статус ошибки, Создать выплату, детали"
+        ],
+        [
+          "/admin/commission",
+          "Комиссия",
+          "20%, 2000 bps, дата действия version, Сохранить для новых продаж"
+        ]
+      ],
+      "source": "C:\\Users\\sheri\\.codex\\generated_images\\01a10aed-d2fc-7383-add7-3f8401f3744b\\exec-3b71220c-9b0b-4933-a655-788afb0f7dc5.png",
+      "prompt": "Create a polished high-fidelity UI design presentation for the Russian fitness application «Спортик». Consistent white/light icy-blue background, deep navy text, bright blue primary buttons, rounded white cards, thin subtle borders, tidy sans-serif Russian typography, restrained lilac highlights, mint green success. Actual flat screen mockups, no device hardware, no perspective, no decorative artwork or extra pages. Each screen separated by generous margins and numbered left to right, top to bottom. All screens fully visible from header to bottom actions, not overlapping, not cropped. Text concise and readable in Russian. Demo data only. Use coherent repeated fictional users Алексей and trainer Анна Волкова and program Сила: 3 дня. Mobile user pages use bottom nav Главная Планы Каталог Прогресс Профиль when appropriate; onboarding and auth no bottom nav. Clear distinct page titles and correct controls. This is a single contact-sheet image asset containing precisely the specified distinct screens, each screen has its number and short title ABOVE the mockup. Maximum possible image resolution.  Board: Администратор: жалобы и финансы. Layout: 2 columns by 2 rows, EXACTLY FOUR landscape DESKTOP ADMIN screens, each 16:10 aspect ratio, all visible. Admin has LEFT sidebar (Обзор, Пользователи, Тренеры, Проверки, Программы, Упражнения, Категории, Отзывы, Жалобы, Покупки, Выплаты, Комиссия), NO MOBILE NAV. Each page's correct active menu selected. Show a distinct page-specific table/editor and a compact readable details pane where specified. No extra functions or invented integrations. Amounts in rubles, commission 20%. Screens in exact order:\n1. Title Жалобы. Route /admin/reports. Content: таблица объект причина статус, карточка история, Закрыть.\n2. Title Покупки. Route /admin/orders. Content: номер сумма валюта статус дата, карточка события.\n3. Title Выплаты тренерам. Route /admin/payouts. Content: начисления доступный баланс статус ошибки, Создать выплату, детали.\n4. Title Комиссия. Route /admin/commission. Content: 20%, 2000 bps, дата действия version, Сохранить для новых продаж.",
+      "refinement": null
+    }
+  ]
+}

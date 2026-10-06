@@ -1,0 +1,470 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Спортик — действующие ML-сервисы",
+    "version": "2026.10.05-2"
+  },
+  "servers": [
+    {
+      "url": "/proxy/ml-plan",
+      "description": "Локальный ML-план, порт 8000"
+    },
+    {
+      "url": "/proxy/ml-chat",
+      "description": "Локальный ML-чат, порт 8001"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "operationId": "ml_plan_get_health",
+        "summary": "Проверить ML-сервис плана",
+        "description": "**Действующий ML endpoint.** Проверка доступности HTTP; сама по себе не проверяет качество модели.",
+        "tags": [
+          "ML · Планы"
+        ],
+        "x-status": "existing",
+        "x-service": "ml-plan",
+        "servers": [
+          {
+            "url": "/proxy/ml-plan",
+            "description": "Локальный ML через Swagger server"
+          },
+          {
+            "url": "http://localhost:8000",
+            "description": "Прямой ML, требует CORS"
+          }
+        ],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Успешный результат",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OK"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ошибка схемы FastAPI/Pydantic",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MLValidationError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка загрузки модели, inference или формирования ответа",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/plan/user": {
+      "post": {
+        "operationId": "ml_plan_post_plan_user",
+        "summary": "Предсказать сплит и выбрать шаблон",
+        "description": "**Действующий ML endpoint.** CatBoost на 8 признаках, затем случайный шаблон того же сплита и числа дней. Не возвращает финальные подходы/веса: их собирает Go. При отсутствии шаблона возможен 500 из-за None при заявленном Dict response. Внутри Compose Go использует http://ml:8000. В Swagger — локальный порт 8000.",
+        "tags": [
+          "ML · Планы"
+        ],
+        "x-status": "existing",
+        "x-service": "ml-plan",
+        "servers": [
+          {
+            "url": "/proxy/ml-plan",
+            "description": "Локальный ML через Swagger server"
+          },
+          {
+            "url": "http://localhost:8000",
+            "description": "Прямой ML, требует CORS"
+          }
+        ],
+        "security": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MLProfileV1"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Успешный результат",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MLPlanV1"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ошибка схемы FastAPI/Pydantic",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MLValidationError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка загрузки модели, inference или формирования ответа",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ai/user/chat": {
+      "post": {
+        "operationId": "ml_chat_post_ai_user_chat",
+        "summary": "Ответить по профилю и плану",
+        "description": "**Действующий ML endpoint.** Последние 10 сообщений в prompt. Cerebras/g4f при наличии конфигурации, иначе шаблонный ответ. Поток text/plain, не SSE; клиент читает текстовые chunks. Сервис находится на локальном порту 8001.",
+        "tags": [
+          "ML · Чат"
+        ],
+        "x-status": "existing",
+        "x-service": "ml-chat",
+        "servers": [
+          {
+            "url": "/proxy/ml-chat",
+            "description": "Локальный ML через Swagger server"
+          },
+          {
+            "url": "http://localhost:8001",
+            "description": "Прямой ML, требует CORS"
+          }
+        ],
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MLChatV1"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Текстовые фрагменты без SSE framing",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ошибка схемы FastAPI/Pydantic",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MLValidationError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка загрузки модели, inference или формирования ответа",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {},
+    "schemas": {
+      "OK": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ok"
+        ]
+      },
+      "MLProfileV1": {
+        "type": "object",
+        "properties": {
+          "age": {
+            "type": "integer"
+          },
+          "height_cm": {
+            "type": "integer"
+          },
+          "weight_kg": {
+            "type": "number"
+          },
+          "gender": {
+            "type": "string"
+          },
+          "activity_level": {
+            "type": "string"
+          },
+          "injuries_notes": {
+            "type": "boolean"
+          },
+          "goal": {
+            "type": "string"
+          },
+          "fitness_level": {
+            "type": "string"
+          },
+          "training_days_map": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "Фактически FastAPI принимает Dict[str,Any]. Документированы английские ключи Go-профиля; ML также распознаёт русские алиасы и использует defaults. Схема не вводит новую валидацию.",
+        "additionalProperties": true,
+        "example": {
+          "age": 26,
+          "height_cm": 175,
+          "weight_kg": 75,
+          "gender": "м",
+          "activity_level": "Средняя активность",
+          "injuries_notes": false,
+          "goal": "Набрать мышцы",
+          "fitness_level": "новичок",
+          "training_days_map": [
+            "Пн",
+            "Ср",
+            "Пт"
+          ]
+        }
+      },
+      "MLMuscle": {
+        "type": "object",
+        "properties": {
+          "группа": {
+            "type": "string"
+          },
+          "подгруппа": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "группа",
+          "подгруппа"
+        ]
+      },
+      "MLPlanV1": {
+        "type": "object",
+        "properties": {
+          "тип_сплита": {
+            "type": "string",
+            "enum": [
+              "Фулбади",
+              "ВерхНиз",
+              "Тяни-толкай",
+              "Пуш-пул-ноги",
+              "Сплит"
+            ]
+          },
+          "еженедельный_план": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "день": {
+                  "type": "string"
+                },
+                "тип_дня": {
+                  "type": "string"
+                },
+                "упражнения": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MLMuscle"
+                  }
+                }
+              },
+              "required": [
+                "день",
+                "тип_дня",
+                "упражнения"
+              ]
+            }
+          }
+        },
+        "required": [
+          "тип_сплита",
+          "еженедельный_план"
+        ],
+        "example": {
+          "тип_сплита": "Фулбади",
+          "еженедельный_план": [
+            {
+              "день": "A",
+              "тип_дня": "Фулбоди A",
+              "упражнения": [
+                {
+                  "группа": "Грудь",
+                  "подгруппа": "грудные середина"
+                }
+              ]
+            },
+            {
+              "день": "B",
+              "тип_дня": "Фулбоди B",
+              "упражнения": [
+                {
+                  "группа": "Грудь",
+                  "подгруппа": "грудные середина"
+                }
+              ]
+            },
+            {
+              "день": "C",
+              "тип_дня": "Фулбоди C",
+              "упражнения": [
+                {
+                  "группа": "Грудь",
+                  "подгруппа": "грудные середина"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "MLChatV1": {
+        "type": "object",
+        "properties": {
+          "messages": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "role": {
+                  "type": "string"
+                },
+                "content": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "user": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "plan": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "messages",
+          "user"
+        ],
+        "description": "messages — list, user — dict, plan — optional dict в текущем Pydantic. Go посылает русские поля user; часть Python fallback читает английские ключи — известное несоответствие контекста.",
+        "example": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "Как заменить упражнение?"
+            }
+          ],
+          "user": {
+            "возраст": 26,
+            "цель": "Набрать мышцы",
+            "уровень_подготовки": "новичок"
+          },
+          "plan": {}
+        }
+      },
+      "MLValidationError": {
+        "type": "object",
+        "properties": {
+          "detail": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "loc": {
+                  "type": "array",
+                  "items": {
+                    "oneOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  }
+                },
+                "msg": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "detail"
+        ]
+      }
+    }
+  },
+  "security": [],
+  "externalDocs": {
+    "description": "Официальная документация Swagger / OpenAPI",
+    "url": "https://swagger.io/docs/specification/v3_0/about/"
+  },
+  "x-conventions": {
+    "ids": "Новые UUID, существующие users/exercises integer",
+    "time": "RFC3339 UTC; calendar date YYYY-MM-DD, IANA time_zone",
+    "money": "Целые минимальные единицы; RUB — копейки",
+    "commission_bps": 2000,
+    "review_required_workouts": 3,
+    "idempotency": "Для v2 заказа, генерации, Fork, complete и выплаты обязателен Idempotency-Key. Тот же ключ+тело возвращает исходный результат, другое тело 409; хранение минимум 24 часа — проектный параметр. provider_event_id дедуплицируется независимо."
+  },
+  "tags": [
+    {
+      "name": "ML · Планы"
+    },
+    {
+      "name": "ML · Чат"
+    }
+  ]
+}
