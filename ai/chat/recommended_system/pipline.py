@@ -1,0 +1,13 @@
+"""
+Объединяет первый и второй этап в себе, на выходе получаем 5-10 планов,
+которые летят в LLM.
+"""
+from chat.recommended_system.sql_worker import SqlFillterPlans
+from chat.recommended_system.model_worker import CrossEncoderRanker
+
+class RecommendationPipline:
+    __COUNT_SQL: int | None = None
+    __COUNT_MODEL:int | None = None
+
+    def __init__(self, ranker:CrossEncoderRanker, fillter, count_sql=30, count_model=10) -> None:
+        pass   
