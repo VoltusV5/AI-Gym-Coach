@@ -1,12 +1,15 @@
 package users_transport_http
 
 import (
+	"fmt"
 	"net/http"
+	"strconv"
+
+	core_errors "sport_app/internal/core/errors"
 	core_logger "sport_app/internal/core/logger"
 	core_http_middleware "sport_app/internal/core/transport/http/middleware"
 	core_http_request "sport_app/internal/core/transport/http/request"
 	core_http_responce "sport_app/internal/core/transport/http/responce"
-	"strconv"
 )
 
 func (h *UsersHTTPHandler) ListNotes(rw http.ResponseWriter, r *http.Request) {
@@ -20,14 +23,38 @@ func (h *UsersHTTPHandler) ListNotes(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	notes, err := h.usersService.GetListNotes(ctx, userID)
+	limit := 50
+	offset := 0
+	q := r.URL.Query()
+	if lStr := q.Get("limit"); lStr != "" {
+		if l, err := strconv.Atoi(lStr); err == nil && l > 0 {
+			if l > 100 {
+				l = 100
+			}
+			limit = l
+		}
+	}
+	if oStr := q.Get("offset"); oStr != "" {
+		if o, err := strconv.Atoi(oStr); err == nil && o >= 0 {
+			offset = o
+		}
+	}
+
+	notes, total, err := h.usersService.GetListNotes(ctx, userID, limit, offset)
 	if err != nil {
 		responseHandler.ErrorResponse(err, "get list notes")
 		return
 	}
 
+	res := map[string]any{
+		"items":  notes,
+		"total":  total,
+		"limit":  limit,
+		"offset": offset,
+	}
+
 	rw.Header().Set("Content-Type", "application/json")
-	responseHandler.JSONResponse(map[string]any{"items": notes}, http.StatusOK)
+	responseHandler.JSONResponse(res, http.StatusOK)
 }
 
 type notePayload struct {
@@ -75,7 +102,10 @@ func (h *UsersHTTPHandler) UpdateNote(rw http.ResponseWriter, r *http.Request) {
 
 	noteID, err := strconv.Atoi(r.PathValue("id"))
 	if err != nil {
-		responseHandler.ErrorResponse(err, "failed to get note id")
+		responseHandler.ErrorResponse(
+			fmt.Errorf("invalid note id '%s': %w", r.PathValue("id"), core_errors.ErrInvalidArgument),
+			"invalid note id",
+		)
 		return
 	}
 
@@ -108,7 +138,10 @@ func (h *UsersHTTPHandler) DeleteNote(rw http.ResponseWriter, r *http.Request) {
 
 	noteID, err := strconv.Atoi(r.PathValue("id"))
 	if err != nil {
-		responseHandler.ErrorResponse(err, "failed to get note id")
+		responseHandler.ErrorResponse(
+			fmt.Errorf("invalid note id '%s': %w", r.PathValue("id"), core_errors.ErrInvalidArgument),
+			"invalid note id",
+		)
 		return
 	}
 

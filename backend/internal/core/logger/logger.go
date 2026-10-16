@@ -1,3 +1,5 @@
+// Package core_logger provides structured logging using zap, supporting console and file outputs,
+// context propagation, and request-scoped field enrichment.
 package core_logger
 
 import (
@@ -17,31 +19,65 @@ var (
 	key = loggerContextKey{}
 )
 
+// Logger wraps a zap.Logger and optionally an open file descriptor for tee-logging.
 type Logger struct {
 	*zap.Logger
 
 	file *os.File
 }
 
+// ToContext attaches the provided Logger instance to the context.
+//
+// Parameters:
+//   - ctx: Parent context.
+//   - log: Logger instance to inject.
+//
+// Returns:
+//   - context.Context: Context holding the logger reference.
 func ToContext(ctx context.Context, log *Logger) context.Context {
 	return context.WithValue(ctx, key, log)
 }
 
+// FromContext retrieves the Logger associated with the context. If no logger is present,
+// it safely falls back to a no-op logger (Nop) instead of panicking.
+//
+// Parameters:
+//   - ctx: Context to extract the logger from.
+//
+// Returns:
+//   - *Logger: Attached logger or a safe no-op logger.
 func FromContext(ctx context.Context) *Logger {
-	log, ok := ctx.Value(key).(*Logger)
-	if !ok {
-		panic("no logger in context")
+	if ctx != nil {
+		if log, ok := ctx.Value(key).(*Logger); ok && log != nil {
+			return log
+		}
 	}
 
-	return log
+	return Nop()
 }
 
+// Nop returns a discard logger that suppresses all log entries without performing I/O.
+//
+// Returns:
+//   - *Logger: Safe discard logger instance.
 func Nop() *Logger {
 	return &Logger{
 		Logger: zap.NewNop(),
 	}
 }
 
+// NewLogger instantiates and configures a dual-output (stdout and file) zap logger based on Config.
+//
+// Parameters:
+//   - config: Configuration specifying logging level (debug, info, warn, error) and output directory.
+//
+// Returns:
+//   - *Logger: Initialized logger with caller reporting.
+//   - error: Non-nil if level parsing or folder/file creation fails.
+//
+// Side effects:
+//   - Creates directory at config.Folder if absent.
+//   - Opens a timestamped log file in write-only mode.
 func NewLogger(config Config) (*Logger, error) {
 	zaplvl := zap.NewAtomicLevel()
 	if err := zaplvl.UnmarshalText([]byte(config.Level)); err != nil {
@@ -81,6 +117,10 @@ func NewLogger(config Config) (*Logger, error) {
 	}, nil
 }
 
+// Close flushes and closes the underlying log file descriptor.
+//
+// Side effects:
+//   - Closes open file handle if present.
 func (l *Logger) Close() {
 	if l.file == nil {
 		return
@@ -90,6 +130,13 @@ func (l *Logger) Close() {
 	}
 }
 
+// With clones the logger and appends additional contextual zap fields.
+//
+// Parameters:
+//   - field: Variadic list of zap.Field values (e.g., request_id, user_id).
+//
+// Returns:
+//   - *Logger: Cloned logger with enriched fields.
 func (l *Logger) With(field ...zap.Field) *Logger {
 	return &Logger{
 		Logger: l.Logger.With(field...),

@@ -24,19 +24,39 @@ type Note struct {
 func (r *UsersRepository) GetListNotes(
 	ctx context.Context,
 	userID string,
-) ([]Note, error) {
+	limit int,
+	offset int,
+) ([]Note, int, error) {
 	ctx, cancel := context.WithTimeout(ctx, r.pool.OpTimeout())
 	defer cancel()
 
-	rows, err := r.pool.Query(ctx,
-		`SELECT id, version, user_id, title, body, created_at, updated_at, deleted_at
-		 FROM sportapp.notes
-		 WHERE user_id = $1 AND deleted_at IS NULL
-		 ORDER BY created_at DESC;`,
-		userID,
-	)
+	var total int
+	countQuery := `
+		SELECT COUNT(*)
+		FROM sportapp.notes
+		WHERE user_id = $1 AND deleted_at IS NULL;`
+	if err := r.pool.QueryRow(ctx, countQuery, userID).Scan(&total); err != nil {
+		return []Note{}, 0, fmt.Errorf("count notes: %w", err)
+	}
+
+	query := `
+		SELECT id, version, user_id, title, body, created_at, updated_at, deleted_at
+		FROM sportapp.notes
+		WHERE user_id = $1 AND deleted_at IS NULL
+		ORDER BY created_at DESC, id DESC`
+
+	var args []any
+	if limit > 0 {
+		query += " LIMIT $2 OFFSET $3;"
+		args = []any{userID, limit, offset}
+	} else {
+		query += ";"
+		args = []any{userID}
+	}
+
+	rows, err := r.pool.Query(ctx, query, args...)
 	if err != nil {
-		return []Note{}, fmt.Errorf("insert note: %w", err)
+		return []Note{}, 0, fmt.Errorf("query notes: %w", err)
 	}
 	defer rows.Close()
 
@@ -44,11 +64,14 @@ func (r *UsersRepository) GetListNotes(
 	for rows.Next() {
 		var n Note
 		if err := rows.Scan(&n.ID, &n.Version, &n.UserID, &n.Title, &n.Body, &n.CreatedAt, &n.UpdatedAt, &n.DeletedAt); err != nil {
-			return []Note{}, fmt.Errorf("scan get notes: %w", err)
+			return []Note{}, 0, fmt.Errorf("scan get notes: %w", err)
 		}
 		notes = append(notes, n)
 	}
-	return notes, nil
+	if notes == nil {
+		notes = []Note{}
+	}
+	return notes, total, nil
 }
 
 func (r *UsersRepository) GetNoteByID(
@@ -144,12 +167,15 @@ func (r *UsersRepository) DeleteNotesUser(
 	ctx, cancel := context.WithTimeout(ctx, r.pool.OpTimeout())
 	defer cancel()
 
-	_, err := r.pool.Exec(ctx,
-		`UPDATE sportapp.notes SET deleted_at = NOW() WHERE id = $1 AND user_id = $2;`,
+	tag, err := r.pool.Exec(ctx,
+		`UPDATE sportapp.notes SET deleted_at = NOW() WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL;`,
 		noteID, userID,
 	)
 	if err != nil {
-		return fmt.Errorf("scan delete notes: %w", err)
+		return fmt.Errorf("delete notes: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return fmt.Errorf("note id='%d' for user_id='%s' not found: %w", noteID, userID, core_errors.ErrNotFound)
 	}
 
 	return nil
