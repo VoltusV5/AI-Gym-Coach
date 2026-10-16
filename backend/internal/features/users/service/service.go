@@ -1,3 +1,5 @@
+// Package users_service implements core business logic for user management, authentication,
+// profile maintenance with optimistic locking, AI plan generation, workout completion, and user notes.
 package users_service
 
 import (
@@ -8,12 +10,14 @@ import (
 	users_postgres_repository "sport_app/internal/features/users/repository/postgres"
 )
 
+// UsersService coordinates users business operations across repositories and external ML clients.
 type UsersService struct {
 	usersRepository UsersRepository
 	mlClient        MLClient
 	jwt             *core_auth.JWT
 }
 
+// UsersRepository defines the database interface contract required by UsersService.
 type UsersRepository interface {
 	EnsureExercisesSeeded(
 		ctx context.Context,
@@ -24,6 +28,11 @@ type UsersRepository interface {
 	CreateGuestUser(
 		ctx context.Context,
 	) (string, error)
+	CreateUser(
+		ctx context.Context,
+		email string,
+		passwordHash string,
+	) (users_postgres_repository.User, error)
 	PromoteGuestToUser(
 		ctx context.Context,
 		userID string,
@@ -103,7 +112,9 @@ type UsersRepository interface {
 	GetListNotes(
 		ctx context.Context,
 		userID string,
-	) ([]users_postgres_repository.Note, error)
+		limit int,
+		offset int,
+	) ([]users_postgres_repository.Note, int, error)
 	GetNoteByID(
 		ctx context.Context,
 		userID string,
@@ -142,6 +153,7 @@ type UsersRepository interface {
 	) (map[int]string, error)
 }
 
+// MLClient defines the contract for communicating with ML model services.
 type MLClient interface {
 	GeneratePlan(
 		ctx context.Context,
@@ -149,6 +161,7 @@ type MLClient interface {
 	) (*mlclient.Plan, error)
 }
 
+// NewUsersService constructs a new UsersService with database repository, ML client, and JWT provider.
 func NewUsersService(
 	usersRepository UsersRepository,
 	mlClient MLClient,

@@ -8,6 +8,8 @@ Thumbs.db
 .idea/
 client_secret.json
 .env
+REPORT_SPRINT1.md
+*REPORT*.md
 # Local documentation QA dependencies and caches
 docs/api/.qa/
 docs/**/__pycache__/

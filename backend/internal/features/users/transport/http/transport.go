@@ -59,7 +59,9 @@ type UsersService interface {
 	GetListNotes(
 		ctx context.Context,
 		userID string,
-	) ([]users_postgres_repository.Note, error)
+		limit int,
+		offset int,
+	) ([]users_postgres_repository.Note, int, error)
 	CreateNotesUser(
 		ctx context.Context,
 		userID string,

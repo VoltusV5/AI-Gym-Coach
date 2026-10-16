@@ -1,3 +1,4 @@
+// Package core_http_request provides JSON request deserialization and schema validation.
 package core_http_request
 
 import (
@@ -16,6 +17,15 @@ type validatable interface {
 
 var requestValidator = validator.New()
 
+// DecodeAndValidateRequest unmarshals JSON request body into the dest pointer, and executes
+// either custom Validate() method (if implemented) or struct tag validation via go-playground/validator.
+//
+// Parameters:
+//   - r: Incoming HTTP request containing JSON body.
+//   - dest: Pointer to target struct.
+//
+// Returns:
+//   - error: core_errors.ErrInvalidArgument if JSON decoding or validation fails.
 func DecodeAndValidateRequest(r *http.Request, dest any) error {
 	if err := json.NewDecoder(r.Body).Decode(dest); err != nil {
 		return fmt.Errorf("decode json: %v: %w", err, core_errors.ErrInvalidArgument)

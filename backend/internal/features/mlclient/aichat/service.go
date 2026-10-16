@@ -39,11 +39,15 @@ type Service struct {
 }
 
 func NewService(cfg mlclient.Config, users UsersReader) *Service {
+	timeout := cfg.Timeout
+	if timeout <= 0 {
+		timeout = 60 * time.Second
+	}
 	return &Service{
 		cfg: cfg,
 		httpClient: &http.Client{
 			Transport: http.DefaultTransport,
-			Timeout:   0,
+			Timeout:   timeout,
 		},
 		users: users,
 	}

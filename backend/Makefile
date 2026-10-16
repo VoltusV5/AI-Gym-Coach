@@ -1,4 +1,4 @@
-include .env
+-include .env
 export
 
 export PROJECT_ROOT=${shell pwd}
@@ -60,3 +60,33 @@ sportapp-deploy:
 
 ps:
 	@docker compose ps
+
+# Development and Quality Assurance targets
+test:
+	@go test -v ./...
+
+test-cover:
+	@go test -v -coverprofile=coverage.out ./...
+	@go tool cover -func=coverage.out
+
+fmt:
+	@gofmt -s -w .
+
+fmt-check:
+	@files=$$(gofmt -l .); if [ -n "$$files" ]; then echo "Unformatted files found:"; echo "$$files"; exit 1; else echo "All files properly formatted."; fi
+
+vet:
+	@go vet ./...
+
+lint:
+	@if command -v golangci-lint >/dev/null 2>&1; then \
+		golangci-lint run ./...; \
+	else \
+		echo "golangci-lint not installed locally, running go vet"; \
+		go vet ./...; \
+	fi
+
+check: fmt-check vet test
+
+build:
+	@go build -v -o out/sport_app cmd/sport_app/main.go

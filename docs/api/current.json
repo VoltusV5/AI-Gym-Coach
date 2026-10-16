@@ -1244,6 +1244,26 @@
             }
           }
         },
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          }
+        ],
         "x-service": "go",
         "x-source": "backend/internal/features/users/transport/http/notes.go"
       },
@@ -4701,6 +4721,15 @@
               "$ref": "#/components/schemas/Note"
             },
             "nullable": true
+          },
+          "total": {
+            "type": "integer"
+          },
+          "limit": {
+            "type": "integer"
+          },
+          "offset": {
+            "type": "integer"
           }
         },
         "required": [

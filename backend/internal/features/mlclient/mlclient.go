@@ -1,3 +1,5 @@
+// Package mlclient provides HTTP client integration with external machine learning microservices
+// for personalized workout plan generation and AI coaching assistance.
 package mlclient
 
 import (
@@ -7,32 +9,39 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/kelseyhightower/envconfig"
 )
 
+// Plan models a workout split schedule returned by the ML service.
 type Plan struct {
 	Split_type string `json:"тип_сплита"`
 	Plan_week  []Days `json:"еженедельный_план"`
 }
 
+// Days represents a specific day in the workout schedule.
 type Days struct {
 	Day       string     `json:"день"`
 	Type_day  string     `json:"тип_дня"`
 	Exercises []Muscules `json:"упражнения"`
 }
 
+// Muscules represents target muscle group and specific exercise sub-group.
 type Muscules struct {
 	Group     string  `json:"группа"`
 	Sub_group *string `json:"подгруппа"`
 }
 
+// Config stores connection parameters and HTTP timeouts for the ML microservice.
 type Config struct {
-	BaseURL     string `envconfig:"BASE_URL" required:"true"`
-	ChatBaseURL string `envconfig:"CHAT_BASE_URL"`
-	ChatPath    string `envconfig:"CHAT_PATH" default:"/ai/user/chat"`
+	BaseURL     string        `envconfig:"BASE_URL" required:"true"`
+	ChatBaseURL string        `envconfig:"CHAT_BASE_URL"`
+	ChatPath    string        `envconfig:"CHAT_PATH" default:"/ai/user/chat"`
+	Timeout     time.Duration `envconfig:"TIMEOUT" default:"30s"`
 }
 
+// NewConfig parses ML client settings from environment variables with "ML" prefix.
 func NewConfig() (Config, error) {
 	var config Config
 
@@ -43,6 +52,7 @@ func NewConfig() (Config, error) {
 	return config, nil
 }
 
+// NewConfigMust parses ML client settings or panics on failure.
 func NewConfigMust() Config {
 	config, err := NewConfig()
 	if err != nil {
@@ -53,6 +63,7 @@ func NewConfigMust() Config {
 	return config
 }
 
+// ChatURL resolves the absolute URL for the AI chat endpoint.
 func (c Config) ChatURL() string {
 	base := strings.TrimSpace(c.ChatBaseURL)
 	if base == "" {
@@ -69,18 +80,41 @@ func (c Config) ChatURL() string {
 	return base + path
 }
 
+// Client handles outbound HTTP requests to the ML microservice.
 type Client struct {
 	baseURL    string
 	httpClient *http.Client
 }
 
+// NewClient constructs an ML Client with the specified base URL and HTTP timeout.
+//
+// Parameters:
+//   - config: ML client configuration with endpoint and timeout settings.
+//
+// Returns:
+//   - *Client: Initialized ML client.
 func NewClient(config Config) *Client {
+	timeout := config.Timeout
+	if timeout <= 0 {
+		timeout = 30 * time.Second
+	}
 	return &Client{
-		baseURL:    strings.TrimSuffix(strings.TrimSpace(config.BaseURL), "/"),
-		httpClient: http.DefaultClient,
+		baseURL: strings.TrimSuffix(strings.TrimSpace(config.BaseURL), "/"),
+		httpClient: &http.Client{
+			Timeout: timeout,
+		},
 	}
 }
 
+// GeneratePlan sends user profile and fitness parameters to the ML service to generate a customized workout plan.
+//
+// Parameters:
+//   - ctx: Operation context (supports request cancellation and deadlines).
+//   - reqBody: Payload containing user demographics, goals, and training experience.
+//
+// Returns:
+//   - *Plan: Personalized workout plan with mapped exercise names.
+//   - error: Non-nil if network timeout occurs, ML service returns non-200, or JSON unmarshaling fails.
 func (c *Client) GeneratePlan(ctx context.Context, reqBody any) (*Plan, error) {
 	if c.baseURL == "" {
 		return nil, fmt.Errorf("ML base url is not set")

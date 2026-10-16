@@ -1,3 +1,5 @@
+// Package core_http_middleware provides HTTP middleware functions for authentication,
+// request identification, structured logging, CORS handling, panic recovery, and rate limiting.
 package core_http_middleware
 
 import (
@@ -19,6 +21,11 @@ import (
 
 const requestIDHeader = "X-Request-ID"
 
+// RequestID generates a unique UUIDv4 for each HTTP request if not already present in the X-Request-ID header,
+// and sets the header on both request and response.
+//
+// Side effects:
+//   - Mutates request Header and response Header with "X-Request-ID".
 func RequestID() Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -35,6 +42,14 @@ func RequestID() Middleware {
 	}
 }
 
+// Logger enriches the application logger with request-scoped fields (request_id, sanitized URL)
+// and stores the enriched logger in the request context for downstream handlers.
+//
+// Parameters:
+//   - log: Base application logger.
+//
+// Side effects:
+//   - Attaches enriched *core_logger.Logger to the request Context.
 func Logger(log *core_logger.Logger) Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -42,7 +57,7 @@ func Logger(log *core_logger.Logger) Middleware {
 
 			l := log.With(
 				zap.String("request_id", requestID),
-				zap.String("url", r.URL.String()),
+				zap.String("url", sanitizeURL(r.URL)),
 			)
 
 			ctx := core_logger.ToContext(r.Context(), l)
@@ -52,13 +67,39 @@ func Logger(log *core_logger.Logger) Middleware {
 	}
 }
 
+func sanitizeURL(u *url.URL) string {
+	if u == nil {
+		return ""
+	}
+	if u.RawQuery == "" {
+		return u.Path
+	}
+	q := u.Query()
+	for _, key := range []string{"token", "secret", "password", "key", "auth"} {
+		if q.Has(key) {
+			q.Set(key, "[REDACTED]")
+		}
+	}
+	return u.Path + "?" + q.Encode()
+}
+
 type contextKey string
 
 const (
-	UserIDKey      contextKey = "userID"
+	// UserIDKey identifies the authenticated user ID string stored in request context.
+	UserIDKey contextKey = "userID"
+	// IsAnonymousKey identifies the boolean flag distinguishing guest from registered users.
 	IsAnonymousKey contextKey = "isAnonymous"
 )
 
+// UserIDFromContext extracts the authenticated user ID from context.
+//
+// Parameters:
+//   - ctx: Request context.
+//
+// Returns:
+//   - string: Authenticated user's UUID.
+//   - error: core_errors.ErrUnauthorized if user ID is missing or empty.
 func UserIDFromContext(ctx context.Context) (string, error) {
 	userID, ok := ctx.Value(UserIDKey).(string)
 	if !ok || userID == "" {
@@ -68,6 +109,17 @@ func UserIDFromContext(ctx context.Context) (string, error) {
 	return userID, nil
 }
 
+// Protect enforces Bearer JWT token authentication on secured routes.
+// It parses claims, verifies token validity and expiration, and binds UserIDKey and IsAnonymousKey to context.
+//
+// Parameters:
+//   - jwt: JWT parser and validator service.
+//
+// Returns:
+//   - Middleware: HTTP middleware handler.
+//
+// Errors:
+//   - Returns 401 Unauthorized with JSON error payload if header is missing, malformed, or token is invalid/expired.
 func Protect(jwt *core_auth.JWT) Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -107,6 +159,8 @@ func Protect(jwt *core_auth.JWT) Middleware {
 	}
 }
 
+// CORS adds Cross-Origin Resource Sharing headers for local and private network development clients.
+// Automatically responds with 204 No Content for preflight OPTIONS requests.
 func CORS() Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -153,6 +207,7 @@ func isAllowedDevOrigin(origin string) bool {
 	return false
 }
 
+// Trace logs entry and exit timing for each HTTP request, recording method, start timestamp, status code, and latency.
 func Trace() Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -179,6 +234,7 @@ func Trace() Middleware {
 	}
 }
 
+// Panic recovers from uncaught panics inside HTTP handlers and formats a standardized 500 error response.
 func Panic() Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

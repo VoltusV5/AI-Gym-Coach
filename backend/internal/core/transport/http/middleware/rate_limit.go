@@ -32,6 +32,16 @@ func (l *slidingWindowLimiter) allow(key string, maxRequests int, window time.Du
 	defer l.mu.Unlock()
 
 	now := time.Now()
+
+	// Periodic cleanup of expired entries to prevent memory leaks
+	if len(l.entries) > 500 {
+		for k, v := range l.entries {
+			if now.Sub(v.windowStart) >= window {
+				delete(l.entries, k)
+			}
+		}
+	}
+
 	entry := l.entries[key]
 	if entry.windowStart.IsZero() || now.Sub(entry.windowStart) >= window {
 		l.entries[key] = rateLimitEntry{count: 1, windowStart: now}
@@ -45,6 +55,15 @@ func (l *slidingWindowLimiter) allow(key string, maxRequests int, window time.Du
 	return true
 }
 
+// RateLimit creates an IP-based sliding window rate limiter middleware.
+// Requests exceeding maxRequests within the specified time window receive HTTP 429 Too Many Requests.
+//
+// Parameters:
+//   - maxRequests: Maximum number of HTTP requests permitted per window per IP.
+//   - window: Sliding window duration.
+//
+// Returns:
+//   - Middleware: HTTP middleware enforcing the request limit.
 func RateLimit(maxRequests int, window time.Duration) Middleware {
 	lim := newSlidingWindowLimiter()
 	return func(next http.Handler) http.Handler {
@@ -70,6 +89,15 @@ func RateLimit(maxRequests int, window time.Duration) Middleware {
 	}
 }
 
+// UserRateLimit creates a per-user sliding window rate limiter middleware based on context userID.
+// Must be used after Protect middleware.
+//
+// Parameters:
+//   - maxRequests: Maximum number of HTTP requests allowed per user within the window.
+//   - window: Sliding window duration.
+//
+// Returns:
+//   - Middleware: HTTP middleware enforcing user quota.
 func UserRateLimit(maxRequests int, window time.Duration) Middleware {
 	lim := newSlidingWindowLimiter()
 	return func(next http.Handler) http.Handler {
