@@ -64,7 +64,7 @@ async def ai_chat(chat:ChatRequest) -> Dict[str,str]:
       top_p=1,
       stream=False
     )
-    
+    print(chat.plan)
     return {"role":"assistant", "content": completion.choices[0].message.content}
 
 

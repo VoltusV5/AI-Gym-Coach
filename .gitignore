@@ -8,7 +8,9 @@ Thumbs.db
 .idea/
 client_secret.json
 .env
-
+ai/chat/recommended_system/test_db_data.py
+ai/chat/recommended_system/test_db_data.py
+marketplace.db
 # AI (Python)
 ai/generateData/dataset*
 ai/__pycache__/

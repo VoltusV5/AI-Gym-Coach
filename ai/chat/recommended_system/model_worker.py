@@ -3,7 +3,9 @@
 Используя легковестную модель отбирает 5-10 вариантов.
 """
 from abc import ABC, abstractmethod
+import logging
 
+logger = logging.getLogger(__name__)
 
 class BaseRecommendedModel(ABC):
 
