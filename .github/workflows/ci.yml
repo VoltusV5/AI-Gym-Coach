@@ -1,0 +1,42 @@
+name: Backend CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Lint, Test & Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: ./backend/go.sum
+
+      - name: Установить закреплённый golangci-lint
+        run: make lint-install
+      - name: Форматирование, vet, lint и тесты
+        run: make check
+      - name: Покрытие и сборка
+        run: make test-cover build
+      - name: Проверить конфигурацию деплоя без запуска сервисов
+        working-directory: .
+        run: |
+          sh -n scripts/deploy.sh scripts/install-golangci-lint.sh
+          python3 -m unittest discover -s scripts/tests -v
+          docker compose --env-file deploy/.env.production.example -f docker-compose.production.yml config --quiet

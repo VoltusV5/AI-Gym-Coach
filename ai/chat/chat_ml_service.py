@@ -50,6 +50,11 @@ client = Cerebras(api_key=api_key) if api_key else None
 
 app = FastAPI(title="sportik-ml-chat", version="0.1.0")
 
+@app.get("/health")
+async def health():
+    """Проверяет готовность процесса без обращения к внешним AI-провайдерам."""
+    return {"ok": True}
+
 @app.post("/ai/user/chat")
 async def ai_chat(chat: ChatRequest):
     last_user = chat.messages[-1]['content'] if chat.messages else ""

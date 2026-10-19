@@ -77,16 +77,16 @@ func (r *UsersRepository) queryExerciseGroup(
 			FROM sportapp.exercises
 			WHERE muscular_group = $1 AND muscular_subgroup IS NULL
 			ORDER BY id
-			LIMIT 5;
-		`, ex.Group)
+			LIMIT $2;
+		`, ex.Group, exerciseGroupLimit)
 	} else {
 		rows, err = r.pool.Query(ctx, `
 			SELECT id, exercises_name, working_weights, image_url, video_url
 			FROM sportapp.exercises
 			WHERE muscular_group = $1 AND muscular_subgroup = $2
 			ORDER BY id
-			LIMIT 5;
-		`, ex.Group, *ex.Sub_group)
+			LIMIT $3;
+		`, ex.Group, *ex.Sub_group, exerciseGroupLimit)
 	}
 	if err != nil {
 		return nil, nil, fmt.Errorf("query exercises: %w", err)
@@ -133,33 +133,33 @@ func computeUserWeight(baseWeight float64, profile Profile) float64 {
 
 	switch derefStr(profile.FitnessLevel) {
 	case "Новичок":
-		k *= 0.4
+		k *= beginnerWeightMultiplier
 	case "Любитель":
-		k *= 0.6
+		k *= intermediateWeightMultiplier
 	default:
-		k *= 0.8
+		k *= advancedWeightMultiplier
 	}
 
 	switch derefStr(profile.ActivityLevel) {
 	case "Высокая", "Очень высокая":
-		k *= 1.1
+		k *= highActivityWeightMultiplier
 	}
 
 	if derefStr(profile.Gender) == "Женщина" {
-		k *= 0.7
+		k *= femaleWeightMultiplier
 	}
 
-	if profile.Age != nil && (*profile.Age < 20 || *profile.Age > 50) {
-		k *= 0.8
+	if profile.Age != nil && (*profile.Age < fullLoadMinimumAge || *profile.Age > fullLoadMaximumAge) {
+		k *= ageWeightMultiplier
 	}
 
 	if profile.InjuriesNotes != nil && *profile.InjuriesNotes {
-		k *= 0.7
+		k *= injuryWeightMultiplier
 	}
 
 	switch derefStr(profile.Goal) {
 	case "Сжечь жир", "Сбросить вес":
-		k *= 0.9
+		k *= weightLossLoadMultiplier
 	}
 
 	return roundWeightDownToGymStep(baseWeight * k)
@@ -172,33 +172,33 @@ const (
 )
 
 func roundWeightDownToGymStep(kg float64) float64 {
-	if kg < 1.0 {
-		return 1.0
+	if kg < gymPlateStepSmallKG {
+		return gymPlateStepSmallKG
 	}
 	step := gymPlateStepSmallKG
 	if kg >= gymPlateStepLargeFromKG {
 		step = gymPlateStepLargeKG
 	}
 	rounded := math.Floor(kg/step) * step
-	if rounded < 1.0 {
-		return 1.0
+	if rounded < gymPlateStepSmallKG {
+		return gymPlateStepSmallKG
 	}
-	return math.Round(rounded*10) / 10
+	return math.Round(rounded*weightRoundingPrecision) / weightRoundingPrecision
 }
 
 func RoundWeightToNearestGymStep(kg float64) float64 {
-	if kg < 1.0 {
-		return 1.0
+	if kg < gymPlateStepSmallKG {
+		return gymPlateStepSmallKG
 	}
 	step := gymPlateStepSmallKG
 	if kg >= gymPlateStepLargeFromKG {
 		step = gymPlateStepLargeKG
 	}
 	rounded := math.Round(kg/step) * step
-	if rounded < 1.0 {
-		return 1.0
+	if rounded < gymPlateStepSmallKG {
+		return gymPlateStepSmallKG
 	}
-	return math.Round(rounded*10) / 10
+	return math.Round(rounded*weightRoundingPrecision) / weightRoundingPrecision
 }
 
 func normalizeWeightedBodyweightVariants(list []ExWithWeight) []ExWithWeight {

@@ -59,7 +59,9 @@ type UsersService interface {
 	GetListNotes(
 		ctx context.Context,
 		userID string,
-	) ([]users_postgres_repository.Note, error)
+		limit int,
+		offset int,
+	) ([]users_postgres_repository.Note, int, error)
 	CreateNotesUser(
 		ctx context.Context,
 		userID string,
@@ -96,9 +98,9 @@ func NewUsersHTTPHandler(
 
 func (h *UsersHTTPHandler) Routes() []core_http_server.Route {
 	protect := core_http_middleware.Protect(h.jwt)
-	guestCreateRateLimit := core_http_middleware.RateLimit(10, time.Minute)
-	registerRateLimit := core_http_middleware.RateLimit(20, time.Minute)
-	loginRateLimit := core_http_middleware.RateLimit(30, time.Minute)
+	guestCreateRateLimit := core_http_middleware.RateLimit(guestRequestsPerMinute, time.Minute)
+	registerRateLimit := core_http_middleware.RateLimit(registerRequestsPerMinute, time.Minute)
+	loginRateLimit := core_http_middleware.RateLimit(loginRequestsPerMinute, time.Minute)
 
 	return []core_http_server.Route{
 		core_http_server.NewRoute(

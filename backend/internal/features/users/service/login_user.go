@@ -13,6 +13,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// LoginUser проверяет email и password по bcrypt-хешу и возвращает JWT и пользователя.
+// При отсутствии пользователя или неверном пароле возвращает ErrUnauthorized; возможны ошибки БД и подписи токена.
 func (s *UsersService) LoginUser(
 	ctx context.Context,
 	email string,

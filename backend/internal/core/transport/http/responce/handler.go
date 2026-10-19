@@ -1,3 +1,4 @@
+// Package core_http_responce формирует HTTP-ответы, сериализует JSON и сопоставляет ошибки со статусами.
 package core_http_responce
 
 import (
@@ -12,11 +13,13 @@ import (
 	"go.uber.org/zap"
 )
 
+// HTTPResponceHandler формирует HTTP-ответы и записывает ошибки в журнал.
 type HTTPResponceHandler struct {
 	log *core_logger.Logger
 	rw  http.ResponseWriter
 }
 
+// NewHTTPResponce создаёт обработчик ответов с журналом log и потоком ответа rw.
 func NewHTTPResponce(
 	log *core_logger.Logger,
 	rw http.ResponseWriter,
@@ -27,10 +30,12 @@ func NewHTTPResponce(
 	}
 }
 
+// JSONResponse сериализует responseBody, устанавливает Content-Type: application/json и записывает statusCode и тело ответа. Ошибку записи сохраняет в журнал.
 func (h *HTTPResponceHandler) JSONResponse(
 	responseBody any,
 	statusCode int,
 ) {
+	h.rw.Header().Set("Content-Type", "application/json")
 	h.rw.WriteHeader(statusCode)
 
 	if err := json.NewEncoder(h.rw).Encode(responseBody); err != nil {
@@ -38,10 +43,12 @@ func (h *HTTPResponceHandler) JSONResponse(
 	}
 }
 
+// NoContentResponse записывает HTTP 204 без тела ответа.
 func (h *HTTPResponceHandler) NoContentResponse() {
 	h.rw.WriteHeader(http.StatusNoContent)
 }
 
+// ErrorResponse сопоставляет err с HTTP-статусом, записывает ошибку и контекст msg в журнал и отправляет JSON с полями message и error. Неизвестной ошибке соответствует HTTP 500.
 func (h *HTTPResponceHandler) ErrorResponse(err error, msg string) {
 	var (
 		statusCode int
@@ -83,6 +90,7 @@ func (h *HTTPResponceHandler) ErrorResponse(err error, msg string) {
 	)
 }
 
+// PanicResponce записывает восстановленное значение паники p и описание msg в журнал и отправляет HTTP 500.
 func (h *HTTPResponceHandler) PanicResponce(p any, msg string) {
 	statusCode := http.StatusInternalServerError
 	err := fmt.Errorf("unexpected panic: %v", p)
@@ -100,8 +108,6 @@ func (h *HTTPResponceHandler) errorResponse(
 	err error,
 	msg string,
 ) {
-	h.rw.WriteHeader(statusCode)
-
 	responce := map[string]string{
 		"message": msg,
 		"error":   err.Error(),

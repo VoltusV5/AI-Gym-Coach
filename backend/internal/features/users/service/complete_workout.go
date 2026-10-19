@@ -7,6 +7,9 @@ import (
 	users_postgres_repository "sport_app/internal/features/users/repository/postgres"
 )
 
+// CompleteWorkout сохраняет тренировку req пользователя userID, рассчитывает прогрессию весов и достижения.
+// Возвращает новые достижения, итоги сессии и изменения плана либо ошибку загрузки, расчёта или сохранения.
+// Обновляет историю тренировок, рабочие веса с проверкой версии и разблокированные достижения.
 func (s *UsersService) CompleteWorkout(
 	ctx context.Context,
 	userID string,

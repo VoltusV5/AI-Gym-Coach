@@ -1,3 +1,4 @@
+// Package core_logger предоставляет структурированный журнал zap с выводом в консоль и файл и передачей через контекст.
 package core_logger
 
 import (
@@ -13,42 +14,54 @@ import (
 
 type loggerContextKey struct{}
 
+const (
+	logDirectoryPermissions = 0o755
+	logFilePermissions      = 0o644
+)
+
 var (
 	key = loggerContextKey{}
 )
 
+// Logger хранит структурированный журнал и открытый файл для записи сообщений.
 type Logger struct {
 	*zap.Logger
 
 	file *os.File
 }
 
+// ToContext добавляет log в контекст ctx и возвращает производный контекст.
 func ToContext(ctx context.Context, log *Logger) context.Context {
 	return context.WithValue(ctx, key, log)
 }
 
+// FromContext возвращает журнал из ctx. При его отсутствии возвращает безопасный Nop-журнал.
 func FromContext(ctx context.Context) *Logger {
-	log, ok := ctx.Value(key).(*Logger)
-	if !ok {
-		panic("no logger in context")
+	if ctx != nil {
+		if log, ok := ctx.Value(key).(*Logger); ok && log != nil {
+			return log
+		}
 	}
 
-	return log
+	return Nop()
 }
 
+// Nop возвращает журнал, который отбрасывает сообщения и не выполняет ввод-вывод.
 func Nop() *Logger {
 	return &Logger{
 		Logger: zap.NewNop(),
 	}
 }
 
+// NewLogger создаёт журнал zap с уровнем и каталогом из config.
+// Создаёт каталог и файл с временной меткой; возвращает ошибку неверного уровня или открытия файла.
 func NewLogger(config Config) (*Logger, error) {
 	zaplvl := zap.NewAtomicLevel()
 	if err := zaplvl.UnmarshalText([]byte(config.Level)); err != nil {
 		return nil, fmt.Errorf("unmarshal log level: %w", err)
 	}
 
-	if err := os.MkdirAll(config.Folder, 0755); err != nil {
+	if err := os.MkdirAll(config.Folder, logDirectoryPermissions); err != nil {
 		return nil, fmt.Errorf("mkdir log folder: %w", err)
 	}
 
@@ -58,7 +71,7 @@ func NewLogger(config Config) (*Logger, error) {
 		fmt.Sprintf("%s.log", timestamp),
 	)
 
-	logFile, err := os.OpenFile(logFilePath, os.O_CREATE|os.O_WRONLY, 0644)
+	logFile, err := os.OpenFile(logFilePath, os.O_CREATE|os.O_WRONLY, logFilePermissions)
 	if err != nil {
 		return nil, fmt.Errorf("open log file: %w", err)
 	}
@@ -81,6 +94,7 @@ func NewLogger(config Config) (*Logger, error) {
 	}, nil
 }
 
+// Close закрывает открытый файл журнала, если он существует.
 func (l *Logger) Close() {
 	if l.file == nil {
 		return
@@ -90,6 +104,7 @@ func (l *Logger) Close() {
 	}
 }
 
+// With возвращает копию журнала с дополнительными полями field.
 func (l *Logger) With(field ...zap.Field) *Logger {
 	return &Logger{
 		Logger: l.Logger.With(field...),

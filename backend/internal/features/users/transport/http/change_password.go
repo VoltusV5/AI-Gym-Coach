@@ -29,7 +29,7 @@ func (h *UsersHTTPHandler) ChangeUserPassword(rw http.ResponseWriter, r *http.Re
 		responseHandler.ErrorResponse(err, "failed to decode change user request")
 		return
 	}
-	defer r.Body.Close()
+	defer func() { _ = r.Body.Close() }()
 
 	if err := h.usersService.ChangeUserPassword(ctx, userID, req.CurrentPassword, req.NewPassword); err != nil {
 		responseHandler.ErrorResponse(err, "failed change password")

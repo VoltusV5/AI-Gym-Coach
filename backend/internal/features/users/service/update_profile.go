@@ -8,6 +8,9 @@ import (
 	users_postgres_repository "sport_app/internal/features/users/repository/postgres"
 )
 
+// UpdateProfile частично обновляет профиль userID полями updates с проверкой expectedVersion.
+// Возвращает обновлённый профиль, ErrInvalidArgument при пустом updates, ErrConflict при конфликте версии либо ошибку БД.
+// Сохраняет изменения и увеличивает версию профиля.
 func (s *UsersService) UpdateProfile(
 	ctx context.Context,
 	userID string,

@@ -1,3 +1,4 @@
+// Package core_http_request декодирует JSON-запросы и проверяет входные данные.
 package core_http_request
 
 import (
@@ -16,6 +17,8 @@ type validatable interface {
 
 var requestValidator = validator.New()
 
+// DecodeAndValidateRequest декодирует тело r в dest и вызывает Validate, если метод реализован, иначе проверяет теги структуры через validator.
+// При неверном JSON или нарушении правил возвращает ErrInvalidArgument.
 func DecodeAndValidateRequest(r *http.Request, dest any) error {
 	if err := json.NewDecoder(r.Body).Decode(dest); err != nil {
 		return fmt.Errorf("decode json: %v: %w", err, core_errors.ErrInvalidArgument)

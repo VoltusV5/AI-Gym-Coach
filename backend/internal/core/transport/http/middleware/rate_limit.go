@@ -13,6 +13,8 @@ import (
 	core_http_responce "sport_app/internal/core/transport/http/responce"
 )
 
+const limiterCleanupThreshold = 500
+
 type rateLimitEntry struct {
 	count       int
 	windowStart time.Time
@@ -32,6 +34,16 @@ func (l *slidingWindowLimiter) allow(key string, maxRequests int, window time.Du
 	defer l.mu.Unlock()
 
 	now := time.Now()
+
+	// Удаляем истёкшие записи, чтобы ограничить рост памяти.
+	if len(l.entries) > limiterCleanupThreshold {
+		for k, v := range l.entries {
+			if now.Sub(v.windowStart) >= window {
+				delete(l.entries, k)
+			}
+		}
+	}
+
 	entry := l.entries[key]
 	if entry.windowStart.IsZero() || now.Sub(entry.windowStart) >= window {
 		l.entries[key] = rateLimitEntry{count: 1, windowStart: now}
@@ -45,6 +57,8 @@ func (l *slidingWindowLimiter) allow(key string, maxRequests int, window time.Du
 	return true
 }
 
+// RateLimit ограничивает число запросов maxRequests с одного IP за окно window.
+// При превышении лимита отправляет HTTP 429.
 func RateLimit(maxRequests int, window time.Duration) Middleware {
 	lim := newSlidingWindowLimiter()
 	return func(next http.Handler) http.Handler {
@@ -70,6 +84,8 @@ func RateLimit(maxRequests int, window time.Duration) Middleware {
 	}
 }
 
+// UserRateLimit ограничивает число запросов maxRequests пользователя из контекста за окно window.
+// Должен выполняться после Protect; при превышении лимита отправляет HTTP 429.
 func UserRateLimit(maxRequests int, window time.Duration) Middleware {
 	lim := newSlidingWindowLimiter()
 	return func(next http.Handler) http.Handler {

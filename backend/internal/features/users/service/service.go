@@ -1,19 +1,33 @@
+// Package users_service реализует регистрацию, авторизацию, обновление профиля, генерацию планов, завершение тренировок и работу с заметками.
 package users_service
 
 import (
 	"context"
+	"time"
 
 	core_auth "sport_app/internal/core/auth"
 	"sport_app/internal/features/mlclient"
 	users_postgres_repository "sport_app/internal/features/users/repository/postgres"
 )
 
+// UsersService координирует бизнес-операции пользователей, репозиторий и ML-клиент.
 type UsersService struct {
-	usersRepository UsersRepository
-	mlClient        MLClient
-	jwt             *core_auth.JWT
+	usersRepository       UsersRepository
+	mlClient              MLClient
+	jwt                   *core_auth.JWT
+	planGenerationTimeout time.Duration
 }
 
+// WithPlanGenerationTimeout задаёт максимальную длительность генерации плана.
+func WithPlanGenerationTimeout(timeout time.Duration) func(*UsersService) {
+	return func(s *UsersService) {
+		if timeout > 0 {
+			s.planGenerationTimeout = timeout
+		}
+	}
+}
+
+// UsersRepository задаёт операции хранения, необходимые сервису пользователей.
 type UsersRepository interface {
 	EnsureExercisesSeeded(
 		ctx context.Context,
@@ -24,6 +38,11 @@ type UsersRepository interface {
 	CreateGuestUser(
 		ctx context.Context,
 	) (string, error)
+	CreateUser(
+		ctx context.Context,
+		email string,
+		passwordHash string,
+	) (users_postgres_repository.User, error)
 	PromoteGuestToUser(
 		ctx context.Context,
 		userID string,
@@ -103,7 +122,9 @@ type UsersRepository interface {
 	GetListNotes(
 		ctx context.Context,
 		userID string,
-	) ([]users_postgres_repository.Note, error)
+		limit int,
+		offset int,
+	) ([]users_postgres_repository.Note, int, error)
 	GetNoteByID(
 		ctx context.Context,
 		userID string,
@@ -142,6 +163,7 @@ type UsersRepository interface {
 	) (map[int]string, error)
 }
 
+// MLClient задаёт контракт генерации тренировочного плана через ML-сервис.
 type MLClient interface {
 	GeneratePlan(
 		ctx context.Context,
@@ -149,14 +171,21 @@ type MLClient interface {
 	) (*mlclient.Plan, error)
 }
 
+// NewUsersService создаёт сервис с репозиторием usersRepository, ML-клиентом mlClient, менеджером jwt и необязательными настройками.
 func NewUsersService(
 	usersRepository UsersRepository,
 	mlClient MLClient,
 	jwt *core_auth.JWT,
+	options ...func(*UsersService),
 ) *UsersService {
-	return &UsersService{
-		usersRepository: usersRepository,
-		mlClient:        mlClient,
-		jwt:             jwt,
+	s := &UsersService{
+		usersRepository:       usersRepository,
+		mlClient:              mlClient,
+		jwt:                   jwt,
+		planGenerationTimeout: mlGenerationTimeout,
 	}
+	for _, option := range options {
+		option(s)
+	}
+	return s
 }

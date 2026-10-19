@@ -1,3 +1,4 @@
+// Package core_http_middleware реализует авторизацию, идентификацию запросов, журналирование, CORS, восстановление после паник и ограничение частоты запросов.
 package core_http_middleware
 
 import (
@@ -19,6 +20,7 @@ import (
 
 const requestIDHeader = "X-Request-ID"
 
+// RequestID создаёт UUID запроса, если заголовок X-Request-ID отсутствует, и записывает идентификатор в заголовки запроса и ответа.
 func RequestID() Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -35,6 +37,7 @@ func RequestID() Middleware {
 	}
 }
 
+// Logger добавляет к журналу log поля запроса и URL без секретов и помещает журнал в контекст запроса.
 func Logger(log *core_logger.Logger) Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -42,7 +45,7 @@ func Logger(log *core_logger.Logger) Middleware {
 
 			l := log.With(
 				zap.String("request_id", requestID),
-				zap.String("url", r.URL.String()),
+				zap.String("url", sanitizeURL(r.URL)),
 			)
 
 			ctx := core_logger.ToContext(r.Context(), l)
@@ -52,13 +55,33 @@ func Logger(log *core_logger.Logger) Middleware {
 	}
 }
 
+func sanitizeURL(u *url.URL) string {
+	if u == nil {
+		return ""
+	}
+	if u.RawQuery == "" {
+		return u.Path
+	}
+	q := u.Query()
+	for _, key := range []string{"token", "secret", "password", "key", "auth"} {
+		if q.Has(key) {
+			q.Set(key, "[REDACTED]")
+		}
+	}
+	return u.Path + "?" + q.Encode()
+}
+
 type contextKey string
 
 const (
-	UserIDKey      contextKey = "userID"
+	// UserIDKey задаёт ключ идентификатора авторизованного пользователя в контексте.
+	UserIDKey contextKey = "userID"
+	// IsAnonymousKey задаёт ключ признака гостевой сессии в контексте.
 	IsAnonymousKey contextKey = "isAnonymous"
 )
 
+// UserIDFromContext извлекает идентификатор пользователя из ctx.
+// Возвращает ErrUnauthorized, если идентификатор отсутствует или пуст.
 func UserIDFromContext(ctx context.Context) (string, error) {
 	userID, ok := ctx.Value(UserIDKey).(string)
 	if !ok || userID == "" {
@@ -68,6 +91,8 @@ func UserIDFromContext(ctx context.Context) (string, error) {
 	return userID, nil
 }
 
+// Protect проверяет Bearer JWT с помощью jwt и добавляет идентификатор пользователя и признак гостя в контекст.
+// При отсутствии, повреждении или истечении токена отправляет HTTP 401 с JSON-ошибкой.
 func Protect(jwt *core_auth.JWT) Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -107,6 +132,7 @@ func Protect(jwt *core_auth.JWT) Middleware {
 	}
 }
 
+// CORS разрешает междоменные запросы от локальных клиентов и частных сетей разработки. На предварительный запрос OPTIONS отвечает HTTP 204.
 func CORS() Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -153,6 +179,7 @@ func isAllowedDevOrigin(origin string) bool {
 	return false
 }
 
+// Trace записывает в журнал метод, время начала, HTTP-статус и длительность запроса.
 func Trace() Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -179,6 +206,7 @@ func Trace() Middleware {
 	}
 }
 
+// Panic перехватывает панику HTTP-обработчика и формирует стандартный ответ с HTTP 500.
 func Panic() Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

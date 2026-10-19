@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	core_logger "sport_app/internal/core/logger"
 	core_http_middleware "sport_app/internal/core/transport/http/middleware"
@@ -57,7 +58,7 @@ func (h *HTTPServer) Run(ctx context.Context) error {
 	select {
 	case err := <-ch:
 		if err != nil {
-			return fmt.Errorf("Listen and Serve: %w", err)
+			return fmt.Errorf("listen and serve: %w", err)
 		}
 	case <-ctx.Done():
 		h.log.Warn("shutdown HTTP server...")
@@ -71,7 +72,7 @@ func (h *HTTPServer) Run(ctx context.Context) error {
 		if err := server.Shutdown(shutdownCtx); err != nil {
 			_ = server.Close()
 
-			return fmt.Errorf("Shutdown HTTP server: %w", err)
+			return fmt.Errorf("shutdown HTTP server: %w", err)
 		}
 		h.log.Warn("HTTP server stoped")
 	}
@@ -92,4 +93,20 @@ func (h *HTTPServer) RegisterAPIRouters(routers ...*APIVersionRouter) {
 func (h *HTTPServer) RegisterStaticDir(urlPrefix, localDir string) {
 	fs := http.FileServer(http.Dir(localDir))
 	h.mux.Handle(urlPrefix, http.StripPrefix(urlPrefix, fs))
+}
+
+// RegisterHealthCheck регистрирует проверку готовности и доступности БД.
+// Проверка ограничена таймаутом; ответ не раскрывает причины отказа и параметры подключения.
+func (h *HTTPServer) RegisterHealthCheck(check func(context.Context) error) {
+	const healthCheckTimeout = 3 * time.Second
+	h.mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
+		ctx, cancel := context.WithTimeout(r.Context(), healthCheckTimeout)
+		defer cancel()
+		w.Header().Set("Cache-Control", "no-store")
+		if err := check(ctx); err != nil {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	})
 }

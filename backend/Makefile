@@ -1,4 +1,4 @@
-include .env
+-include .env
 export
 
 export PROJECT_ROOT=${shell pwd}
@@ -60,3 +60,37 @@ sportapp-deploy:
 
 ps:
 	@docker compose ps
+
+# Локальные проверки качества совпадают с командами CI.
+.PHONY: test test-cover fmt fmt-check vet lint lint-install check build
+GOLANGCI_LINT := $(CURDIR)/bin/golangci-lint
+GOLANGCI_VERSION := $(shell cat .golangci-version)
+
+test:
+	@go test -v ./...
+
+test-cover:
+	@go test -v -coverprofile=coverage.out ./...
+	@go tool cover -func=coverage.out
+
+fmt:
+	@gofmt -s -w .
+
+fmt-check:
+	@files=$$(gofmt -l .); if [ -n "$$files" ]; then echo "Нарушено форматирование:"; echo "$$files"; exit 1; fi
+
+vet:
+	@go vet ./...
+
+lint-install:
+	@sh ../scripts/install-golangci-lint.sh
+
+lint:
+	@test -x "$(GOLANGCI_LINT)" || { echo "Сначала выполните make lint-install"; exit 1; }
+	@"$(GOLANGCI_LINT)" version | grep -F "version $(GOLANGCI_VERSION) " >/dev/null || { echo "Обновите линтер: make lint-install"; exit 1; }
+	@"$(GOLANGCI_LINT)" run --config .golangci.yml ./...
+
+check: fmt-check vet lint test
+
+build:
+	@go build -v -o out/sport_app cmd/sport_app/main.go

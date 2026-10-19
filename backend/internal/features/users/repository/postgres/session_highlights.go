@@ -106,11 +106,11 @@ func aggregateCurrentByExercise(req WorkoutCompleteRequest) map[int]exerciseSess
 func repIntensityBand(minReps int) int {
 	switch {
 	case minReps < normRepsMin:
-		return 0
+		return repBandLow
 	case minReps > normRepsMax:
-		return 2
+		return repBandHigh
 	default:
-		return 1
+		return repBandNormal
 	}
 }
 
@@ -145,7 +145,7 @@ func findPreviousExerciseMetrics(
 }
 
 func roundHighlightFloat(x float64) float64 {
-	return math.Round(x*10) / 10
+	return math.Round(x*weightRoundingPrecision) / weightRoundingPrecision
 }
 
 func BuildSessionHighlights(
@@ -192,11 +192,11 @@ func BuildSessionHighlights(
 			continue
 		}
 
-		weightUp := cur.maxWeightKg > prev.maxWeightKg+1e-9 && prev.maxWeightKg > 0
+		weightUp := cur.maxWeightKg > prev.maxWeightKg+weightComparisonEpsilon && prev.maxWeightKg > 0
 		weightDown := cur.maxWeightKg < prev.maxWeightKg-highlightWeightEpsilon
 
 		if weightUp {
-			pct := (cur.maxWeightKg - prev.maxWeightKg) / prev.maxWeightKg * 100
+			pct := (cur.maxWeightKg - prev.maxWeightKg) / prev.maxWeightKg * percentScale
 			bCur := repIntensityBand(cur.minReps)
 			bPrev := repIntensityBand(prev.minReps)
 			msg := "weight_pr"
@@ -233,8 +233,8 @@ func BuildSessionHighlights(
 		}
 		sameWeight := math.Abs(cur.maxWeightKg-prev.maxWeightKg) <= highlightWeightEpsilon
 		if sameWeight {
-			if cur.volumeKg > prev.volumeKg+1e-9 && prev.volumeKg > 0 {
-				pct := (cur.volumeKg - prev.volumeKg) / prev.volumeKg * 100
+			if cur.volumeKg > prev.volumeKg+weightComparisonEpsilon && prev.volumeKg > 0 {
+				pct := (cur.volumeKg - prev.volumeKg) / prev.volumeKg * percentScale
 				out = append(out, SessionHighlight{
 					ExerciseID:   exerciseID,
 					ExerciseName: name,
@@ -276,7 +276,7 @@ func BuildPlanUpdates(
 	var out []PlanUpdate
 	for k, newVal := range newWeights {
 		oldVal := oldWeights[k]
-		if math.Abs(newVal-oldVal) < 1e-9 {
+		if math.Abs(newVal-oldVal) < weightComparisonEpsilon {
 			continue
 		}
 		id, _ := strconv.Atoi(k)

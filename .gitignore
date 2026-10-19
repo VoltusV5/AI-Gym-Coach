@@ -8,10 +8,16 @@ Thumbs.db
 .idea/
 client_secret.json
 .env
+backend/bin/
+backend/out/
+backend/coverage.out
+deploy/.env.production
+deploy/ml.env
 # Local documentation QA dependencies and caches
 docs/api/.qa/
 docs/**/__pycache__/
 docs/**/*.pyc
+scripts/**/__pycache__/
 
 # AI (Python)
 ai/generateData/dataset*

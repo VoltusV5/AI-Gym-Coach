@@ -109,19 +109,19 @@ func earnedAchievementTitles(
 	if n >= 1 {
 		earned[achFirstWorkout] = struct{}{}
 	}
-	if n >= 5 {
+	if n >= fiveWorkoutsThreshold {
 		earned[achFiveWorkouts] = struct{}{}
 	}
-	if n >= 10 {
+	if n >= tenWorkoutsThreshold {
 		earned[achTenWorkouts] = struct{}{}
 	}
-	if n >= 25 {
+	if n >= twentyFiveWorkoutsThreshold {
 		earned[achTwentyFiveWorkouts] = struct{}{}
 	}
 
-	cutoff7 := now.Add(-7 * 24 * time.Hour)
+	cutoff7 := now.Add(-achievementWeekWindow)
 	c7 := 0
-	cutoff30 := now.Add(-30 * 24 * time.Hour)
+	cutoff30 := now.Add(-achievementMonthWindow)
 	c30 := 0
 	for _, w := range workouts {
 		if !w.FinishedAt.Before(cutoff7) {
@@ -131,10 +131,10 @@ func earnedAchievementTitles(
 			c30++
 		}
 	}
-	if c7 >= 3 {
+	if c7 >= weekWarriorThreshold {
 		earned[achWeekWarrior] = struct{}{}
 	}
-	if c30 >= 12 {
+	if c30 >= consistentMonthThreshold {
 		earned[achConsistentMonth] = struct{}{}
 	}
 
@@ -142,7 +142,7 @@ func earnedAchievementTitles(
 	sort.Slice(sorted, func(i, j int) bool {
 		return sorted[i].FinishedAt.Before(sorted[j].FinishedAt)
 	})
-	pause := 14 * 24 * time.Hour
+	pause := comebackPause
 	for i := 1; i < len(sorted); i++ {
 		if sorted[i].FinishedAt.Sub(sorted[i-1].FinishedAt) >= pause {
 			earned[achComeback] = struct{}{}
@@ -152,20 +152,20 @@ func earnedAchievementTitles(
 
 	for _, w := range workouts {
 		h := w.FinishedAt.Hour()
-		if h >= 5 && h < 10 {
+		if h >= earlyBirdStartHour && h < earlyBirdEndHour {
 			earned[achEarlyBird] = struct{}{}
 		}
-		if h >= 20 || h < 5 {
+		if h >= nightOwlStartHour || h < earlyBirdStartHour {
 			earned[achNightOwl] = struct{}{}
 		}
 		v := workoutVolumeKg(w)
-		if v >= 5000 {
+		if v >= sessionVolume5kKG {
 			earned[achVolume5k] = struct{}{}
 		}
-		if v >= 10000 {
+		if v >= sessionVolume10kKG {
 			earned[achVolume10k] = struct{}{}
 		}
-		if weightedSetsInSession(w) >= 20 {
+		if weightedSetsInSession(w) >= weightedSetsThreshold {
 			earned[achDoubleDigitSets] = struct{}{}
 		}
 	}
