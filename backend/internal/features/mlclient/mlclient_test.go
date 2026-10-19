@@ -56,7 +56,7 @@ func TestMLClient_GeneratePlan_Success(t *testing.T) {
 	require.Len(t, plan.Plan_week, 1)
 	require.Len(t, plan.Plan_week[0].Exercises, 2)
 
-	// Verify replacement of sub_group exercises
+	// Проверяем замену упражнений подгруппы.
 	require.NotNil(t, plan.Plan_week[0].Exercises[0].Sub_group)
 	assert.Equal(t, "тяга перед собой широким хватом", *plan.Plan_week[0].Exercises[0].Sub_group)
 
@@ -73,7 +73,7 @@ func TestMLClient_GeneratePlan_Timeout(t *testing.T) {
 
 	client := mlclient.NewClient(mlclient.Config{
 		BaseURL: ts.URL,
-		Timeout: 50 * time.Millisecond, // very short timeout
+		Timeout: 50 * time.Millisecond, // Короткий таймаут для проверки отмены запроса.
 	})
 
 	_, err := client.GeneratePlan(context.Background(), map[string]any{"goal": "strength"})

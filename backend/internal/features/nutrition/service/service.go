@@ -12,10 +12,10 @@ import (
 	nutrition_repo "sport_app/internal/features/nutrition/repository/postgres"
 )
 
-// ErrProfileIncomplete indicates that user profile data is insufficient for goal calculation.
+// ErrProfileIncomplete означает, что данных профиля недостаточно для расчёта целей питания.
 var ErrProfileIncomplete = errors.New("profile incomplete")
 
-// Repository defines the data access contract required by NutritionService.
+// Repository задаёт доступ к данным питания.
 type Repository interface {
 	ListEntries(ctx context.Context, userID int, startUTC, endUTC time.Time, limit, offset int) ([]nutrition_repo.NutritionEntry, int, error)
 	CreateEntry(ctx context.Context, userID int, entry nutrition_repo.NutritionEntry) (nutrition_repo.NutritionEntry, error)
@@ -51,13 +51,13 @@ type Repository interface {
 	GetAnalyticsWater(ctx context.Context, userID int, daysLimit int) ([]nutrition_repo.WaterLogSummary, error)
 }
 
-// NutritionService implements business logic for nutrition tracking.
+// NutritionService реализует бизнес-правила дневника питания.
 type NutritionService struct {
 	repo Repository
 	tz   *time.Location
 }
 
-// NewNutritionService constructs a new NutritionService.
+// NewNutritionService создаёт сервис питания с репозиторием и часовым поясом дневника.
 func NewNutritionService(repo Repository) *NutritionService {
 	tz, err := time.LoadLocation("Europe/Moscow")
 	if err != nil {
@@ -69,7 +69,7 @@ func NewNutritionService(repo Repository) *NutritionService {
 	}
 }
 
-// CreateEntryInput holds input parameters for creating a food entry.
+// CreateEntryInput содержит параметры создания записи питания.
 type CreateEntryInput struct {
 	DishID     *int
 	Grams      *float64
@@ -83,7 +83,7 @@ type CreateEntryInput struct {
 	Day        string
 }
 
-// UpdateEntryInput holds input parameters for updating a food entry.
+// UpdateEntryInput содержит параметры изменения записи питания.
 type UpdateEntryInput struct {
 	DishID     *int
 	Grams      *float64
@@ -97,7 +97,7 @@ type UpdateEntryInput struct {
 	Day        string
 }
 
-// DashboardResult aggregates all daily nutrition tracker data.
+// DashboardResult объединяет суточные показатели питания, воды, веса и целей.
 type DashboardResult struct {
 	Day            string         `json:"day"`
 	Today          map[string]any `json:"today"`
@@ -108,14 +108,14 @@ type DashboardResult struct {
 	BurnedCalories float64        `json:"burned_calories"`
 }
 
-// StatsResult aggregates macronutrient summaries across day, week and month.
+// StatsResult содержит суммы и средние значения БЖУ за день, неделю и месяц.
 type StatsResult struct {
 	Day      map[string]float64 `json:"day"`
 	WeekAvg  map[string]float64 `json:"week_avg"`
 	MonthAvg map[string]float64 `json:"month_avg"`
 }
 
-// AnalyticsResult contains historical charts for food, weight, and water.
+// AnalyticsResult содержит историю питания, веса и воды для графиков.
 type AnalyticsResult struct {
 	Days   int                               `json:"days"`
 	Food   []nutrition_repo.FoodDaySummary   `json:"food"`
@@ -123,20 +123,20 @@ type AnalyticsResult struct {
 	Water  []nutrition_repo.WaterLogSummary  `json:"water"`
 }
 
-// CaloriesFromMacros calculates total calories from protein, fat, and carbohydrate grams.
+// CaloriesFromMacros рассчитывает калорийность по массе белков p, жиров f и углеводов c в граммах.
 func CaloriesFromMacros(p, f, c float64) float64 {
-	return p*4 + f*9 + c*4
+	return p*proteinCaloriesPerGram + f*fatCaloriesPerGram + c*carbCaloriesPerGram
 }
 
-// ScaleFrom100 scales nutrition values per 100g to specified gram quantity.
+// ScaleFrom100 пересчитывает valuePer100 с порции 100 г на grams; для неположительной массы использует 100 г.
 func ScaleFrom100(valuePer100, grams float64) float64 {
 	if grams <= 0 {
-		grams = 100
+		grams = referencePortionGrams
 	}
-	return (valuePer100 / 100.0) * grams
+	return (valuePer100 / referencePortionGrams) * grams
 }
 
-// MealTypeOrDefault normalizes meal type or defaults to "snack".
+// MealTypeOrDefault нормализует тип приёма пищи; неизвестное значение заменяет на snack.
 func MealTypeOrDefault(v string) string {
 	switch strings.ToLower(strings.TrimSpace(v)) {
 	case "breakfast":
@@ -152,83 +152,83 @@ func MealTypeOrDefault(v string) string {
 	}
 }
 
-// DailyWaterGoalMlFromWeight computes target daily water intake in milliliters based on body weight.
+// DailyWaterGoalMlFromWeight рассчитывает суточную цель воды в миллилитрах по массе тела weightKg.
 func DailyWaterGoalMlFromWeight(weightKg float64) int {
 	if weightKg <= 0 {
-		return 2000
+		return defaultWaterGoalML
 	}
-	ml := int(math.Round(weightKg * 33))
-	if ml < 1500 {
-		ml = 1500
+	ml := int(math.Round(weightKg * waterMLPerKg))
+	if ml < minWaterGoalML {
+		ml = minWaterGoalML
 	}
-	if ml > 4500 {
-		ml = 4500
+	if ml > maxWaterGoalML {
+		ml = maxWaterGoalML
 	}
 	return ml
 }
 
-// ActivityMultiplier returns the physical activity coefficient.
+// ActivityMultiplier возвращает коэффициент физической активности.
 func ActivityMultiplier(level string) float64 {
 	switch strings.ToLower(strings.TrimSpace(level)) {
 	case "сидячий и малоподвижный":
-		return 1.2
+		return sedentaryActivityMultiplier
 	case "лёгкая активность (физические нагрузки 1-3 раза в неделю)",
 		"легкая активность (физические нагрузки 1-3 раза в неделю)":
-		return 1.375
+		return lightActivityMultiplier
 	case "средняя активность (физические нагрузки 3-5 раза в неделю)":
-		return 1.55
+		return moderateActivityMultiplier
 	case "высокая активность (физические нагрузки 6-7 раз в неделю)":
-		return 1.725
+		return highActivityMultiplier
 	case "очень высокая активность (постоянно высокая физическая нагрузка)":
-		return 1.9
+		return veryHighActivityMultiplier
 	default:
-		return 1.375
+		return lightActivityMultiplier
 	}
 }
 
-// TargetAdjustment adjusts calorie target according to fitness goal.
+// TargetAdjustment рассчитывает поправку калорийности для цели и массы тела.
 func TargetAdjustment(target string, weightKg float64) float64 {
 	switch strings.ToLower(strings.TrimSpace(target)) {
 	case "lose", "сбросить вес", "сжечь жир":
-		return -2 * weightKg
+		return -targetCaloriesPerKg * weightKg
 	case "gain", "набрать мышцы", "набрать мышцы и сжечь жир":
-		return 2 * weightKg
+		return targetCaloriesPerKg * weightKg
 	default:
 		return 0
 	}
 }
 
-// TargetDeltaAdjustment adjusts calories for target weight delta.
+// TargetDeltaAdjustment рассчитывает поправку калорийности по целевому изменению массы.
 func TargetDeltaAdjustment(deltaKg float64) float64 {
-	return deltaKg * 220
+	return deltaKg * targetDeltaCaloriesPerKg
 }
 
-// CalculateGoalFromProfile computes daily nutrition target macros using Mifflin-St Jeor formula.
+// CalculateGoalFromProfile рассчитывает суточные калории и БЖУ по формуле Миффлина — Сан Жеора, активности и цели.
 func CalculateGoalFromProfile(age int, heightCm, weightKg float64, gender, activity, target string) nutrition_repo.NutritionGoal {
-	base := (10*weightKg + 6.25*heightCm - 5*float64(age))
+	base := (bmrWeightCoefficient*weightKg + bmrHeightCoefficient*heightCm - bmrAgeCoefficient*float64(age))
 	if strings.EqualFold(strings.TrimSpace(gender), "Женщина") || strings.EqualFold(strings.TrimSpace(gender), "female") {
-		base -= 161
+		base -= bmrFemaleOffset
 	} else {
-		base += 5
+		base += bmrMaleOffset
 	}
 	calories := base*ActivityMultiplier(activity) + TargetAdjustment(target, weightKg)
-	if calories < 1200 {
-		calories = 1200
+	if calories < minimumDailyCalories {
+		calories = minimumDailyCalories
 	}
 
 	var protein float64
 	var fat float64
 	if strings.Contains(strings.ToLower(target), "сброс") || strings.Contains(strings.ToLower(target), "сжечь") {
-		protein = weightKg * 1.2
-		fat = (calories * 0.2) / 9
+		protein = weightKg * weightLossProteinPerKg
+		fat = (calories * weightLossFatFraction) / fatCaloriesPerGram
 	} else if strings.Contains(strings.ToLower(target), "набрать") {
-		protein = weightKg * 1.8
-		fat = (calories * 0.25) / 9
+		protein = weightKg * muscleGainProteinPerKg
+		fat = (calories * muscleGainFatFraction) / fatCaloriesPerGram
 	} else {
-		protein = weightKg * 1.0
-		fat = (calories * 0.3) / 9
+		protein = weightKg * maintenanceProteinPerKg
+		fat = (calories * maintenanceFatFraction) / fatCaloriesPerGram
 	}
-	carbs := (calories - protein*4 - fat*9) / 4
+	carbs := (calories - protein*proteinCaloriesPerGram - fat*fatCaloriesPerGram) / carbCaloriesPerGram
 	if carbs < 0 {
 		carbs = 0
 	}
@@ -240,28 +240,28 @@ func CalculateGoalFromProfile(age int, heightCm, weightKg float64, gender, activ
 	}
 }
 
-// DayBoundsFromQuery computes start and end UTC bounds for the given day string.
+// DayBoundsFromQuery возвращает UTC-границы дня и его дату в часовом поясе дневника; при пустой или неверной дате использует сегодня.
 func (s *NutritionService) DayBoundsFromQuery(dayRaw string) (time.Time, time.Time, string) {
 	now := time.Now().In(s.tz)
 	var dayStart time.Time
 	if dayRaw == "" {
 		dayStart = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, s.tz)
-	} else if d, err := time.ParseInLocation("2006-01-02", dayRaw, s.tz); err == nil {
+	} else if d, err := time.ParseInLocation(time.DateOnly, dayRaw, s.tz); err == nil {
 		dayStart = time.Date(d.Year(), d.Month(), d.Day(), 0, 0, 0, 0, s.tz)
 	} else {
 		dayStart = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, s.tz)
 	}
-	end := dayStart.Add(24 * time.Hour)
-	return dayStart.UTC(), end.UTC(), dayStart.Format("2006-01-02")
+	end := dayStart.Add(nutritionDayDuration)
+	return dayStart.UTC(), end.UTC(), dayStart.Format(time.DateOnly)
 }
 
 func (s *NutritionService) parseConsumedAt(consumedAt *string, day string) (time.Time, error) {
 	if strings.TrimSpace(day) != "" {
-		d, err := time.ParseInLocation("2006-01-02", strings.TrimSpace(day), s.tz)
+		d, err := time.ParseInLocation(time.DateOnly, strings.TrimSpace(day), s.tz)
 		if err != nil {
 			return time.Time{}, err
 		}
-		return time.Date(d.Year(), d.Month(), d.Day(), 12, 0, 0, 0, s.tz).UTC(), nil
+		return time.Date(d.Year(), d.Month(), d.Day(), defaultMealHour, 0, 0, 0, s.tz).UTC(), nil
 	}
 	if consumedAt == nil || strings.TrimSpace(*consumedAt) == "" {
 		return time.Now().UTC(), nil
@@ -273,7 +273,7 @@ func (s *NutritionService) parseConsumedAt(consumedAt *string, day string) (time
 	return t.UTC(), nil
 }
 
-// ListEntries returns logged entries for a specific day with optional pagination.
+// ListEntries возвращает записи питания пользователя за день со стабильной сортировкой и необязательной пагинацией.
 func (s *NutritionService) ListEntries(
 	ctx context.Context,
 	userID int,
@@ -289,7 +289,7 @@ func (s *NutritionService) ListEntries(
 	return items, total, dayYMD, nil
 }
 
-// CreateEntry adds a new food log entry with automatic macro scaling and dish association.
+// CreateEntry сохраняет запись питания пользователя с пересчётом БЖУ по массе порции и привязкой к блюду. Возвращает запись либо ошибку.
 func (s *NutritionService) CreateEntry(
 	ctx context.Context,
 	userID int,
@@ -301,7 +301,7 @@ func (s *NutritionService) CreateEntry(
 	}
 
 	mealType := MealTypeOrDefault(inp.MealType)
-	grams := 100.0
+	grams := float64(referencePortionGrams)
 	if inp.Grams != nil && *inp.Grams > 0 {
 		grams = *inp.Grams
 	}
@@ -355,7 +355,7 @@ func (s *NutritionService) CreateEntry(
 			FatG:      perF,
 			CarbsG:    perC,
 			Calories:  CaloriesFromMacros(perP, perF, perC),
-			BaseGrams: 100,
+			BaseGrams: referencePortionGrams,
 		})
 		if err == nil {
 			dishID = &createdDish.ID
@@ -387,7 +387,7 @@ func (s *NutritionService) CreateEntry(
 	return s.repo.CreateEntry(ctx, userID, entry)
 }
 
-// UpdateEntry modifies an existing food log entry.
+// UpdateEntry изменяет принадлежащую пользователю запись питания. Возвращает запись либо ошибку.
 func (s *NutritionService) UpdateEntry(
 	ctx context.Context,
 	userID int,
@@ -400,7 +400,7 @@ func (s *NutritionService) UpdateEntry(
 	}
 
 	mealType := MealTypeOrDefault(inp.MealType)
-	grams := 100.0
+	grams := float64(referencePortionGrams)
 	if inp.Grams != nil && *inp.Grams > 0 {
 		grams = *inp.Grams
 	}
@@ -457,17 +457,17 @@ func (s *NutritionService) UpdateEntry(
 	return s.repo.UpdateEntry(ctx, userID, entryID, entry)
 }
 
-// DeleteEntry deletes an entry owned by the user.
+// DeleteEntry удаляет запись питания только её владельца; при отсутствии записи возвращает ErrNotFound.
 func (s *NutritionService) DeleteEntry(ctx context.Context, userID int, entryID int) error {
 	return s.repo.DeleteEntry(ctx, userID, entryID)
 }
 
-// ListFavorites returns favorite foods for a user.
+// ListFavorites возвращает избранные продукты пользователя.
 func (s *NutritionService) ListFavorites(ctx context.Context, userID int, limit, offset int) ([]nutrition_repo.NutritionFavorite, int, error) {
 	return s.repo.ListFavorites(ctx, userID, limit, offset)
 }
 
-// CreateFavorite saves a new favorite food item.
+// CreateFavorite сохраняет продукт в избранном пользователя.
 func (s *NutritionService) CreateFavorite(
 	ctx context.Context,
 	userID int,
@@ -491,12 +491,12 @@ func (s *NutritionService) CreateFavorite(
 	})
 }
 
-// DeleteFavorite removes a favorite food item.
+// DeleteFavorite удаляет продукт из избранного только его владельца.
 func (s *NutritionService) DeleteFavorite(ctx context.Context, userID int, favID int) error {
 	return s.repo.DeleteFavorite(ctx, userID, favID)
 }
 
-// GetGoal returns the nutrition goal, computing and persisting it from profile if not yet set.
+// GetGoal возвращает цель питания пользователя; сервис рассчитывает и сохраняет её по профилю при отсутствии.
 func (s *NutritionService) GetGoal(ctx context.Context, userID int) (nutrition_repo.NutritionGoal, error) {
 	g, err := s.repo.GetGoal(ctx, userID)
 	if err == nil {
@@ -513,7 +513,7 @@ func (s *NutritionService) GetGoal(ctx context.Context, userID int) (nutrition_r
 	return synced, nil
 }
 
-// UpsertGoalFromProfile calculates and persists target goals from user profile.
+// UpsertGoalFromProfile рассчитывает и сохраняет цели питания по профилю и необязательному целевому изменению массы.
 func (s *NutritionService) UpsertGoalFromProfile(
 	ctx context.Context,
 	userID int,
@@ -525,20 +525,20 @@ func (s *NutritionService) UpsertGoalFromProfile(
 		return nutrition_repo.NutritionGoal{}, err
 	}
 
-	age := 30
-	if p.Age != nil && *p.Age > 0 && *p.Age < 120 {
+	age := defaultProfileAge
+	if p.Age != nil && *p.Age > 0 && *p.Age < maximumProfileAge {
 		age = *p.Age
 	}
-	heightCm := 175.0
-	if p.HeightCm != nil && *p.HeightCm > 80 && *p.HeightCm < 250 {
+	heightCm := float64(defaultProfileHeightCM)
+	if p.HeightCm != nil && *p.HeightCm > minimumProfileHeightCM && *p.HeightCm < maximumProfileHeightCM {
 		heightCm = float64(*p.HeightCm)
 	}
-	weightKg := 70.0
-	if p.WeightKg != nil && *p.WeightKg > 30 && *p.WeightKg < 400 {
+	weightKg := float64(defaultProfileWeightKG)
+	if p.WeightKg != nil && *p.WeightKg > minimumProfileWeightKG && *p.WeightKg < maximumProfileWeightKG {
 		weightKg = float64(*p.WeightKg)
 	} else {
 		lw, qerr := s.repo.GetLatestWeightKg(ctx, userID)
-		if qerr == nil && lw != nil && *lw > 30 && *lw < 400 {
+		if qerr == nil && lw != nil && *lw > minimumProfileWeightKG && *lw < maximumProfileWeightKG {
 			weightKg = *lw
 		}
 	}
@@ -567,13 +567,13 @@ func (s *NutritionService) UpsertGoalFromProfile(
 	}
 
 	newGoal := CalculateGoalFromProfile(age, heightCm, weightKg, gender, activity, goal)
-	if targetDeltaKg != nil && math.Abs(*targetDeltaKg) > 1e-6 {
+	if targetDeltaKg != nil && math.Abs(*targetDeltaKg) > targetDeltaEpsilon {
 		newGoal.Calories += TargetDeltaAdjustment(*targetDeltaKg)
-		if newGoal.Calories < 1200 {
-			newGoal.Calories = 1200
+		if newGoal.Calories < minimumDailyCalories {
+			newGoal.Calories = minimumDailyCalories
 		}
-		newGoal.FatG = (newGoal.Calories * 0.28) / 9
-		newGoal.CarbsG = (newGoal.Calories - newGoal.ProteinG*4 - newGoal.FatG*9) / 4
+		newGoal.FatG = (newGoal.Calories * recalculatedFatFraction) / fatCaloriesPerGram
+		newGoal.CarbsG = (newGoal.Calories - newGoal.ProteinG*proteinCaloriesPerGram - newGoal.FatG*fatCaloriesPerGram) / carbCaloriesPerGram
 		if newGoal.CarbsG < 0 {
 			newGoal.CarbsG = 0
 		}
@@ -582,7 +582,7 @@ func (s *NutritionService) UpsertGoalFromProfile(
 	return s.repo.UpsertGoal(ctx, userID, newGoal)
 }
 
-// RecalculateGoal updates goal target based on profile and optional target delta.
+// RecalculateGoal пересчитывает цели питания по профилю и необязательному изменению массы.
 func (s *NutritionService) RecalculateGoal(
 	ctx context.Context,
 	userID int,
@@ -592,14 +592,14 @@ func (s *NutritionService) RecalculateGoal(
 	return s.UpsertGoalFromProfile(ctx, userID, target, deltaKg)
 }
 
-// GetStats compiles aggregate macronutrient averages for day, week, and month.
+// GetStats возвращает суммарные и средние значения БЖУ и калорий за день, неделю и месяц.
 func (s *NutritionService) GetStats(ctx context.Context, userID int) (StatsResult, error) {
 	now := time.Now().In(s.tz)
 	dayStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, s.tz)
-	weekStart := dayStart.AddDate(0, 0, -7)
-	monthStart := dayStart.AddDate(0, 0, -30)
+	weekStart := dayStart.AddDate(0, 0, -statsWeekDays)
+	monthStart := dayStart.AddDate(0, 0, -statsMonthDays)
 
-	dayEnd := dayStart.Add(24 * time.Hour)
+	dayEnd := dayStart.Add(nutritionDayDuration)
 	daySums, err := s.repo.GetDayTotals(ctx, userID, dayStart.UTC(), dayEnd.UTC())
 	if err != nil {
 		return StatsResult{}, err
@@ -623,33 +623,33 @@ func (s *NutritionService) GetStats(ctx context.Context, userID int) (StatsResul
 			"calories":  daySums.Calories,
 		},
 		WeekAvg: map[string]float64{
-			"protein_g": weekSums.Protein / 7,
-			"fat_g":     weekSums.Fat / 7,
-			"carbs_g":   weekSums.Carbs / 7,
-			"calories":  weekSums.Calories / 7,
+			"protein_g": weekSums.Protein / statsWeekDays,
+			"fat_g":     weekSums.Fat / statsWeekDays,
+			"carbs_g":   weekSums.Carbs / statsWeekDays,
+			"calories":  weekSums.Calories / statsWeekDays,
 		},
 		MonthAvg: map[string]float64{
-			"protein_g": monthSums.Protein / 30,
-			"fat_g":     monthSums.Fat / 30,
-			"carbs_g":   monthSums.Carbs / 30,
-			"calories":  monthSums.Calories / 30,
+			"protein_g": monthSums.Protein / statsMonthDays,
+			"fat_g":     monthSums.Fat / statsMonthDays,
+			"carbs_g":   monthSums.Carbs / statsMonthDays,
+			"calories":  monthSums.Calories / statsMonthDays,
 		},
 	}, nil
 }
 
-// SearchDishes returns catalog dishes matching a search string.
+// SearchDishes ищет блюда по подстроке названия со стабильной сортировкой.
 func (s *NutritionService) SearchDishes(
 	ctx context.Context,
 	query string,
 	limit, offset int,
 ) ([]nutrition_repo.CatalogDish, int, error) {
-	if limit <= 0 || limit > 200 {
-		limit = 30
+	if limit <= 0 || limit > maxDishSearchLimit {
+		limit = DefaultDishSearchLimit
 	}
 	return s.repo.SearchDishes(ctx, strings.TrimSpace(query), limit, offset)
 }
 
-// CreateDish creates or updates a custom dish in the shared catalog.
+// CreateDish создаёт или обновляет пользовательское блюдо в каталоге.
 func (s *NutritionService) CreateDish(
 	ctx context.Context,
 	userID int,
@@ -660,7 +660,7 @@ func (s *NutritionService) CreateDish(
 		return nutrition_repo.CatalogDish{}, fmt.Errorf("dish title is required: %w", core_errors.ErrInvalidArgument)
 	}
 	if dish.BaseGrams <= 0 {
-		dish.BaseGrams = 100
+		dish.BaseGrams = referencePortionGrams
 	}
 	if dish.Calories <= 0 {
 		dish.Calories = CaloriesFromMacros(dish.ProteinG, dish.FatG, dish.CarbsG)
@@ -668,7 +668,7 @@ func (s *NutritionService) CreateDish(
 	return s.repo.CreateOrUpsertDish(ctx, userID, dish)
 }
 
-// ListMyDishes returns dishes created by the user.
+// ListMyDishes возвращает блюда, созданные текущим пользователем.
 func (s *NutritionService) ListMyDishes(
 	ctx context.Context,
 	userID int,
@@ -677,7 +677,7 @@ func (s *NutritionService) ListMyDishes(
 	return s.repo.ListMyDishes(ctx, userID, limit, offset)
 }
 
-// UpdateMyDish updates an existing custom dish created by the user.
+// UpdateMyDish изменяет блюдо только для его автора.
 func (s *NutritionService) UpdateMyDish(
 	ctx context.Context,
 	userID int,
@@ -689,7 +689,7 @@ func (s *NutritionService) UpdateMyDish(
 		return nutrition_repo.CatalogDish{}, fmt.Errorf("dish title is required: %w", core_errors.ErrInvalidArgument)
 	}
 	if dish.BaseGrams <= 0 {
-		dish.BaseGrams = 100
+		dish.BaseGrams = referencePortionGrams
 	}
 	if dish.Calories <= 0 {
 		dish.Calories = CaloriesFromMacros(dish.ProteinG, dish.FatG, dish.CarbsG)
@@ -697,12 +697,12 @@ func (s *NutritionService) UpdateMyDish(
 	return s.repo.UpdateMyDish(ctx, userID, dishID, dish)
 }
 
-// DeleteMyDish deletes a custom dish owned by the user.
+// DeleteMyDish удаляет блюдо только для его автора.
 func (s *NutritionService) DeleteMyDish(ctx context.Context, userID int, dishID int) error {
 	return s.repo.DeleteMyDish(ctx, userID, dishID)
 }
 
-// UpsertWater records water consumption.
+// UpsertWater сохраняет объём выпитой воды пользователя за указанную дату.
 func (s *NutritionService) UpsertWater(ctx context.Context, userID int, dayRaw string, amountML int) error {
 	if amountML < 0 {
 		amountML = 0
@@ -711,7 +711,7 @@ func (s *NutritionService) UpsertWater(ctx context.Context, userID int, dayRaw s
 	return s.repo.UpsertWater(ctx, userID, defaultYMD, amountML)
 }
 
-// UpsertWeight records daily body weight.
+// UpsertWeight сохраняет массу тела пользователя за указанную дату.
 func (s *NutritionService) UpsertWeight(ctx context.Context, userID int, dayRaw string, weightKg float64) error {
 	if weightKg <= 0 {
 		return fmt.Errorf("weight_kg must be > 0: %w", core_errors.ErrInvalidArgument)
@@ -720,7 +720,7 @@ func (s *NutritionService) UpsertWeight(ctx context.Context, userID int, dayRaw 
 	return s.repo.UpsertWeight(ctx, userID, defaultYMD, weightKg)
 }
 
-// GetDashboard aggregates daily summaries, goals, water, weight and streak.
+// GetDashboard объединяет суточные показатели питания, цели, воду, вес и непрерывную серию записей.
 func (s *NutritionService) GetDashboard(
 	ctx context.Context,
 	userID int,
@@ -745,7 +745,7 @@ func (s *NutritionService) GetDashboard(
 
 	needWeightReminder := true
 	if lastWeightDay != nil {
-		needWeightReminder = dayStart.Sub(*lastWeightDay) >= 72*time.Hour
+		needWeightReminder = dayStart.Sub(*lastWeightDay) >= weightReminderInterval
 	}
 
 	waterGoalKg := 0.0
@@ -777,7 +777,7 @@ func (s *NutritionService) GetDashboard(
 		Water: map[string]any{
 			"amount_ml":   waterML,
 			"goal_ml":     wMlGoal,
-			"goal_liters": math.Round(float64(wMlGoal)/1000.0*100) / 100,
+			"goal_liters": math.Round(float64(wMlGoal)/millilitersPerLiter*waterLitersPrecision) / waterLitersPrecision,
 		},
 		Weight: map[string]any{
 			"last_weight_kg":       lastWeight,
@@ -789,10 +789,10 @@ func (s *NutritionService) GetDashboard(
 	}, nil
 }
 
-// GetAnalytics compiles historical intake, weight, and water charts.
+// GetAnalytics возвращает историю питания, веса и воды за выбранный период.
 func (s *NutritionService) GetAnalytics(ctx context.Context, userID int, days int) (AnalyticsResult, error) {
-	if days <= 0 || days > 4000 {
-		days = 30
+	if days <= 0 || days > maxAnalyticsDays {
+		days = defaultAnalyticsDays
 	}
 
 	food, err := s.repo.GetAnalyticsFood(ctx, userID, days)

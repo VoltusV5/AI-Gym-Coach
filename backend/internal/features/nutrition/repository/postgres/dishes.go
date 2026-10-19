@@ -12,7 +12,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
-// SearchDishes searches dishes in the catalog by substring match with stable ordering.
+// SearchDishes ищет блюда по подстроке названия со стабильной сортировкой.
 func (r *Repository) SearchDishes(
 	ctx context.Context,
 	searchQuery string,
@@ -68,7 +68,7 @@ func (r *Repository) SearchDishes(
 	return items, total, nil
 }
 
-// GetDishByID retrieves a dish by its ID.
+// GetDishByID возвращает блюдо по идентификатору либо ошибку отсутствия или чтения.
 func (r *Repository) GetDishByID(
 	ctx context.Context,
 	dishID int,
@@ -96,7 +96,7 @@ func (r *Repository) GetDishByID(
 	return item, nil
 }
 
-// CreateOrUpsertDish inserts a new dish or updates macros on conflict title.
+// CreateOrUpsertDish создаёт блюдо либо обновляет БЖУ при конфликте названия.
 func (r *Repository) CreateOrUpsertDish(
 	ctx context.Context,
 	userID int,
@@ -139,7 +139,7 @@ func (r *Repository) CreateOrUpsertDish(
 	return item, nil
 }
 
-// ListMyDishes retrieves custom dishes created by a specific user.
+// ListMyDishes возвращает блюда, созданные текущим пользователем.
 func (r *Repository) ListMyDishes(
 	ctx context.Context,
 	userID int,
@@ -190,7 +190,7 @@ func (r *Repository) ListMyDishes(
 	return items, total, nil
 }
 
-// UpdateMyDish updates a custom dish created by the user.
+// UpdateMyDish изменяет блюдо только для его автора.
 func (r *Repository) UpdateMyDish(
 	ctx context.Context,
 	userID int,
@@ -230,7 +230,7 @@ func (r *Repository) UpdateMyDish(
 	return item, nil
 }
 
-// DeleteMyDish detaches user entries from the dish and deletes the dish.
+// DeleteMyDish удаляет блюдо только для его автора.
 func (r *Repository) DeleteMyDish(
 	ctx context.Context,
 	userID int,

@@ -2,7 +2,7 @@ package postgres
 
 import "time"
 
-// NutritionEntry represents a food log item consumed by a user.
+// NutritionEntry описывает запись съеденного продукта в дневнике пользователя.
 type NutritionEntry struct {
 	ID         int       `json:"id"`
 	DishID     *int      `json:"dish_id,omitempty"`
@@ -17,7 +17,7 @@ type NutritionEntry struct {
 	CreatedAt  time.Time `json:"created_at"`
 }
 
-// NutritionFavorite represents a saved favorite food item for quick logging.
+// NutritionFavorite описывает избранный продукт для быстрого добавления в дневник.
 type NutritionFavorite struct {
 	ID       int     `json:"id"`
 	Title    string  `json:"title"`
@@ -27,7 +27,7 @@ type NutritionFavorite struct {
 	UnitType string  `json:"unit_type"`
 }
 
-// NutritionGoal represents daily target macronutrients and calories.
+// NutritionGoal содержит суточные цели по калорийности и БЖУ.
 type NutritionGoal struct {
 	ProteinG  float64   `json:"protein_g"`
 	FatG      float64   `json:"fat_g"`
@@ -36,7 +36,7 @@ type NutritionGoal struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-// CatalogDish represents a catalog dish item.
+// CatalogDish описывает блюдо каталога.
 type CatalogDish struct {
 	ID        int     `json:"id,omitempty"`
 	Title     string  `json:"title"`
@@ -47,7 +47,7 @@ type CatalogDish struct {
 	BaseGrams float64 `json:"base_grams,omitempty"`
 }
 
-// UserProfileData contains fields from sportapp.profile needed to calculate nutritional goals.
+// UserProfileData содержит параметры профиля, необходимые для расчёта целей питания.
 type UserProfileData struct {
 	Age           *int
 	Gender        *string
@@ -57,7 +57,7 @@ type UserProfileData struct {
 	Goal          *string
 }
 
-// DailyMacroTotals holds aggregated macronutrient sums.
+// DailyMacroTotals содержит суммарные значения БЖУ и калорий.
 type DailyMacroTotals struct {
 	Protein  float64
 	Fat      float64
@@ -65,7 +65,7 @@ type DailyMacroTotals struct {
 	Calories float64
 }
 
-// FoodDaySummary represents aggregated nutrition intake for a single day.
+// FoodDaySummary содержит суммарное питание за день.
 type FoodDaySummary struct {
 	Day      string  `json:"day"`
 	ProteinG float64 `json:"protein_g"`
@@ -74,13 +74,13 @@ type FoodDaySummary struct {
 	Calories float64 `json:"calories"`
 }
 
-// WeightLogSummary represents a weight record on a specific date.
+// WeightLogSummary содержит запись массы тела на указанную дату.
 type WeightLogSummary struct {
 	Day      string  `json:"day"`
 	WeightKg float64 `json:"weight_kg"`
 }
 
-// WaterLogSummary represents a water intake record on a specific date.
+// WaterLogSummary содержит запись потребления воды на указанную дату.
 type WaterLogSummary struct {
 	Day      string `json:"day"`
 	AmountML int    `json:"amount_ml"`

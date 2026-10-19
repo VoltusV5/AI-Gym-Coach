@@ -97,7 +97,7 @@ func TestMealTypeOrDefault(t *testing.T) {
 }
 
 func TestCalculateGoalFromProfile(t *testing.T) {
-	// 30 yo, 175cm, 70kg, male, light activity, maintain
+	// Мужчина: 30 лет, 175 см, 70 кг, лёгкая активность, поддержание веса.
 	goal := CalculateGoalFromProfile(30, 175, 70, "Мужчина", "лёгкая активность (физические нагрузки 1-3 раза в неделю)", "Поддержание")
 
 	if goal.Calories < 1200 {
@@ -113,7 +113,7 @@ func TestCalculateGoalFromProfile(t *testing.T) {
 		t.Errorf("Goal carbs = %v; expected >= 0", goal.CarbsG)
 	}
 
-	// Female profile
+	// Женский профиль.
 	femaleGoal := CalculateGoalFromProfile(25, 165, 55, "Женщина", "средняя активность (физические нагрузки 3-5 раза в неделю)", "Сбросить вес")
 	if femaleGoal.Calories < 1200 {
 		t.Errorf("Female calories should be at least 1200, got %v", femaleGoal.Calories)

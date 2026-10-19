@@ -10,7 +10,7 @@ import (
 	core_postgres_pool "sport_app/internal/core/repository/postgres/pool"
 )
 
-// GetGoal retrieves the nutrition goal for a user.
+// GetGoal возвращает цель питания пользователя; сервис рассчитывает и сохраняет её по профилю при отсутствии.
 func (r *Repository) GetGoal(
 	ctx context.Context,
 	userID int,
@@ -37,7 +37,7 @@ func (r *Repository) GetGoal(
 	return g, nil
 }
 
-// UpsertGoal inserts or updates the nutrition goal for a user.
+// UpsertGoal создаёт или обновляет цель питания пользователя.
 func (r *Repository) UpsertGoal(
 	ctx context.Context,
 	userID int,
@@ -70,7 +70,7 @@ func (r *Repository) UpsertGoal(
 	return goal, nil
 }
 
-// GetUserProfile retrieves profile parameters used in nutrition calculations.
+// GetUserProfile возвращает параметры профиля для расчёта целей питания.
 func (r *Repository) GetUserProfile(
 	ctx context.Context,
 	userID int,
@@ -97,7 +97,7 @@ func (r *Repository) GetUserProfile(
 	return p, nil
 }
 
-// GetLatestWeightKg retrieves the latest logged weight for a user.
+// GetLatestWeightKg возвращает последнее измерение массы тела в килограммах.
 func (r *Repository) GetLatestWeightKg(
 	ctx context.Context,
 	userID int,
@@ -124,7 +124,7 @@ func (r *Repository) GetLatestWeightKg(
 	return w, nil
 }
 
-// GetProfileWeightKg retrieves the baseline weight recorded in profile.
+// GetProfileWeightKg возвращает массу тела из профиля.
 func (r *Repository) GetProfileWeightKg(
 	ctx context.Context,
 	userID int,

@@ -1,0 +1,94 @@
+name: Deploy production
+
+on:
+  workflow_run:
+    workflows: [Backend CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sportik-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    # Переменная включается только после подготовки сервера. PR никогда не деплоится.
+    if: >-
+      vars.DEPLOY_ENABLED == 'true' &&
+      ((github.event_name == 'workflow_run' &&
+        github.event.workflow_run.event == 'push' &&
+        github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.head_branch == 'main' &&
+        github.event.workflow_run.head_repository.full_name == github.repository) ||
+       (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'))
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+      # Ручной запуск также проходит все проверки выбранного SHA до получения SSH-ключа.
+      - name: Проверить релиз
+        run: |
+          make -C backend lint-install check build
+          sh -n scripts/deploy.sh
+          python3 -m unittest discover -s scripts/tests -v
+          docker compose --env-file deploy/.env.production.example -f docker-compose.production.yml config --quiet
+      - name: Подготовить SSH и архив исходников
+        env:
+          HOST: ${{ secrets.HOST }}
+          USER: ${{ secrets.USER }}
+          SSH_KEY: ${{ secrets.SSH_KEY }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+        run: |
+          set -eu
+          test -n "$HOST" && test -n "$USER" && test -n "$SSH_KEY"
+          test -n "$SSH_KNOWN_HOSTS"
+          case "$SSH_PORT" in ''|*[!0-9]*) echo 'Задайте SSH_PORT'; exit 1 ;; esac
+          test "$SSH_PORT" -ge 1 && test "$SSH_PORT" -le 65535
+          mkdir -p "$RUNNER_TEMP/ssh"
+          chmod 700 "$RUNNER_TEMP/ssh"
+          printf '%s\n' "$SSH_KEY" > "$RUNNER_TEMP/ssh/key"
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > "$RUNNER_TEMP/ssh/known_hosts"
+          chmod 600 "$RUNNER_TEMP/ssh/"*
+          git archive --format=tar.gz --output="$RUNNER_TEMP/release.tar.gz" HEAD
+      - name: Передать и запустить деплой
+        env:
+          HOST: ${{ secrets.HOST }}
+          USER: ${{ secrets.USER }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+        run: |
+          set -eu
+          sha=$(git rev-parse HEAD)
+          remote="/srv/sportik/incoming/$sha-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          ssh_opts="-i $RUNNER_TEMP/ssh/key -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$RUNNER_TEMP/ssh/known_hosts -o ConnectTimeout=15"
+          ssh $ssh_opts -p "$SSH_PORT" "$USER@$HOST" "mkdir -p '$remote'"
+          scp $ssh_opts -P "$SSH_PORT" "$RUNNER_TEMP/release.tar.gz" scripts/deploy.sh "$USER@$HOST:$remote/"
+          ssh $ssh_opts -p "$SSH_PORT" "$USER@$HOST" "sh '$remote/deploy.sh' deploy '$sha' '$remote/release.tar.gz'"
+      - name: Удалить временный SSH-ключ
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/ssh"
+      - name: Отправить результат в Telegram
+        if: ${{ always() && !cancelled() }}
+        env:
+          TELEGRAM_TO: ${{ secrets.TELEGRAM_TO }}
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          DEPLOY_STATUS: ${{ job.status }}
+        run: |
+          if [ -z "$TELEGRAM_TO" ] || [ -z "$TELEGRAM_TOKEN" ]; then
+            echo 'Telegram secrets не заданы'; exit 1
+          fi
+          curl --fail --silent --show-error --retry 2 --max-time 20 \
+            --data-urlencode "chat_id=$TELEGRAM_TO" \
+            --data-urlencode "text=Спортик: деплой $DEPLOY_STATUS. $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            "https://api.telegram.org/bot$TELEGRAM_TOKEN/sendMessage" > /dev/null

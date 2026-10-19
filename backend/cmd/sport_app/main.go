@@ -61,7 +61,8 @@ func main() {
 
 	logger.Debug("initializing feature", zap.String("feature", "users"))
 	usersRepository := users_postgres_repository.NewUsersRepository(pool)
-	usersService := users_service.NewUsersService(usersRepository, mlClient, jwt)
+	usersService := users_service.NewUsersService(usersRepository, mlClient, jwt,
+		users_service.WithPlanGenerationTimeout(mlCfg.PlanGenerationTimeout()))
 
 	usersTransportHTTP := users_transport_http.NewUsersHTTPHandler(usersService, jwt)
 
@@ -105,6 +106,10 @@ func main() {
 	httpServer.RegisterStaticDir("/static/", staticDir)
 
 	httpServer.RegisterAPIRouters(apiVersionRouter)
+	httpServer.RegisterHealthCheck(func(ctx context.Context) error {
+		var value int
+		return pool.QueryRow(ctx, "SELECT 1").Scan(&value)
+	})
 
 	if err := httpServer.Run(ctx); err != nil {
 		logger.Error("HTTP server run error", zap.Error(err))

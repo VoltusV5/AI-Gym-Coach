@@ -1,4 +1,4 @@
-// Package core_postgres_pool defines connection pool abstractions decoupled from specific database drivers.
+// Package core_postgres_pool описывает пул подключений к БД независимо от конкретного драйвера.
 package core_postgres_pool
 
 import (
@@ -6,25 +6,25 @@ import (
 	"time"
 )
 
-// Pool abstracts database connection pooling operations for queries, executions, and timeouts.
+// Pool описывает выполнение запросов, управление подключениями и таймаутами операций БД.
 type Pool interface {
-	// Query executes an SQL query returning multiple rows.
+	// Query выполняет SQL-запрос и возвращает итератор строк или ошибку БД.
 	Query(ctx context.Context, sql string, args ...any) (Rows, error)
 
-	// QueryRow executes an SQL query expected to return at most one row.
+	// QueryRow выполняет SQL-запрос, ожидающий не более одной строки.
 	QueryRow(ctx context.Context, sql string, args ...any) Row
 
-	// Exec executes an SQL statement (INSERT, UPDATE, DELETE) returning the affected rows count.
+	// Exec выполняет SQL-команду и возвращает число затронутых строк или ошибку БД.
 	Exec(ctx context.Context, sql string, arguments ...any) (CommandTag, error)
 
-	// Close terminates all pool connections.
+	// Close закрывает все подключения пула.
 	Close()
 
-	// OpTimeout returns the default database operation deadline.
+	// OpTimeout возвращает таймаут операции БД.
 	OpTimeout() time.Duration
 }
 
-// Rows represents an iterator over database query result sets.
+// Rows описывает итератор строк результата SQL-запроса.
 type Rows interface {
 	Close()
 	Err() error
@@ -32,12 +32,12 @@ type Rows interface {
 	Scan(dest ...any) error
 }
 
-// Row represents a single database row result.
+// Row описывает одну строку результата SQL-запроса.
 type Row interface {
 	Scan(dest ...any) error
 }
 
-// CommandTag holds metadata about the executed SQL command (e.g., number of affected rows).
+// CommandTag содержит сведения о выполненной SQL-команде, включая число затронутых строк.
 type CommandTag interface {
 	RowsAffected() int64
 }

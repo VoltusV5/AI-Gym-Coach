@@ -1,27 +1,21 @@
-// Package core_errors defines standardized sentinel errors used across all application layers
-// for consistent HTTP mapping, domain error handling, and testing.
+// Package core_errors определяет общие ошибки приложения для согласованной обработки в HTTP, сервисах и тестах.
 package core_errors
 
 import "errors"
 
 var (
-	// ErrNotFound indicates that a requested entity (user, note, dish, workout) does not exist or was deleted.
-	// Maps to HTTP 404 Not Found.
+	// ErrNotFound означает, что объект не существует, удалён или недоступен пользователю; соответствует HTTP 404.
 	ErrNotFound = errors.New("not found")
 
-	// ErrInvalidArgument indicates malformed request payload, invalid parameters, or validation failure.
-	// Maps to HTTP 400 Bad Request.
+	// ErrInvalidArgument означает неверные параметры или тело запроса; соответствует HTTP 400.
 	ErrInvalidArgument = errors.New("invalid argument")
 
-	// ErrConflict indicates an optimistic lock version conflict (e.g., outdated entity version).
-	// Maps to HTTP 409 Conflict.
+	// ErrConflict означает конфликт версии или уникальности; соответствует HTTP 409.
 	ErrConflict = errors.New("conflict")
 
-	// ErrUnauthorized indicates missing, invalid, or expired credentials (JWT token).
-	// Maps to HTTP 401 Unauthorized.
+	// ErrUnauthorized означает отсутствие или недействительность учётных данных; соответствует HTTP 401.
 	ErrUnauthorized = errors.New("unauthorized")
 
-	// ErrTooManyRequests indicates that a client exceeded the allowed rate limit threshold.
-	// Maps to HTTP 429 Too Many Requests.
+	// ErrTooManyRequests означает превышение квоты запросов; соответствует HTTP 429.
 	ErrTooManyRequests = errors.New("too many requests")
 )

@@ -13,17 +13,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// LoginUser verifies email and password against stored bcrypt hashes and issues a non-guest JWT token.
-//
-// Parameters:
-//   - ctx: Operation context.
-//   - email: User's login email address.
-//   - password: Submitted plaintext password.
-//
-// Returns:
-//   - string: Authenticated JWT token.
-//   - users_postgres_repository.User: User account entity.
-//   - error: core_errors.ErrUnauthorized if user not found or password does not match.
+// LoginUser проверяет email и password по bcrypt-хешу и возвращает JWT и пользователя.
+// При отсутствии пользователя или неверном пароле возвращает ErrUnauthorized; возможны ошибки БД и подписи токена.
 func (s *UsersService) LoginUser(
 	ctx context.Context,
 	email string,

@@ -1,0 +1,117 @@
+name: sportik
+services:
+  postgres:
+    image: postgres:18.1-bookworm
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?Задайте POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER:?Задайте POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Задайте POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  migrate:
+    image: migrate/migrate:v4.19.1
+    profiles: [tools]
+    volumes:
+      - ./backend/migrations:/migrations:ro
+    # Пароль в URI должен быть URL-safe; пример настройки использует openssl rand -hex.
+    command: [-path=/migrations, '-database=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable', up]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  backend:
+    image: sportik-backend:${RELEASE_ID:?Задайте RELEASE_ID}
+    build:
+      context: ./backend
+      dockerfile: cmd/sport_app/Dockerfile
+      args:
+        GO_VERSION: ${GO_VERSION:-1.25.5}
+    environment:
+      HTTP_ADDR: :5050
+      HTTP_SHUTDOWN_TIMEOUT: ${HTTP_SHUTDOWN_TIMEOUT:-30s}
+      LOGGER_LEVEL: ${LOGGER_LEVEL:-INFO}
+      LOGGER_FOLDER: /app/logs
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_TIMEOUT: ${POSTGRES_TIMEOUT:-5s}
+      JWT_SECRET: ${JWT_SECRET:?Задайте JWT_SECRET}
+      JWT_TOKEN_TTL: ${JWT_TOKEN_TTL:-2160h}
+      ML_BASE_URL: http://ml:8000
+      ML_CHAT_BASE_URL: http://ml-chat:8000
+      ML_TIMEOUT: ${ML_TIMEOUT:-30s}
+      ML_CHAT_TIMEOUT: ${ML_CHAT_TIMEOUT:-60s}
+      ML_GENERATION_TIMEOUT: ${ML_GENERATION_TIMEOUT:-52s}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ml:
+        condition: service_healthy
+      ml-chat:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, wget, -q, -O, /dev/null, 'http://127.0.0.1:5050/healthz']
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    restart: unless-stopped
+
+  ml:
+    image: sportik-ml:${RELEASE_ID}
+    build:
+      context: ./ai
+    command: [uvicorn, 'main:app', --host, 0.0.0.0, --port, '8000']
+    healthcheck:
+      test: [CMD, python, -c, 'import urllib.request; urllib.request.urlopen("http://127.0.0.1:8000/health", timeout=3)']
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+    restart: unless-stopped
+
+  ml-chat:
+    image: sportik-ml:${RELEASE_ID}
+    build:
+      context: ./ai
+    env_file:
+      - path: ${ML_ENV_FILE:-/srv/sportik/shared/ml.env}
+        required: false
+    command: [uvicorn, 'chat.chat_ml_service:app', --host, 0.0.0.0, --port, '8000']
+    healthcheck:
+      test: [CMD, python, -c, 'import urllib.request; urllib.request.urlopen("http://127.0.0.1:8000/health", timeout=3)']
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    restart: unless-stopped
+
+  frontend:
+    image: sportik-frontend:${RELEASE_ID}
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.production
+    ports:
+      - '${HTTP_BIND:-127.0.0.1}:${HTTP_PORT:-3000}:3000'
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, wget, -q, -O, /dev/null, 'http://127.0.0.1:3000/healthz']
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

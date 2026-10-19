@@ -23,13 +23,13 @@ func (h *UsersHTTPHandler) ListNotes(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	limit := 50
+	limit := defaultNotesPageSize
 	offset := 0
 	q := r.URL.Query()
 	if lStr := q.Get("limit"); lStr != "" {
 		if l, err := strconv.Atoi(lStr); err == nil && l > 0 {
-			if l > 100 {
-				l = 100
+			if l > maxNotesPageSize {
+				l = maxNotesPageSize
 			}
 			limit = l
 		}

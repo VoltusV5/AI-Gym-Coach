@@ -29,7 +29,7 @@ func (h *UsersHTTPHandler) LoginUser(rw http.ResponseWriter, r *http.Request) {
 		responseHandler.ErrorResponse(err, "failed to decode login user request")
 		return
 	}
-	defer r.Body.Close()
+	defer func() { _ = r.Body.Close() }()
 
 	token, user, err := h.usersService.LoginUser(ctx, req.Email, req.Password)
 	if err != nil {

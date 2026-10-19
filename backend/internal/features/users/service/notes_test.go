@@ -68,7 +68,7 @@ func TestUsersService_Notes_PaginationAndIDOR(t *testing.T) {
 	t.Run("DeleteNotesUser returns ErrNotFound for other user's note (IDOR protection)", func(t *testing.T) {
 		repo := &mockUsersRepository{
 			DeleteNotesUserFunc: func(ctx context.Context, userID string, noteID int) error {
-				// Simulating repository 0 rows affected when note belongs to another user
+				// Имитируем отсутствие затронутых строк при обращении к чужой заметке.
 				return core_errors.ErrNotFound
 			},
 		}
@@ -82,7 +82,7 @@ func TestUsersService_Notes_PaginationAndIDOR(t *testing.T) {
 	t.Run("UpdateNotesUser returns ErrNotFound when note belongs to another user", func(t *testing.T) {
 		repo := &mockUsersRepository{
 			GetNoteByIDFunc: func(ctx context.Context, userID string, noteID int) (users_postgres_repository.Note, error) {
-				// Repository rejects query when user_id does not match note owner
+				// Repository задаёт доступ к данным питания.
 				return users_postgres_repository.Note{}, core_errors.ErrNotFound
 			},
 		}

@@ -59,13 +59,13 @@ func TestUsersService_RegisterUser_DirectRegistration(t *testing.T) {
 	token, user, err := svc.RegisterUser(context.Background(), "", "Athlete@Example.COM", "SecretPass123!")
 	require.NoError(t, err)
 	assert.Equal(t, 55, user.ID)
-	assert.Equal(t, "athlete@example.com", createdEmail) // Normalized lowercase
+	assert.Equal(t, "athlete@example.com", createdEmail) // Адрес приведён к нижнему регистру.
 
-	// Verify password hash
+	// Проверяем хеш пароля.
 	err = bcrypt.CompareHashAndPassword([]byte(createdHash), []byte("SecretPass123!"))
 	assert.NoError(t, err)
 
-	// Verify JWT claims
+	// Проверяем данные JWT.
 	claims, err := jwt.ParseToken(token)
 	require.NoError(t, err)
 	assert.Equal(t, "55", claims.UserID)
@@ -90,7 +90,7 @@ func TestUsersService_RegisterUser_GuestPromotion(t *testing.T) {
 	assert.Equal(t, "guest-123", promotedID)
 	assert.Equal(t, "user@test.com", promotedEmail)
 
-	// Verify JWT claims
+	// Проверяем данные JWT.
 	claims, err := jwt.ParseToken(token)
 	require.NoError(t, err)
 	assert.Equal(t, "guest-123", claims.UserID)

@@ -248,7 +248,7 @@ func TestNutritionHTTP_DeleteEntry_IDOR(t *testing.T) {
 			DeleteEntryFunc: func(ctx context.Context, userID int, entryID int) error {
 				assert.Equal(t, 99, userID)
 				assert.Equal(t, 42, entryID)
-				// Simulating entity not found or belonging to another user
+				// Имитируем отсутствие объекта или его принадлежность другому пользователю.
 				return core_errors.ErrNotFound
 			},
 		}

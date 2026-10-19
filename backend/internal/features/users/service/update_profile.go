@@ -8,20 +8,9 @@ import (
 	users_postgres_repository "sport_app/internal/features/users/repository/postgres"
 )
 
-// UpdateProfile applies partial profile modifications using optimistic locking to prevent concurrent overwrite issues.
-//
-// Parameters:
-//   - ctx: Operation context.
-//   - userID: Authenticated user ID.
-//   - expectedVersion: Expected current version of user_data (used for optimistic locking).
-//   - updates: Map of key-value fields to update (e.g. weight, height, goal).
-//
-// Returns:
-//   - users_postgres_repository.Profile: Fresh profile state after update.
-//   - error: core_errors.ErrInvalidArgument if updates map is empty, core_errors.ErrConflict if version does not match, or db error.
-//
-// Side effects:
-//   - Updates user profile row in database and increments version number.
+// UpdateProfile частично обновляет профиль userID полями updates с проверкой expectedVersion.
+// Возвращает обновлённый профиль, ErrInvalidArgument при пустом updates, ErrConflict при конфликте версии либо ошибку БД.
+// Сохраняет изменения и увеличивает версию профиля.
 func (s *UsersService) UpdateProfile(
 	ctx context.Context,
 	userID string,

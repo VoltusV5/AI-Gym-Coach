@@ -30,7 +30,7 @@ func (h *UsersHTTPHandler) UpdateProfile(rw http.ResponseWriter, r *http.Request
 		)
 		return
 	}
-	defer r.Body.Close()
+	defer func() { _ = r.Body.Close() }()
 
 	versionRaw, ok := request["version"]
 	if !ok {

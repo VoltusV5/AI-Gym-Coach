@@ -23,6 +23,9 @@ import (
 const (
 	maxAssistantStoredBytes = 2 << 20
 	chatUserRatePerMinute   = 30
+	upstreamErrorBodyBytes  = 4096
+	streamChunkBytes        = 32 * 1024
+	chatHistoryLimit        = 50
 )
 
 type UsersReader interface {
@@ -39,10 +42,7 @@ type Service struct {
 }
 
 func NewService(cfg mlclient.Config, users UsersReader) *Service {
-	timeout := cfg.Timeout
-	if timeout <= 0 {
-		timeout = 60 * time.Second
-	}
+	timeout := cfg.ChatRequestTimeout()
 	return &Service{
 		cfg: cfg,
 		httpClient: &http.Client{
@@ -102,10 +102,10 @@ func (s *Service) generateAnswer(
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
-		b, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
+		b, _ := io.ReadAll(io.LimitReader(resp.Body, upstreamErrorBodyBytes))
 		return fmt.Errorf("python chat status %d: %s", resp.StatusCode, string(b))
 	}
 
@@ -131,7 +131,7 @@ func (s *Service) generateAnswer(
 
 	log := core_logger.FromContext(ctx)
 	var assistantBuf bytes.Buffer
-	chunk := make([]byte, 32*1024)
+	chunk := make([]byte, streamChunkBytes)
 	for {
 		n, readErr := resp.Body.Read(chunk)
 		if n > 0 {
@@ -209,7 +209,7 @@ func (s *Service) HandleGetHistory(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	msgs, err := s.users.GetChatMessages(ctx, userID, 50)
+	msgs, err := s.users.GetChatMessages(ctx, userID, chatHistoryLimit)
 	if err != nil {
 		responseHandler.ErrorResponse(err, "failed to get chat history")
 		return

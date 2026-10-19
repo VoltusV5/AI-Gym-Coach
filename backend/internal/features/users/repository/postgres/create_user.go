@@ -11,7 +11,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
-// CreateUser inserts a new registered user with their initial profile, program, and user_data records.
+// CreateUser создаёт зарегистрированного пользователя и начальные записи профиля, программы и user_data. Возвращает пользователя либо ошибку БД.
 func (r *UsersRepository) CreateUser(
 	ctx context.Context,
 	email string,

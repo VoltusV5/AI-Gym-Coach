@@ -10,14 +10,14 @@ import (
 	nutrition_http "sport_app/internal/features/nutrition/transport/http"
 )
 
-// Service encapsulates the nutrition feature dependencies.
+// Service объединяет зависимости компонента и предоставляет его операции.
 type Service struct {
 	Repo    *nutrition_repo.Repository
 	Service *nutrition_service.NutritionService
 	Handler *nutrition_http.NutritionHTTPHandler
 }
 
-// NewService instantiates repository, service, and HTTP transport layers for nutrition.
+// NewService создаёт компонент с необходимыми зависимостями.
 func NewService(pool core_postgres_pool.Pool) *Service {
 	repo := nutrition_repo.NewRepository(pool)
 	svc := nutrition_service.NewNutritionService(repo)
@@ -30,7 +30,7 @@ func NewService(pool core_postgres_pool.Pool) *Service {
 	}
 }
 
-// RegisterRoutes registers all nutrition HTTP routes onto the provided router.
+// RegisterRoutes регистрирует HTTP-маршруты компонента с проверкой JWT на защищённых операциях.
 func (s *Service) RegisterRoutes(
 	jwt *core_auth.JWT,
 	register func(method, path string, handler http.Handler),

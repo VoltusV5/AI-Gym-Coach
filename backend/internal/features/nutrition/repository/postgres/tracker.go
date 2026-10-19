@@ -9,7 +9,7 @@ import (
 	core_postgres_pool "sport_app/internal/core/repository/postgres/pool"
 )
 
-// UpsertWater records water consumption for a user on a given date.
+// UpsertWater сохраняет объём выпитой воды пользователя за указанную дату.
 func (r *Repository) UpsertWater(
 	ctx context.Context,
 	userID int,
@@ -33,7 +33,7 @@ func (r *Repository) UpsertWater(
 	return nil
 }
 
-// UpsertWeight records body weight for a user on a given date.
+// UpsertWeight сохраняет массу тела пользователя за указанную дату.
 func (r *Repository) UpsertWeight(
 	ctx context.Context,
 	userID int,
@@ -57,7 +57,7 @@ func (r *Repository) UpsertWeight(
 	return nil
 }
 
-// GetDayTotals calculates total macronutrients for a given date range.
+// GetDayTotals рассчитывает суммарные БЖУ за указанный интервал.
 func (r *Repository) GetDayTotals(
 	ctx context.Context,
 	userID int,
@@ -86,7 +86,7 @@ func (r *Repository) GetDayTotals(
 	return t, nil
 }
 
-// GetStreakDays computes the number of consecutive days with logged activity.
+// GetStreakDays возвращает число последовательных дней с записями дневника.
 func (r *Repository) GetStreakDays(
 	ctx context.Context,
 	userID int,
@@ -94,10 +94,14 @@ func (r *Repository) GetStreakDays(
 	ctx, cancel := context.WithTimeout(ctx, r.pool.OpTimeout())
 	defer cancel()
 
+	const (
+		streakLookbackDays = 180
+		streakFallbackDays = 365
+	)
 	query := `
 		WITH days AS (
 			SELECT d::date AS day
-			FROM generate_series(CURRENT_DATE - INTERVAL '180 days', CURRENT_DATE, '1 day') d
+			FROM generate_series(CURRENT_DATE - ($2::int * INTERVAL '1 day'), CURRENT_DATE, '1 day') d
 		),
 		filled AS (
 			SELECT day,
@@ -109,7 +113,7 @@ func (r *Repository) GetStreakDays(
 			FROM days
 		),
 		latest_break AS (
-			SELECT COALESCE(MAX(day), CURRENT_DATE - INTERVAL '365 days') AS last_break
+			SELECT COALESCE(MAX(day), CURRENT_DATE - ($3::int * INTERVAL '1 day')) AS last_break
 			FROM filled
 			WHERE is_filled = false AND day <= CURRENT_DATE
 		)
@@ -118,7 +122,7 @@ func (r *Repository) GetStreakDays(
 		WHERE f.is_filled = true AND f.day > b.last_break`
 
 	var streak int
-	err := r.pool.QueryRow(ctx, query, userID).Scan(&streak)
+	err := r.pool.QueryRow(ctx, query, userID, streakLookbackDays, streakFallbackDays).Scan(&streak)
 	if err != nil {
 		return 0, nil
 	}
@@ -126,7 +130,7 @@ func (r *Repository) GetStreakDays(
 	return streak, nil
 }
 
-// GetWaterLogML returns the amount of water logged for a specific date.
+// GetWaterLogML возвращает объём воды в миллилитрах за указанную дату.
 func (r *Repository) GetWaterLogML(
 	ctx context.Context,
 	userID int,
@@ -148,7 +152,7 @@ func (r *Repository) GetWaterLogML(
 	return waterML, nil
 }
 
-// GetLatestWeightInfo returns the latest weight and date it was logged.
+// GetLatestWeightInfo возвращает последнее значение массы тела и дату записи.
 func (r *Repository) GetLatestWeightInfo(
 	ctx context.Context,
 	userID int,
@@ -176,7 +180,7 @@ func (r *Repository) GetLatestWeightInfo(
 	return weight, loggedDay, nil
 }
 
-// GetRangeSums aggregates macronutrients starting from a given timestamp.
+// GetRangeSums суммирует БЖУ и калории начиная с указанного времени.
 func (r *Repository) GetRangeSums(
 	ctx context.Context,
 	userID int,
@@ -204,7 +208,7 @@ func (r *Repository) GetRangeSums(
 	return acc, nil
 }
 
-// GetAnalyticsFood aggregates food entries grouped by day.
+// GetAnalyticsFood группирует записи питания по дням для аналитики.
 func (r *Repository) GetAnalyticsFood(
 	ctx context.Context,
 	userID int,
@@ -249,7 +253,7 @@ func (r *Repository) GetAnalyticsFood(
 	return items, nil
 }
 
-// GetAnalyticsWeight returns weight logs for analytics report.
+// GetAnalyticsWeight возвращает историю массы тела для аналитики.
 func (r *Repository) GetAnalyticsWeight(
 	ctx context.Context,
 	userID int,
@@ -286,7 +290,7 @@ func (r *Repository) GetAnalyticsWeight(
 	return items, nil
 }
 
-// GetAnalyticsWater returns water intake logs for analytics report.
+// GetAnalyticsWater возвращает историю потребления воды для аналитики.
 func (r *Repository) GetAnalyticsWater(
 	ctx context.Context,
 	userID int,

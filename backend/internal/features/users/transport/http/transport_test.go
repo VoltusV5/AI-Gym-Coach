@@ -189,7 +189,7 @@ func TestUsersHTTP_RegisterUser(t *testing.T) {
 		}
 		handler, jwt := newTestHandler(mockSvc)
 
-		guestToken, err := jwt.CreateToken("guest-42", true) // is_anonymous = true
+		guestToken, err := jwt.CreateToken("guest-42", true) // Гостевая сессия.
 		require.NoError(t, err)
 
 		body := `{"email": "guest@user.com", "password": "Password123"}`
@@ -207,7 +207,7 @@ func TestUsersHTTP_RegisterUser(t *testing.T) {
 		mockSvc := &mockUsersService{}
 		handler, jwt := newTestHandler(mockSvc)
 
-		registeredToken, err := jwt.CreateToken("user-99", false) // is_anonymous = false
+		registeredToken, err := jwt.CreateToken("user-99", false) // Сессия зарегистрированного пользователя.
 		require.NoError(t, err)
 
 		body := `{"email": "already@user.com", "password": "Password123"}`

@@ -7,7 +7,7 @@ import (
 	core_errors "sport_app/internal/core/errors"
 )
 
-// ListFavorites fetches saved favorite food items for a user.
+// ListFavorites возвращает избранные продукты пользователя.
 func (r *Repository) ListFavorites(
 	ctx context.Context,
 	userID int,
@@ -55,7 +55,7 @@ func (r *Repository) ListFavorites(
 	return items, total, nil
 }
 
-// CreateFavorite inserts a favorite food item for a user.
+// CreateFavorite сохраняет продукт в избранном пользователя.
 func (r *Repository) CreateFavorite(
 	ctx context.Context,
 	userID int,
@@ -81,7 +81,7 @@ func (r *Repository) CreateFavorite(
 	return id, nil
 }
 
-// DeleteFavorite removes a favorite food item owned by a user.
+// DeleteFavorite удаляет продукт из избранного только его владельца.
 func (r *Repository) DeleteFavorite(
 	ctx context.Context,
 	userID int,

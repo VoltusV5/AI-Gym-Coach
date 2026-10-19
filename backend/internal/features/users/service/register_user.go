@@ -11,23 +11,9 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// RegisterUser either converts an existing anonymous guest account into a registered user,
-// or directly creates a new registered account when no guest token is provided.
-// Hashes the password using bcrypt and returns a signed non-guest JWT token.
-//
-// Parameters:
-//   - ctx: Operation context.
-//   - guestUserID: Optional guest user ID string (empty if direct registration).
-//   - email: User email address (normalized to lowercase).
-//   - password: Plaintext password.
-//
-// Returns:
-//   - string: Signed JWT token with is_anonymous=false.
-//   - users_postgres_repository.User: User account entity.
-//   - error: core_errors.ErrConflict if email is already taken, or bcrypt/db/token generation error.
-//
-// Side effects:
-//   - Mutates user row (sets email, password hash, is_anonymous=false).
+// RegisterUser преобразует гостя guestUserID в пользователя либо создаёт учётную запись, если guestUserID пуст.
+// Хеширует password через bcrypt, сохраняет email и хеш и возвращает JWT, пользователя и ошибку.
+// При занятом email возвращает ErrConflict; также возвращает ошибки БД, хеширования и подписи токена.
 func (s *UsersService) RegisterUser(
 	ctx context.Context,
 	guestUserID string,

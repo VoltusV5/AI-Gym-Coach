@@ -19,7 +19,9 @@ import (
 	nutrition_service "sport_app/internal/features/nutrition/service"
 )
 
-// Service defines business logic contract for HTTP transport handlers.
+const maxPageSize = 200
+
+// Service задаёт бизнес-операции питания, доступные HTTP-обработчикам.
 type Service interface {
 	ListEntries(ctx context.Context, userID int, dayRaw string, limit, offset int) ([]nutrition_repo.NutritionEntry, int, string, error)
 	CreateEntry(ctx context.Context, userID int, inp nutrition_service.CreateEntryInput) (nutrition_repo.NutritionEntry, error)
@@ -47,17 +49,17 @@ type Service interface {
 	UpsertWeight(ctx context.Context, userID int, dayRaw string, weightKg float64) error
 }
 
-// NutritionHTTPHandler handles HTTP requests for nutrition tracking.
+// NutritionHTTPHandler обрабатывает HTTP-запросы дневника питания.
 type NutritionHTTPHandler struct {
 	svc Service
 }
 
-// NewNutritionHTTPHandler constructs a new NutritionHTTPHandler.
+// NewNutritionHTTPHandler создаёт HTTP-обработчик сервиса питания.
 func NewNutritionHTTPHandler(svc Service) *NutritionHTTPHandler {
 	return &NutritionHTTPHandler{svc: svc}
 }
 
-// RegisterRoutes registers all nutrition endpoints onto the router.
+// RegisterRoutes регистрирует HTTP-маршруты компонента с проверкой JWT на защищённых операциях.
 func (h *NutritionHTTPHandler) RegisterRoutes(
 	jwt *core_auth.JWT,
 	register func(method, path string, handler http.Handler),
@@ -103,8 +105,8 @@ func parsePagination(r *http.Request) (limit int, offset int) {
 	q := r.URL.Query()
 	if lStr := q.Get("limit"); lStr != "" {
 		if l, err := strconv.Atoi(lStr); err == nil && l > 0 {
-			if l > 200 {
-				l = 200
+			if l > maxPageSize {
+				l = maxPageSize
 			}
 			limit = l
 		}
@@ -130,7 +132,7 @@ type entryPayload struct {
 	Day        string   `json:"day"`
 }
 
-// ListEntries returns food entries for the user on the requested day.
+// ListEntries возвращает записи питания пользователя за день со стабильной сортировкой и необязательной пагинацией.
 func (h *NutritionHTTPHandler) ListEntries(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := core_logger.FromContext(ctx)
@@ -164,7 +166,7 @@ func (h *NutritionHTTPHandler) ListEntries(w http.ResponseWriter, r *http.Reques
 	resp.JSONResponse(result, http.StatusOK)
 }
 
-// CreateEntry logs a new food entry for the authenticated user.
+// CreateEntry сохраняет запись питания пользователя с пересчётом БЖУ по массе порции и привязкой к блюду. Возвращает запись либо ошибку.
 func (h *NutritionHTTPHandler) CreateEntry(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := core_logger.FromContext(ctx)
@@ -206,7 +208,7 @@ func (h *NutritionHTTPHandler) CreateEntry(w http.ResponseWriter, r *http.Reques
 	resp.JSONResponse(entry, http.StatusOK)
 }
 
-// UpdateEntry updates a food log entry.
+// UpdateEntry изменяет принадлежащую пользователю запись питания. Возвращает запись либо ошибку.
 func (h *NutritionHTTPHandler) UpdateEntry(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := core_logger.FromContext(ctx)
@@ -254,7 +256,7 @@ func (h *NutritionHTTPHandler) UpdateEntry(w http.ResponseWriter, r *http.Reques
 	resp.JSONResponse(map[string]any{"ok": true}, http.StatusOK)
 }
 
-// DeleteEntry removes a food log entry.
+// DeleteEntry удаляет запись питания только её владельца; при отсутствии записи возвращает ErrNotFound.
 func (h *NutritionHTTPHandler) DeleteEntry(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := core_logger.FromContext(ctx)
@@ -280,7 +282,7 @@ func (h *NutritionHTTPHandler) DeleteEntry(w http.ResponseWriter, r *http.Reques
 	resp.JSONResponse(map[string]any{"ok": true}, http.StatusOK)
 }
 
-// ListFavorites returns favorite foods for the user.
+// ListFavorites возвращает избранные продукты пользователя.
 func (h *NutritionHTTPHandler) ListFavorites(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := core_logger.FromContext(ctx)
@@ -308,7 +310,7 @@ func (h *NutritionHTTPHandler) ListFavorites(w http.ResponseWriter, r *http.Requ
 	resp.JSONResponse(result, http.StatusOK)
 }
 
-// CreateFavorite saves a food favorite.
+// CreateFavorite сохраняет продукт в избранном пользователя.
 func (h *NutritionHTTPHandler) CreateFavorite(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := core_logger.FromContext(ctx)
@@ -345,7 +347,7 @@ func (h *NutritionHTTPHandler) CreateFavorite(w http.ResponseWriter, r *http.Req
 	resp.JSONResponse(map[string]any{"id": id, "ok": true}, http.StatusOK)
 }
 
-// DeleteFavorite removes a saved favorite item.
+// DeleteFavorite удаляет продукт из избранного только его владельца.
 func (h *NutritionHTTPHandler) DeleteFavorite(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := core_logger.FromContext(ctx)
@@ -371,7 +373,7 @@ func (h *NutritionHTTPHandler) DeleteFavorite(w http.ResponseWriter, r *http.Req
 	resp.JSONResponse(map[string]any{"ok": true}, http.StatusOK)
 }
 
-// GetGoal returns daily nutritional target macros.
+// GetGoal возвращает цель питания пользователя; сервис рассчитывает и сохраняет её по профилю при отсутствии.
 func (h *NutritionHTTPHandler) GetGoal(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := core_logger.FromContext(ctx)
@@ -396,7 +398,7 @@ func (h *NutritionHTTPHandler) GetGoal(w http.ResponseWriter, r *http.Request) {
 	resp.JSONResponse(goal, http.StatusOK)
 }
 
-// RecalculateGoal updates nutrition targets from user profile.
+// RecalculateGoal пересчитывает цели питания по профилю и необязательному изменению массы.
 func (h *NutritionHTTPHandler) RecalculateGoal(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := core_logger.FromContext(ctx)
@@ -433,7 +435,7 @@ func (h *NutritionHTTPHandler) RecalculateGoal(w http.ResponseWriter, r *http.Re
 	resp.JSONResponse(goal, http.StatusOK)
 }
 
-// GetStats returns aggregated macronutrient stats.
+// GetStats возвращает суммарные и средние значения БЖУ и калорий за день, неделю и месяц.
 func (h *NutritionHTTPHandler) GetStats(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := core_logger.FromContext(ctx)
@@ -454,7 +456,7 @@ func (h *NutritionHTTPHandler) GetStats(w http.ResponseWriter, r *http.Request) 
 	resp.JSONResponse(stats, http.StatusOK)
 }
 
-// SearchDishes searches food catalog dishes.
+// SearchDishes ищет блюда по подстроке названия со стабильной сортировкой.
 func (h *NutritionHTTPHandler) SearchDishes(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := core_logger.FromContext(ctx)
@@ -463,7 +465,7 @@ func (h *NutritionHTTPHandler) SearchDishes(w http.ResponseWriter, r *http.Reque
 	query := r.URL.Query().Get("q")
 	limit, offset := parsePagination(r)
 	if limit == 0 {
-		limit = 30
+		limit = nutrition_service.DefaultDishSearchLimit
 	}
 
 	items, total, err := h.svc.SearchDishes(ctx, query, limit, offset)
@@ -475,7 +477,7 @@ func (h *NutritionHTTPHandler) SearchDishes(w http.ResponseWriter, r *http.Reque
 	resp.JSONResponse(map[string]any{"items": items, "total": total}, http.StatusOK)
 }
 
-// CreateDish adds or updates a catalog dish.
+// CreateDish создаёт или обновляет пользовательское блюдо в каталоге.
 func (h *NutritionHTTPHandler) CreateDish(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := core_logger.FromContext(ctx)
@@ -534,7 +536,7 @@ func (h *NutritionHTTPHandler) CreateDish(w http.ResponseWriter, r *http.Request
 	resp.JSONResponse(created, http.StatusOK)
 }
 
-// ListMyDishes returns dishes created by the authenticated user.
+// ListMyDishes возвращает блюда, созданные текущим пользователем.
 func (h *NutritionHTTPHandler) ListMyDishes(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := core_logger.FromContext(ctx)
@@ -556,7 +558,7 @@ func (h *NutritionHTTPHandler) ListMyDishes(w http.ResponseWriter, r *http.Reque
 	resp.JSONResponse(map[string]any{"items": items, "total": total}, http.StatusOK)
 }
 
-// PatchMyDish modifies a custom dish owned by the user.
+// PatchMyDish обрабатывает изменение блюда только его автором.
 func (h *NutritionHTTPHandler) PatchMyDish(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := core_logger.FromContext(ctx)
@@ -615,7 +617,7 @@ func (h *NutritionHTTPHandler) PatchMyDish(w http.ResponseWriter, r *http.Reques
 	resp.JSONResponse(updated, http.StatusOK)
 }
 
-// DeleteMyDish deletes a custom dish owned by the user.
+// DeleteMyDish удаляет блюдо только для его автора.
 func (h *NutritionHTTPHandler) DeleteMyDish(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := core_logger.FromContext(ctx)
@@ -641,7 +643,7 @@ func (h *NutritionHTTPHandler) DeleteMyDish(w http.ResponseWriter, r *http.Reque
 	resp.NoContentResponse()
 }
 
-// UpsertWater records water consumption.
+// UpsertWater сохраняет объём выпитой воды пользователя за указанную дату.
 func (h *NutritionHTTPHandler) UpsertWater(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := core_logger.FromContext(ctx)
@@ -670,7 +672,7 @@ func (h *NutritionHTTPHandler) UpsertWater(w http.ResponseWriter, r *http.Reques
 	resp.JSONResponse(map[string]any{"ok": true}, http.StatusOK)
 }
 
-// UpsertWeight records daily body weight.
+// UpsertWeight сохраняет массу тела пользователя за указанную дату.
 func (h *NutritionHTTPHandler) UpsertWeight(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := core_logger.FromContext(ctx)
@@ -703,7 +705,7 @@ func (h *NutritionHTTPHandler) UpsertWeight(w http.ResponseWriter, r *http.Reque
 	resp.JSONResponse(map[string]any{"ok": true}, http.StatusOK)
 }
 
-// GetDashboard returns aggregated dashboard metrics for the day.
+// GetDashboard объединяет суточные показатели питания, цели, воду, вес и непрерывную серию записей.
 func (h *NutritionHTTPHandler) GetDashboard(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := core_logger.FromContext(ctx)
@@ -725,7 +727,7 @@ func (h *NutritionHTTPHandler) GetDashboard(w http.ResponseWriter, r *http.Reque
 	resp.JSONResponse(dashboard, http.StatusOK)
 }
 
-// GetAnalytics returns charts for food intake, weight, and water.
+// GetAnalytics возвращает историю питания, веса и воды за выбранный период.
 func (h *NutritionHTTPHandler) GetAnalytics(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := core_logger.FromContext(ctx)

@@ -13,7 +13,7 @@ import (
 func TestJWT_CreateAndParseToken_Success(t *testing.T) {
 	jwt := core_auth.NewJWT(core_auth.Config{Secret: "super-secret-key-12345", TokenTTL: 2 * time.Hour})
 
-	// Registered user
+	// Зарегистрированный пользователь.
 	token, err := jwt.CreateToken("user-42", false)
 	require.NoError(t, err)
 	assert.NotEmpty(t, token)
@@ -23,7 +23,7 @@ func TestJWT_CreateAndParseToken_Success(t *testing.T) {
 	assert.Equal(t, "user-42", claims.UserID)
 	assert.False(t, claims.IsAnonymous)
 
-	// Anonymous guest user
+	// Анонимный гость.
 	guestToken, err := jwt.CreateToken("guest-99", true)
 	require.NoError(t, err)
 	assert.NotEmpty(t, guestToken)
@@ -35,7 +35,7 @@ func TestJWT_CreateAndParseToken_Success(t *testing.T) {
 }
 
 func TestJWT_ParseToken_Expired(t *testing.T) {
-	// Negative TTL produces an already-expired token
+	// Отрицательный TTL создаёт уже просроченный токен.
 	jwt := core_auth.NewJWT(core_auth.Config{Secret: "super-secret-key-12345", TokenTTL: -1 * time.Minute})
 
 	token, err := jwt.CreateToken("user-expired", false)
@@ -54,7 +54,7 @@ func TestJWT_ParseToken_InvalidSignature(t *testing.T) {
 	token, err := jwt1.CreateToken("user-1", false)
 	require.NoError(t, err)
 
-	// Validating with a different secret
+	// Проверяем подпись другим секретом.
 	claims, err := jwt2.ParseToken(token)
 	assert.Error(t, err)
 	assert.Empty(t, claims.UserID)

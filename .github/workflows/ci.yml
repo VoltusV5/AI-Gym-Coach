@@ -2,9 +2,11 @@ name: Backend CI
 
 on:
   push:
-    branches: [ "main", "master", "develop", "feature/**" ]
   pull_request:
-    branches: [ "main", "master", "develop" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   test:
@@ -17,28 +19,24 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24'
-          check-latest: true
+          go-version-file: backend/go.mod
           cache-dependency-path: ./backend/go.sum
 
-      - name: Check code formatting (gofmt)
+      - name: Установить закреплённый golangci-lint
+        run: make lint-install
+      - name: Форматирование, vet, lint и тесты
+        run: make check
+      - name: Покрытие и сборка
+        run: make test-cover build
+      - name: Проверить конфигурацию деплоя без запуска сервисов
+        working-directory: .
         run: |
-          UNFORMATTED=$(gofmt -l .)
-          if [ -n "$UNFORMATTED" ]; then
-            echo "Unformatted Go files found:"
-            echo "$UNFORMATTED"
-            exit 1
-          fi
-
-      - name: Go Vet
-        run: go vet ./...
-
-      - name: Run Tests with Coverage
-        run: go test -v -coverprofile=coverage.out ./...
-
-      - name: Verify Build
-        run: go build -v -o /dev/null ./cmd/sport_app
+          sh -n scripts/deploy.sh scripts/install-golangci-lint.sh
+          python3 -m unittest discover -s scripts/tests -v
+          docker compose --env-file deploy/.env.production.example -f docker-compose.production.yml config --quiet

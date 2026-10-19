@@ -30,7 +30,11 @@ func (s *UsersService) GeneratePlan(
 		return users_postgres_repository.EPlanWithWeight{}, fmt.Errorf("get profile: %w", err)
 	}
 
-	mlCtx, cancel := context.WithTimeout(ctx, mlGenerationTimeout)
+	timeout := s.planGenerationTimeout
+	if timeout <= 0 {
+		timeout = mlGenerationTimeout
+	}
+	mlCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
 	log.Debug("generating plan from ML", zap.String("user_id", userID))

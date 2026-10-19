@@ -1,4 +1,4 @@
-// Package core_auth provides token generation and validation mechanisms for user authentication.
+// Package core_auth реализует создание и проверку JWT и загрузку настроек авторизации.
 package core_auth
 
 import (
@@ -10,27 +10,19 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// Claims represents authenticated identity claims embedded in the JWT.
-// Parameters:
-//   - UserID: unique identifier of the user (guest or registered)
-//   - IsAnonymous: boolean indicator whether the session belongs to a guest user
+// Claims содержит идентификатор пользователя UserID и признак гостевой сессии IsAnonymous в JWT.
 type Claims struct {
 	UserID      string
 	IsAnonymous bool
 }
 
-// JWT manages cryptographic signing and verification of user access tokens.
+// JWT подписывает и проверяет токены доступа с заданным секретом и сроком действия.
 type JWT struct {
 	secret   []byte
 	tokenTTL time.Duration
 }
 
-// NewJWT initializes a new JWT service with configured secret and token expiration time.
-// Parameters:
-//   - config: Config struct containing Secret key string and TokenTTL duration
-//
-// Returns:
-//   - *JWT: instantiated token manager ready to sign and verify tokens
+// NewJWT создаёт менеджер токенов с секретом Secret и сроком действия TokenTTL из config.
 func NewJWT(config Config) *JWT {
 	return &JWT{
 		secret:   []byte(config.Secret),
@@ -38,14 +30,8 @@ func NewJWT(config Config) *JWT {
 	}
 }
 
-// CreateToken creates and signs a new HMAC-SHA256 JWT containing subject ID and anonymous state.
-// Parameters:
-//   - userID: unique identifier string for the subject
-//   - isAnonymous: true if the user is a guest, false if registered
-//
-// Returns:
-//   - string: signed compact JWT string
-//   - error: non-nil if token signing fails
+// CreateToken подписывает JWT алгоритмом HMAC-SHA256 для userID и признака гостя isAnonymous.
+// Возвращает строку токена либо ошибку подписи.
 func (j *JWT) CreateToken(userID string, isAnonymous bool) (string, error) {
 	iat := time.Now()
 	claims := jwt.MapClaims{
@@ -64,13 +50,8 @@ func (j *JWT) CreateToken(userID string, isAnonymous bool) (string, error) {
 	return tokenString, nil
 }
 
-// ParseToken decodes, cryptographically verifies HMAC signature, and extracts claims from a raw JWT string.
-// Parameters:
-//   - tokenString: raw compact JWT token string
-//
-// Returns:
-//   - Claims: extracted user claims on success
-//   - error: core_errors.ErrUnauthorized if the token is invalid, expired, or malformed
+// ParseToken проверяет подпись и срок действия tokenString и возвращает Claims.
+// При повреждённом, просроченном или неверно подписанном токене возвращает ErrUnauthorized.
 func (j *JWT) ParseToken(tokenString string) (Claims, error) {
 	token, err := jwt.Parse(tokenString, func(t *jwt.Token) (any, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {

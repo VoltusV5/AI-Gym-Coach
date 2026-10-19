@@ -61,7 +61,11 @@ sportapp-deploy:
 ps:
 	@docker compose ps
 
-# Development and Quality Assurance targets
+# Локальные проверки качества совпадают с командами CI.
+.PHONY: test test-cover fmt fmt-check vet lint lint-install check build
+GOLANGCI_LINT := $(CURDIR)/bin/golangci-lint
+GOLANGCI_VERSION := $(shell cat .golangci-version)
+
 test:
 	@go test -v ./...
 
@@ -73,20 +77,20 @@ fmt:
 	@gofmt -s -w .
 
 fmt-check:
-	@files=$$(gofmt -l .); if [ -n "$$files" ]; then echo "Unformatted files found:"; echo "$$files"; exit 1; else echo "All files properly formatted."; fi
+	@files=$$(gofmt -l .); if [ -n "$$files" ]; then echo "Нарушено форматирование:"; echo "$$files"; exit 1; fi
 
 vet:
 	@go vet ./...
 
-lint:
-	@if command -v golangci-lint >/dev/null 2>&1; then \
-		golangci-lint run ./...; \
-	else \
-		echo "golangci-lint not installed locally, running go vet"; \
-		go vet ./...; \
-	fi
+lint-install:
+	@sh ../scripts/install-golangci-lint.sh
 
-check: fmt-check vet test
+lint:
+	@test -x "$(GOLANGCI_LINT)" || { echo "Сначала выполните make lint-install"; exit 1; }
+	@"$(GOLANGCI_LINT)" version | grep -F "version $(GOLANGCI_VERSION) " >/dev/null || { echo "Обновите линтер: make lint-install"; exit 1; }
+	@"$(GOLANGCI_LINT)" run --config .golangci.yml ./...
+
+check: fmt-check vet lint test
 
 build:
 	@go build -v -o out/sport_app cmd/sport_app/main.go

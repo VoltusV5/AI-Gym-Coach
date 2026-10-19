@@ -1,5 +1,28 @@
 # Fitness App (Спортик)
 
+## Проверки Go backend
+
+Версия Go указана в `backend/go.mod`, версия golangci-lint — в
+`backend/.golangci-version` (2.10.1). Из корня проекта:
+
+```bash
+make -C backend lint-install  # установка линтера с проверкой SHA256 релиза
+make -C backend fmt           # исправление форматирования
+make -C backend check         # gofmt, go vet, golangci-lint и все Go-тесты
+make -C backend test-cover build
+python3 -m unittest discover -s scripts/tests -v  # сценарии деплоя без сервера
+```
+
+CI выполняет те же команды при каждом push и pull request. Отсутствующий линтер
+или несовпадение его версии считается ошибкой; автоматической подмены на `go vet` нет.
+
+## Подготовка production-деплоя
+
+[Инструкция CD, настройки сервера и откат](docs/07_DEPLOYMENT.md).
+Workflow `.github/workflows/cd.yml` подготовлен, но деплой включается только после
+настройки Secrets, окружения `production` и переменной `DEPLOY_ENABLED=true`.
+Pull request не запускает деплой. [Отчёт об улучшениях и правках PR #9](REPORT_SPRINT1.md).
+
 ## Запуск 
 
 **1. Из корня**

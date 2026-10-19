@@ -13,6 +13,8 @@ import (
 	core_http_responce "sport_app/internal/core/transport/http/responce"
 )
 
+const limiterCleanupThreshold = 500
+
 type rateLimitEntry struct {
 	count       int
 	windowStart time.Time
@@ -33,8 +35,8 @@ func (l *slidingWindowLimiter) allow(key string, maxRequests int, window time.Du
 
 	now := time.Now()
 
-	// Periodic cleanup of expired entries to prevent memory leaks
-	if len(l.entries) > 500 {
+	// Удаляем истёкшие записи, чтобы ограничить рост памяти.
+	if len(l.entries) > limiterCleanupThreshold {
 		for k, v := range l.entries {
 			if now.Sub(v.windowStart) >= window {
 				delete(l.entries, k)
@@ -55,15 +57,8 @@ func (l *slidingWindowLimiter) allow(key string, maxRequests int, window time.Du
 	return true
 }
 
-// RateLimit creates an IP-based sliding window rate limiter middleware.
-// Requests exceeding maxRequests within the specified time window receive HTTP 429 Too Many Requests.
-//
-// Parameters:
-//   - maxRequests: Maximum number of HTTP requests permitted per window per IP.
-//   - window: Sliding window duration.
-//
-// Returns:
-//   - Middleware: HTTP middleware enforcing the request limit.
+// RateLimit ограничивает число запросов maxRequests с одного IP за окно window.
+// При превышении лимита отправляет HTTP 429.
 func RateLimit(maxRequests int, window time.Duration) Middleware {
 	lim := newSlidingWindowLimiter()
 	return func(next http.Handler) http.Handler {
@@ -89,15 +84,8 @@ func RateLimit(maxRequests int, window time.Duration) Middleware {
 	}
 }
 
-// UserRateLimit creates a per-user sliding window rate limiter middleware based on context userID.
-// Must be used after Protect middleware.
-//
-// Parameters:
-//   - maxRequests: Maximum number of HTTP requests allowed per user within the window.
-//   - window: Sliding window duration.
-//
-// Returns:
-//   - Middleware: HTTP middleware enforcing user quota.
+// UserRateLimit ограничивает число запросов maxRequests пользователя из контекста за окно window.
+// Должен выполняться после Protect; при превышении лимита отправляет HTTP 429.
 func UserRateLimit(maxRequests int, window time.Duration) Middleware {
 	lim := newSlidingWindowLimiter()
 	return func(next http.Handler) http.Handler {

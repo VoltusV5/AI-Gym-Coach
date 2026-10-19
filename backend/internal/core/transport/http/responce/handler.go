@@ -1,5 +1,4 @@
-// Package core_http_responce provides HTTP response helpers, JSON serialization,
-// error mapping to status codes, and panic recovery handling.
+// Package core_http_responce формирует HTTP-ответы, сериализует JSON и сопоставляет ошибки со статусами.
 package core_http_responce
 
 import (
@@ -14,20 +13,13 @@ import (
 	"go.uber.org/zap"
 )
 
-// HTTPResponceHandler encapsulates structured response writing and error logging.
+// HTTPResponceHandler формирует HTTP-ответы и записывает ошибки в журнал.
 type HTTPResponceHandler struct {
 	log *core_logger.Logger
 	rw  http.ResponseWriter
 }
 
-// NewHTTPResponce constructs an HTTPResponceHandler with the provided logger and ResponseWriter.
-//
-// Parameters:
-//   - log: Scoped zap logger for reporting response errors.
-//   - rw: Underlying HTTP response writer.
-//
-// Returns:
-//   - *HTTPResponceHandler: Initialized response helper.
+// NewHTTPResponce создаёт обработчик ответов с журналом log и потоком ответа rw.
 func NewHTTPResponce(
 	log *core_logger.Logger,
 	rw http.ResponseWriter,
@@ -38,16 +30,7 @@ func NewHTTPResponce(
 	}
 }
 
-// JSONResponse serializes responseBody into JSON, sets the Content-Type header to application/json,
-// and writes the provided HTTP status code.
-//
-// Parameters:
-//   - responseBody: Data structure to serialize as JSON.
-//   - statusCode: HTTP status code to emit (e.g., 200, 201, 400).
-//
-// Side effects:
-//   - Sets HTTP header "Content-Type: application/json".
-//   - Emits HTTP status code and writes JSON bytes to response stream.
+// JSONResponse сериализует responseBody, устанавливает Content-Type: application/json и записывает statusCode и тело ответа. Ошибку записи сохраняет в журнал.
 func (h *HTTPResponceHandler) JSONResponse(
 	responseBody any,
 	statusCode int,
@@ -60,25 +43,12 @@ func (h *HTTPResponceHandler) JSONResponse(
 	}
 }
 
-// NoContentResponse writes HTTP 204 No Content status with an empty body.
-//
-// Side effects:
-//   - Calls WriteHeader(http.StatusNoContent).
+// NoContentResponse записывает HTTP 204 без тела ответа.
 func (h *HTTPResponceHandler) NoContentResponse() {
 	h.rw.WriteHeader(http.StatusNoContent)
 }
 
-// ErrorResponse maps domain errors (ErrInvalidArgument, ErrNotFound, ErrConflict, ErrUnauthorized, ErrTooManyRequests)
-// to corresponding HTTP status codes (400, 404, 409, 401, 429, or 500), logs the error with appropriate level,
-// and outputs a JSON body `{"message": "...", "error": "..."}`.
-//
-// Parameters:
-//   - err: Source error to inspect and include in response.
-//   - msg: Human-readable context message.
-//
-// Side effects:
-//   - Logs warning/error to logger.
-//   - Writes HTTP status header and JSON payload.
+// ErrorResponse сопоставляет err с HTTP-статусом, записывает ошибку и контекст msg в журнал и отправляет JSON с полями message и error. Неизвестной ошибке соответствует HTTP 500.
 func (h *HTTPResponceHandler) ErrorResponse(err error, msg string) {
 	var (
 		statusCode int
@@ -120,11 +90,7 @@ func (h *HTTPResponceHandler) ErrorResponse(err error, msg string) {
 	)
 }
 
-// PanicResponce logs panic recovery information at Error level and returns HTTP 500 Internal Server Error.
-//
-// Parameters:
-//   - p: Value recovered from panic (any).
-//   - msg: Description of where the panic occurred.
+// PanicResponce записывает восстановленное значение паники p и описание msg в журнал и отправляет HTTP 500.
 func (h *HTTPResponceHandler) PanicResponce(p any, msg string) {
 	statusCode := http.StatusInternalServerError
 	err := fmt.Errorf("unexpected panic: %v", p)

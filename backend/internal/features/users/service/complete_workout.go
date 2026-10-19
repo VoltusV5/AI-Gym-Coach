@@ -7,23 +7,9 @@ import (
 	users_postgres_repository "sport_app/internal/features/users/repository/postgres"
 )
 
-// CompleteWorkout records a completed workout session, computes weight progression,
-// builds session highlights (e.g. personal records, consistency streaks), updates training plan weights,
-// and unlocks any newly achieved milestones.
-//
-// Parameters:
-//   - ctx: Operation context.
-//   - userID: Authenticated user ID.
-//   - req: Workout payload containing completed exercises, sets, reps, and weights.
-//
-// Returns:
-//   - *users_postgres_repository.WorkoutCompleteServiceResult: Summary of new achievements, highlights, and plan weight updates.
-//   - error: Non-nil if loading workout history, progression calculation, DB persistence, or achievement unlocking fails.
-//
-// Side effects:
-//   - Appends completed workout record to database.
-//   - Updates user working weights in user_data with optimistic concurrency check.
-//   - Persists newly unlocked achievements.
+// CompleteWorkout сохраняет тренировку req пользователя userID, рассчитывает прогрессию весов и достижения.
+// Возвращает новые достижения, итоги сессии и изменения плана либо ошибку загрузки, расчёта или сохранения.
+// Обновляет историю тренировок, рабочие веса с проверкой версии и разблокированные достижения.
 func (s *UsersService) CompleteWorkout(
 	ctx context.Context,
 	userID string,

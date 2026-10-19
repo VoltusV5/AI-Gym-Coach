@@ -32,7 +32,7 @@ func (r *UsersRepository) SaveProgram(
 	`
 
 	start := time.Now()
-	end := start.AddDate(0, 6, 0)
+	end := start.AddDate(0, programDurationMonths, 0)
 
 	tag, err := r.pool.Exec(ctx, query, start, end, isActive, planTemplate, planExercises, userID, expectedVersion)
 	if err != nil {

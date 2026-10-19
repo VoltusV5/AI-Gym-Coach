@@ -8,7 +8,7 @@ import (
 	core_errors "sport_app/internal/core/errors"
 )
 
-// ListEntries fetches nutrition entries for a user within a time range with stable ordering.
+// ListEntries возвращает записи питания пользователя за день со стабильной сортировкой и необязательной пагинацией.
 func (r *Repository) ListEntries(
 	ctx context.Context,
 	userID int,
@@ -65,7 +65,7 @@ func (r *Repository) ListEntries(
 	return items, total, nil
 }
 
-// CreateEntry inserts a new nutrition entry into the database.
+// CreateEntry сохраняет запись питания пользователя с пересчётом БЖУ по массе порции и привязкой к блюду. Возвращает запись либо ошибку.
 func (r *Repository) CreateEntry(
 	ctx context.Context,
 	userID int,
@@ -96,7 +96,7 @@ func (r *Repository) CreateEntry(
 	return entry, nil
 }
 
-// UpdateEntry updates an existing nutrition entry owned by the user.
+// UpdateEntry изменяет принадлежащую пользователю запись питания. Возвращает запись либо ошибку.
 func (r *Repository) UpdateEntry(
 	ctx context.Context,
 	userID int,
@@ -127,7 +127,7 @@ func (r *Repository) UpdateEntry(
 	return nil
 }
 
-// DeleteEntry deletes a nutrition entry owned by the user.
+// DeleteEntry удаляет запись питания только её владельца; при отсутствии записи возвращает ErrNotFound.
 func (r *Repository) DeleteEntry(
 	ctx context.Context,
 	userID int,

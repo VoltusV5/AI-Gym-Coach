@@ -42,7 +42,7 @@ func TestSanitizeURL(t *testing.T) {
 func TestSlidingWindowLimiter(t *testing.T) {
 	lim := newSlidingWindowLimiter()
 
-	// Allow up to 3 requests per 100ms
+	// Разрешаем до трёх запросов за 100 мс.
 	window := 100 * time.Millisecond
 	key := "client-1"
 
@@ -59,7 +59,7 @@ func TestSlidingWindowLimiter(t *testing.T) {
 		t.Errorf("4th request should be blocked")
 	}
 
-	// Wait for window to expire
+	// Ждём истечения окна лимита.
 	time.Sleep(110 * time.Millisecond)
 	if !lim.allow(key, 3, window) {
 		t.Errorf("Request after window expiration should be allowed")
