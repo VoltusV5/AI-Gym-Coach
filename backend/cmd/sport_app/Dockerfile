@@ -14,6 +14,5 @@ WORKDIR /app
 COPY --from=builder /app/cmd/sport_app/exe /app
 COPY --from=builder /app/static /app/static
 RUN mkdir /app/logs && chown sportik:sportik /app/logs
-USER sportik
 EXPOSE 5050
 CMD ["/app/exe"]

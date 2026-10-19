@@ -29,6 +29,8 @@ services:
 
   backend:
     image: sportik-backend:${RELEASE_ID:?Задайте RELEASE_ID}
+    # В production процесс непривилегированный; dev Compose сохраняет права на bind-mounted логи.
+    user: "10001:10001"
     build:
       context: ./backend
       dockerfile: cmd/sport_app/Dockerfile
