@@ -21,6 +21,9 @@ type Note struct {
 	DeletedAt *time.Time `json:"deleted_at"`
 }
 
+// GetListNotes возвращает страницу неудалённых заметок userID и их общее число.
+// Сортирует по created_at и id убывающе; limit <= 0 отключает пагинацию.
+// Ошибки запроса, сканирования и чтения строк возвращает без частичной страницы.
 func (r *UsersRepository) GetListNotes(
 	ctx context.Context,
 	userID string,
@@ -67,6 +70,9 @@ func (r *UsersRepository) GetListNotes(
 			return []Note{}, 0, fmt.Errorf("scan get notes: %w", err)
 		}
 		notes = append(notes, n)
+	}
+	if err := rows.Err(); err != nil {
+		return []Note{}, 0, fmt.Errorf("iterate notes: %w", err)
 	}
 	if notes == nil {
 		notes = []Note{}
