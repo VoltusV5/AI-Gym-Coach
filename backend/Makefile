@@ -62,12 +62,13 @@ ps:
 	@docker compose ps
 
 # Локальные проверки качества совпадают с командами CI.
-.PHONY: test test-cover fmt fmt-check vet lint lint-install check build
+.PHONY: test test-cover fmt fmt-check vet lint lint-install verify check build
 GOLANGCI_LINT := $(CURDIR)/bin/golangci-lint
 GOLANGCI_VERSION := $(shell cat .golangci-version)
+TEST_FLAGS ?= -v
 
 test:
-	@go test -v ./...
+	@go test $(TEST_FLAGS) ./...
 
 test-cover:
 	@go test -v -coverprofile=coverage.out ./...
@@ -77,7 +78,7 @@ fmt:
 	@gofmt -s -w .
 
 fmt-check:
-	@files=$$(gofmt -l .); if [ -n "$$files" ]; then echo "Нарушено форматирование:"; echo "$$files"; exit 1; fi
+	@files=$$(gofmt -l .) || exit $$?; if [ -n "$$files" ]; then echo "Нарушено форматирование:"; echo "$$files"; exit 1; fi
 
 vet:
 	@go vet ./...
@@ -90,7 +91,10 @@ lint:
 	@"$(GOLANGCI_LINT)" version | grep -F "version $(GOLANGCI_VERSION) " >/dev/null || { echo "Обновите линтер: make lint-install"; exit 1; }
 	@"$(GOLANGCI_LINT)" run --config .golangci.yml ./...
 
-check: fmt-check vet lint test
+verify:
+	@go run ./cmd/verify
+
+check: verify lint
 
 build:
 	@go build -v -o out/sport_app cmd/sport_app/main.go
