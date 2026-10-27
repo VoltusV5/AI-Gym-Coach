@@ -13,6 +13,9 @@ import (
 	core_pgx_pool "sport_app/internal/core/repository/postgres/pool/pgx"
 	core_http_middleware "sport_app/internal/core/transport/http/middleware"
 	core_http_server "sport_app/internal/core/transport/http/server"
+	catalog_postgres_repository "sport_app/internal/features/catalog/repository/postgres"
+	catalog_service "sport_app/internal/features/catalog/service"
+	catalog_transport_http "sport_app/internal/features/catalog/transport/http"
 	"sport_app/internal/features/mlclient"
 	"sport_app/internal/features/mlclient/aichat"
 	"sport_app/internal/features/nutrition"
@@ -87,6 +90,12 @@ func main() {
 
 	apiVersionRouter := core_http_server.NewAPIVersionRouter(core_http_server.ApiVersion1)
 	apiVersionRouter.RegisterRoutes(usersTransportHTTP.Routes()...)
+	catalogRepository := catalog_postgres_repository.NewRepository(pool)
+	if err := catalogRepository.EnsureReferenceData(ctx); err != nil {
+		logger.Fatal("failed to ensure reference data", zap.Error(err))
+	}
+	apiVersion2Router := core_http_server.NewAPIVersionRouter(core_http_server.ApiVersion2)
+	apiVersion2Router.RegisterRoutes(catalog_transport_http.NewCatalogHTTPHandler(catalog_service.NewService(catalogRepository), jwt).Routes()...)
 
 	registerV1 := func(method, path string, handler http.Handler) {
 		var hf http.HandlerFunc
@@ -105,7 +114,7 @@ func main() {
 	staticDir := "/app/static"
 	httpServer.RegisterStaticDir("/static/", staticDir)
 
-	httpServer.RegisterAPIRouters(apiVersionRouter)
+	httpServer.RegisterAPIRouters(apiVersionRouter, apiVersion2Router)
 	httpServer.RegisterHealthCheck(func(ctx context.Context) error {
 		var value int
 		return pool.QueryRow(ctx, "SELECT 1").Scan(&value)

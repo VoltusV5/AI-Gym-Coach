@@ -22,6 +22,7 @@ func (r *UsersRepository) PromoteGuestToUser(
 	defer cancel()
 
 	query := `
+	WITH promoted AS (
 	UPDATE sportapp.users
 	SET email = $1,
 	    password_hash = $2,
@@ -29,7 +30,12 @@ func (r *UsersRepository) PromoteGuestToUser(
 	    version = version + 1,
 	    updated_at = $3
 	WHERE id = $4 AND is_anonymous = TRUE
-	RETURNING id, version, is_anonymous, email, subscription_status, created_at, updated_at;
+	RETURNING id, version, is_anonymous, email, subscription_status, created_at, updated_at
+	), inserted_role AS (
+		INSERT INTO sportapp.user_roles (user_id, role)
+		SELECT id, 'user' FROM promoted ON CONFLICT DO NOTHING
+	)
+	SELECT id, version, is_anonymous, email, subscription_status, created_at, updated_at FROM promoted;
 	`
 
 	var u User

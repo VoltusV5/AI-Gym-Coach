@@ -94,11 +94,35 @@ func UserIDFromContext(ctx context.Context) (string, error) {
 // Protect проверяет Bearer JWT с помощью jwt и добавляет идентификатор пользователя и признак гостя в контекст.
 // При отсутствии, повреждении или истечении токена отправляет HTTP 401 с JSON-ошибкой.
 func Protect(jwt *core_auth.JWT) Middleware {
+	return protect(jwt, false)
+}
+
+func ProtectV2(jwt *core_auth.JWT) Middleware {
+	return protect(jwt, true)
+}
+
+func OptionalProtectV2(jwt *core_auth.JWT) Middleware {
+	return func(next http.Handler) http.Handler {
+		protected := ProtectV2(jwt)(next)
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if _, present := r.Header["Authorization"]; !present {
+				next.ServeHTTP(w, r)
+				return
+			}
+			protected.ServeHTTP(w, r)
+		})
+	}
+}
+
+func protect(jwt *core_auth.JWT, v2 bool) Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
 			log := core_logger.FromContext(ctx)
 			responceHandler := core_http_responce.NewHTTPResponce(log, w)
+			if v2 {
+				responceHandler = core_http_responce.NewHTTPResponceV2(log, w, r.Header.Get(requestIDHeader))
+			}
 
 			authHeader := r.Header.Get("Authorization")
 			if authHeader == "" {
