@@ -31,19 +31,20 @@ func (r *Repository) ListPrograms(ctx context.Context, filter Filter) ([]Program
 	ctx, cancel := context.WithTimeout(ctx, r.pool.OpTimeout())
 	defer cancel()
 	order := "p.created_at DESC, p.id DESC"
-	after := `(p.created_at, p.id) < (SELECT created_at, id FROM sportapp.programs WHERE id = $1::uuid)`
+	after := `(p.created_at, p.id) < ($10::timestamptz, $1::uuid)`
+	var sortValue any = filter.AfterCreatedAt
 	switch filter.Sort {
 	case "price_asc":
 		order = "v.price_minor ASC, p.id ASC"
-		after = `(v.price_minor, p.id) > (SELECT av.price_minor, ap.id FROM sportapp.programs ap
-			JOIN sportapp.program_versions av ON av.id = ap.published_version_id WHERE ap.id = $1::uuid)`
+		after = `(v.price_minor, p.id) > ($10::bigint, $1::uuid)`
+		sortValue = filter.AfterPrice
 	case "price_desc":
 		order = "v.price_minor DESC, p.id DESC"
-		after = `(v.price_minor, p.id) < (SELECT av.price_minor, ap.id FROM sportapp.programs ap
-			JOIN sportapp.program_versions av ON av.id = ap.published_version_id WHERE ap.id = $1::uuid)`
+		after = `(v.price_minor, p.id) < ($10::bigint, $1::uuid)`
+		sortValue = filter.AfterPrice
 	}
-	query := `SELECT ` + cardJSON + publishedFrom + `
-		AND ($1::uuid IS NULL OR ` + after + `)
+	query := `SELECT ` + cardJSON + `, p.created_at` + publishedFrom + `
+		AND ($1::uuid IS NULL OR (p.id <> $1::uuid AND ` + after + `))
 		AND ($2 = '' OR v.goal = $2) AND ($3 = '' OR v.level = $3)
 		AND ($4 = 0 OR v.duration_weeks = $4) AND ($5 = 0 OR p.trainer_id = $5)
 		AND ($6 = '' OR ($6 = 'free' AND v.price_minor = 0) OR ($6 = 'paid' AND v.price_minor > 0))
@@ -55,7 +56,8 @@ func (r *Repository) ListPrograms(ctx context.Context, filter Filter) ([]Program
 		cursor = filter.After
 	}
 	rows, err := r.pool.Query(ctx, query, cursor, filter.Goal, filter.Level,
-		filter.DurationWeeks, filter.TrainerID, filter.PriceType, filter.EquipmentSet, filter.Equipment, filter.Limit+1)
+		filter.DurationWeeks, filter.TrainerID, filter.PriceType, filter.EquipmentSet, filter.Equipment, filter.Limit+1,
+		sortValue)
 	if err != nil {
 		return nil, fmt.Errorf("list programs: %w", err)
 	}
@@ -63,10 +65,10 @@ func (r *Repository) ListPrograms(ctx context.Context, filter Filter) ([]Program
 	items := make([]ProgramCard, 0, filter.Limit+1)
 	for rows.Next() {
 		var raw []byte
-		if err := rows.Scan(&raw); err != nil {
+		var item ProgramCard
+		if err := rows.Scan(&raw, &item.CreatedAt); err != nil {
 			return nil, fmt.Errorf("scan program: %w", err)
 		}
-		var item ProgramCard
 		if err := json.Unmarshal(raw, &item); err != nil {
 			return nil, fmt.Errorf("decode program: %w", err)
 		}

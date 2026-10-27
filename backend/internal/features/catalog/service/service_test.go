@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	core_errors "sport_app/internal/core/errors"
 	catalog_postgres_repository "sport_app/internal/features/catalog/repository/postgres"
@@ -33,7 +34,7 @@ func (r *testRepository) EquipmentExists(context.Context, []string) (bool, error
 
 func TestCatalogPagination(t *testing.T) {
 	repo := &testRepository{items: []catalog_postgres_repository.ProgramCard{
-		{ID: "18000000-0000-4000-8000-000000000001"}, {ID: "18000000-0000-4000-8000-000000000002"},
+		{ID: "18000000-0000-4000-8000-000000000001", CreatedAt: time.Now()}, {ID: "18000000-0000-4000-8000-000000000002", CreatedAt: time.Now()},
 	}}
 	svc := NewService(repo)
 	filter := catalog_postgres_repository.Filter{Limit: 1, Equipment: []string{"dumbbell", "bench"}, EquipmentSet: true}
@@ -57,6 +58,7 @@ func TestCatalogPagination(t *testing.T) {
 
 func TestCatalogInvalidFilters(t *testing.T) {
 	for _, filter := range []catalog_postgres_repository.Filter{
+		{DurationWeeks: 1 << 32}, {TrainerID: 1 << 32},
 		{Limit: -1}, {Limit: 101}, {DurationWeeks: -1}, {TrainerID: -1}, {Sort: "arbitrary SQL"},
 		{PriceType: "unknown"}, {Equipment: []string{""}}, {Equipment: []string{"missing"}},
 	} {

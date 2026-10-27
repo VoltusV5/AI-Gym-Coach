@@ -99,6 +99,10 @@ func (h *HTTPResponceHandler) ErrorResponse(err error, msg string) {
 func (h *HTTPResponceHandler) PanicResponce(p any, msg string) {
 	statusCode := http.StatusInternalServerError
 	err := fmt.Errorf("unexpected panic: %v", p)
+	if h.requestID != nil {
+		h.errorResponseV2(err, msg)
+		return
+	}
 
 	h.log.Error(msg, zap.Error(err))
 	h.errorResponse(

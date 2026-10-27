@@ -232,11 +232,22 @@ func Trace() Middleware {
 
 // Panic перехватывает панику HTTP-обработчика и формирует стандартный ответ с HTTP 500.
 func Panic() Middleware {
+	return panicMiddleware(false)
+}
+
+func PanicV2() Middleware {
+	return panicMiddleware(true)
+}
+
+func panicMiddleware(v2 bool) Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
 			log := core_logger.FromContext(ctx)
 			responceHandler := core_http_responce.NewHTTPResponce(log, w)
+			if v2 {
+				responceHandler = core_http_responce.NewHTTPResponceV2(log, w, r.Header.Get(requestIDHeader))
+			}
 
 			defer func() {
 				if p := recover(); p != nil {

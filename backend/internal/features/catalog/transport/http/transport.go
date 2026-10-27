@@ -3,6 +3,7 @@ package catalog_transport_http
 import (
 	"context"
 	"fmt"
+	"math"
 	"net/http"
 	"strconv"
 
@@ -121,7 +122,7 @@ func requestUserID(r *http.Request) (int, error) {
 		return 0, err
 	}
 	id, err := strconv.Atoi(raw)
-	if err != nil || id <= 0 {
+	if err != nil || id <= 0 || id > math.MaxInt32 {
 		return 0, fmt.Errorf("invalid user id: %w", core_errors.ErrUnauthorized)
 	}
 	return id, nil

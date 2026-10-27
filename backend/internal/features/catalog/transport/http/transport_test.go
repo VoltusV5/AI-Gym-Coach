@@ -21,9 +21,10 @@ import (
 
 type testRepository struct {
 	catalog_service.Repository
-	err    error
-	userID int
-	calls  int
+	err        error
+	userID     int
+	calls      int
+	panicValue any
 }
 
 func (r *testRepository) ListEquipment(context.Context, catalog_postgres_repository.Filter) ([]catalog_postgres_repository.Equipment, error) {
@@ -37,6 +38,9 @@ func (r *testRepository) ListExercises(context.Context, catalog_postgres_reposit
 }
 
 func (r *testRepository) ListPrograms(context.Context, catalog_postgres_repository.Filter) ([]catalog_postgres_repository.ProgramCard, error) {
+	if r.panicValue != nil {
+		panic(r.panicValue)
+	}
 	r.calls++
 	return []catalog_postgres_repository.ProgramCard{}, r.err
 }
@@ -58,8 +62,10 @@ func TestCatalogHTTP(t *testing.T) {
 	for _, tt := range []struct {
 		name, method, path, identity string
 		err                          error
+		panicValue                   any
 		status, calls, userID        int
 	}{
+		{name: "panic redacted", method: "GET", path: "/catalog/programs", panicValue: "postgres://secret-host/password", status: 500},
 		{name: "public catalog", method: "GET", path: "/catalog/programs", status: 200, calls: 1},
 		{name: "public detail", method: "GET", path: "/catalog/programs/" + id, status: 200, calls: 1},
 		{name: "authenticated detail", method: "GET", path: "/catalog/programs/" + id, identity: "42", status: 200, calls: 1, userID: 42},
@@ -72,6 +78,9 @@ func TestCatalogHTTP(t *testing.T) {
 		{name: "bad subject", method: "POST", path: "/programs/" + id + "/access", identity: "abc", status: 401},
 		{name: "bad id", method: "GET", path: "/catalog/programs/not-a-uuid", status: 400},
 		{name: "bad limit", method: "GET", path: "/catalog/programs?limit=101", status: 400},
+		{name: "large trainer id", method: "GET", path: "/catalog/programs?trainer_id=4294967296", status: 400},
+		{name: "large duration", method: "GET", path: "/catalog/programs?duration_weeks=4294967296", status: 400},
+		{name: "large subject", method: "GET", path: "/catalog/programs/" + id, identity: "4294967296", status: 401},
 		{name: "bad duration", method: "GET", path: "/catalog/programs?duration_weeks=x", status: 400},
 		{name: "bad cursor", method: "GET", path: "/catalog/programs?cursor=bad", status: 400},
 		{name: "hidden", method: "GET", path: "/catalog/programs/" + id, err: core_errors.ErrNotFound, status: 404, calls: 1},
@@ -81,7 +90,7 @@ func TestCatalogHTTP(t *testing.T) {
 		{name: "timeout", method: "GET", path: "/catalog/programs", err: context.DeadlineExceeded, status: 504, calls: 1},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			repo := &testRepository{err: tt.err}
+			repo := &testRepository{err: tt.err, panicValue: tt.panicValue}
 			jwt := core_auth.NewJWT(core_auth.Config{Secret: "unit-test-only", TokenTTL: time.Hour})
 			router := core_http_server.NewAPIVersionRouter(core_http_server.ApiVersion2)
 			router.RegisterRoutes(catalog_transport_http.NewCatalogHTTPHandler(catalog_service.NewService(repo), jwt).Routes()...)
@@ -100,7 +109,7 @@ func TestCatalogHTTP(t *testing.T) {
 				r.Header.Set("Authorization", "Bearer "+bearer)
 			}
 			w := httptest.NewRecorder()
-			core_http_middleware.RequestID()(router).ServeHTTP(w, r)
+			core_http_middleware.RequestID()(core_http_middleware.Panic()(router)).ServeHTTP(w, r)
 			require.Equal(t, tt.status, w.Code, w.Body.String())
 			assert.Equal(t, tt.calls, repo.calls)
 			assert.Equal(t, tt.userID, repo.userID)

@@ -175,6 +175,59 @@ func TestCatalogIntegration(t *testing.T) {
 			request("GET", "/catalog/programs?"+filter, "", 400)
 		}
 	})
+	t.Run("cursor survives publication changes", func(t *testing.T) {
+		for _, sort := range []string{"price_asc", "price_desc"} {
+			filter := catalog_postgres_repository.Filter{Limit: 1, Sort: sort}
+			first, err := svc.ListPrograms(ctx, filter, "")
+			require.NoError(t, err)
+			require.NotNil(t, first.NextCursor)
+			anchor := first.Items[0]
+			all, err := svc.ListPrograms(ctx, catalog_postgres_repository.Filter{Sort: sort}, "")
+			require.NoError(t, err)
+			require.Greater(t, len(all.Items), 1)
+			_, err = pool.Exec(ctx, `UPDATE sportapp.programs SET published_version_id = NULL WHERE id = $1`, anchor.ID)
+			require.NoError(t, err)
+			next, readErr := svc.ListPrograms(ctx, filter, *first.NextCursor)
+			_, err = pool.Exec(ctx, `UPDATE sportapp.programs SET published_version_id = $2 WHERE id = $1`, anchor.ID, anchor.PublishedVersionID)
+			require.NoError(t, err)
+			require.NoError(t, readErr)
+			if assert.Len(t, next.Items, 1, sort) {
+				assert.Equal(t, all.Items[1].ID, next.Items[0].ID, sort)
+			}
+		}
+	})
+	t.Run("cursor retains original price", func(t *testing.T) {
+		for _, sort := range []string{"price_asc", "price_desc"} {
+			filter := catalog_postgres_repository.Filter{Limit: 1, Sort: sort}
+			first, err := svc.ListPrograms(ctx, filter, "")
+			require.NoError(t, err)
+			require.NotNil(t, first.NextCursor)
+			all, err := svc.ListPrograms(ctx, catalog_postgres_repository.Filter{Sort: sort}, "")
+			require.NoError(t, err)
+			anchor := first.Items[0]
+			newPrice := int64(100000)
+			if sort == "price_desc" {
+				newPrice = 0
+			}
+			_, err = pool.Exec(ctx, `UPDATE sportapp.program_versions SET price_minor = $2 WHERE id = $1`, anchor.PublishedVersionID, newPrice)
+			require.NoError(t, err)
+			next, readErr := svc.ListPrograms(ctx, filter, *first.NextCursor)
+			_, err = pool.Exec(ctx, `UPDATE sportapp.program_versions SET price_minor = $2 WHERE id = $1`, anchor.PublishedVersionID, anchor.PriceMinor)
+			require.NoError(t, err)
+			require.NoError(t, readErr)
+			if assert.Len(t, next.Items, 1, sort) {
+				assert.Equal(t, all.Items[1].ID, next.Items[0].ID, sort)
+			}
+		}
+	})
+	t.Run("UUID aliases", func(t *testing.T) {
+		_, err := svc.GetProgram(ctx, "urn:uuid:"+freeID, 0)
+		assert.NoError(t, err)
+		_, err = svc.GrantFreeAccess(ctx, "urn:uuid:"+freeID, 101)
+		assert.NoError(t, err)
+		_, err = pool.Exec(ctx, `DELETE FROM sportapp.entitlements WHERE user_id = 101`)
+		require.NoError(t, err)
+	})
 	t.Run("reference data", func(t *testing.T) {
 		request("GET", "/equipment", "", 401)
 		request("GET", "/exercises", "bad-token", 401)

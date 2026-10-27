@@ -32,6 +32,7 @@ type Trainer struct {
 }
 
 type ProgramCard struct {
+	CreatedAt          time.Time   `json:"-"`
 	ID                 string      `json:"id"`
 	Title              string      `json:"title"`
 	Trainer            Trainer     `json:"trainer"`
@@ -82,16 +83,18 @@ type Entitlement struct {
 }
 
 type Filter struct {
-	Limit         int
-	After         string
-	Query         string
-	MuscleGroup   string
-	Equipment     []string
-	EquipmentSet  bool
-	Goal          string
-	Level         string
-	DurationWeeks int
-	TrainerID     int
-	PriceType     string
-	Sort          string
+	AfterCreatedAt time.Time
+	AfterPrice     int64
+	Limit          int
+	After          string
+	Query          string
+	MuscleGroup    string
+	Equipment      []string
+	EquipmentSet   bool
+	Goal           string
+	Level          string
+	DurationWeeks  int
+	TrainerID      int
+	PriceType      string
+	Sort           string
 }
