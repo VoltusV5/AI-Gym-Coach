@@ -19,6 +19,9 @@ import (
 	"sport_app/internal/features/mlclient"
 	"sport_app/internal/features/mlclient/aichat"
 	"sport_app/internal/features/nutrition"
+	profile_postgres_repository "sport_app/internal/features/profile/repository/postgres"
+	profile_service "sport_app/internal/features/profile/service"
+	profile_transport_http "sport_app/internal/features/profile/transport/http"
 	users_postgres_repository "sport_app/internal/features/users/repository/postgres"
 	users_service "sport_app/internal/features/users/service"
 	users_transport_http "sport_app/internal/features/users/transport/http"
@@ -96,6 +99,8 @@ func main() {
 	}
 	apiVersion2Router := core_http_server.NewAPIVersionRouter(core_http_server.ApiVersion2)
 	apiVersion2Router.RegisterRoutes(catalog_transport_http.NewCatalogHTTPHandler(catalog_service.NewService(catalogRepository), jwt).Routes()...)
+	profileRepository := profile_postgres_repository.NewRepository(pool)
+	apiVersion2Router.RegisterRoutes(profile_transport_http.NewProfileHTTPHandler(profile_service.NewService(profileRepository), jwt).Routes()...)
 
 	registerV1 := func(method, path string, handler http.Handler) {
 		var hf http.HandlerFunc
