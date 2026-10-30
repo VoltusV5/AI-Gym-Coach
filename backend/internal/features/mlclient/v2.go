@@ -29,11 +29,22 @@ type History struct {
 	Adherence28d    *float64        `json:"adherence_28d"`
 	ExerciseMetrics []HistoryMetric `json:"exercise_metrics"`
 }
+
+// ExerciseCandidate содержит актуальный ID и требования упражнения из каталога Go.
+// ML выбирает только из этого снимка; перед сохранением Go повторно проверяет БД.
+type ExerciseCandidate struct {
+	ExerciseID     int      `json:"exercise_id"`
+	MuscleGroup    string   `json:"muscle_group"`
+	MuscleSubgroup *string  `json:"muscle_subgroup"`
+	EquipmentIDs   []string `json:"equipment_ids"`
+}
+
 type GenerateInput struct {
 	RequestID            string                              `json:"request_id"`
 	FeatureSchemaVersion string                              `json:"feature_schema_version"`
 	Profile              profile_postgres_repository.Profile `json:"profile"`
 	History              *History                            `json:"history"`
+	Exercises            []ExerciseCandidate                 `json:"exercises"`
 }
 type GeneratedDay struct {
 	Weekday   int                                      `json:"weekday"`
@@ -64,13 +75,16 @@ func Unavailable() error {
 func NoFeasiblePlan() error {
 	return &core_errors.DomainError{Code: "NO_FEASIBLE_PLAN", Message: "No valid plan satisfies the constraints", Status: 422}
 }
+
+// Generate вызывает внутренний ML v2 со служебным токеном и снимком каталога.
+// Проверяет структуру и корреляцию ответа; сетевые сбои и невалидный план возвращает как доменные ошибки.
 func (c *V2Client) Generate(ctx context.Context, input GenerateInput) (GenerateResult, error) {
 	var result GenerateResult
 	if c.baseURL == "" || c.token == "" {
 		return result, Unavailable()
 	}
-	profile := map[string]any{"age": input.Profile.Age, "height_cm": input.Profile.HeightCm, "weight_kg": input.Profile.WeightKg, "level": input.Profile.Level, "goal": input.Profile.Goal, "training_days": input.Profile.TrainingDays, "equipment_ids": input.Profile.EquipmentIDs, "excluded_exercise_ids": input.Profile.ExcludedExerciseIDs, "session_duration_min": input.Profile.SessionDurationMin, "gender": input.Profile.Gender, "activity_level": input.Profile.ActivityLevel, "injuries_notes": input.Profile.InjuriesNotes}
-	data, err := json.Marshal(map[string]any{"request_id": input.RequestID, "feature_schema_version": input.FeatureSchemaVersion, "profile": profile, "history": input.History})
+	profile := map[string]any{"age": input.Profile.Age, "height_cm": input.Profile.HeightCm, "weight_kg": input.Profile.WeightKg, "level": input.Profile.Level, "goal": input.Profile.Goal, "training_days": input.Profile.TrainingDays, "equipment_ids": input.Profile.EquipmentIDs, "excluded_exercise_ids": append([]int{}, input.Profile.ExcludedExerciseIDs...), "session_duration_min": input.Profile.SessionDurationMin, "gender": input.Profile.Gender, "activity_level": input.Profile.ActivityLevel, "injuries_notes": input.Profile.InjuriesNotes}
+	data, err := json.Marshal(map[string]any{"request_id": input.RequestID, "feature_schema_version": input.FeatureSchemaVersion, "profile": profile, "history": input.History, "exercises": input.Exercises})
 	if err != nil {
 		return result, err
 	}

@@ -25,10 +25,12 @@ func TestV2ClientContractAndAuthorization(t *testing.T) {
 		var payload map[string]any
 		require.NoError(t, json.NewDecoder(r.Body).Decode(&payload))
 		require.Equal(t, "req-test", payload["request_id"])
+		require.Equal(t, float64(808), payload["exercises"].([]any)[0].(map[string]any)["exercise_id"])
+		require.Equal(t, []any{}, payload["profile"].(map[string]any)["excluded_exercise_ids"])
 		require.NoError(t, json.NewEncoder(w).Encode(responseV2("req-test")))
 	}))
 	defer server.Close()
-	result, err := NewV2Client(Config{BaseURL: server.URL, ServiceToken: "synthetic-service-token"}).Generate(context.Background(), GenerateInput{RequestID: "req-test", FeatureSchemaVersion: "profile-v2"})
+	result, err := NewV2Client(Config{BaseURL: server.URL, ServiceToken: "synthetic-service-token"}).Generate(context.Background(), GenerateInput{RequestID: "req-test", FeatureSchemaVersion: "profile-v2", Exercises: []ExerciseCandidate{{ExerciseID: 808, MuscleGroup: "Ноги", EquipmentIDs: []string{}}}})
 	require.NoError(t, err)
 	require.Equal(t, "transformer-test", result.ModelVersion)
 	_, err = NewV2Client(Config{BaseURL: server.URL}).Generate(context.Background(), GenerateInput{})

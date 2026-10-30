@@ -3,6 +3,7 @@ package generation_service
 import (
 	"context"
 	"errors"
+	"os"
 	"testing"
 	"time"
 
@@ -16,11 +17,13 @@ import (
 )
 
 type repoStub struct {
-	profile profile_postgres_repository.Profile
-	history workouts_domain.Data
-	saved   int
-	cached  bool
-	input   plans_postgres_repository.Input
+	profile    profile_postgres_repository.Profile
+	history    workouts_domain.Data
+	saved      int
+	cached     bool
+	input      plans_postgres_repository.Input
+	exercises  []mlclient.ExerciseCandidate
+	catalogErr error
 }
 
 func (r *repoStub) Cached(context.Context, int, string, string) (generation_postgres_repository.Result, bool, error) {
@@ -30,6 +33,12 @@ func (r *repoStub) Profile(context.Context, int) (profile_postgres_repository.Pr
 	return r.profile, nil
 }
 func (r *repoStub) History(context.Context, int) (workouts_domain.Data, error) { return r.history, nil }
+func (r *repoStub) Exercises(context.Context) ([]mlclient.ExerciseCandidate, error) {
+	if r.exercises != nil || r.catalogErr != nil {
+		return r.exercises, r.catalogErr
+	}
+	return []mlclient.ExerciseCandidate{{ExerciseID: 1, MuscleGroup: "Ноги", EquipmentIDs: []string{}}}, nil
+}
 func (r *repoStub) Save(_ context.Context, _ int, _, _ string, _ int64, input plans_postgres_repository.Input, _ mlclient.GenerateResult) (generation_postgres_repository.Result, error) {
 	r.saved++
 	r.input = input
@@ -63,6 +72,7 @@ func TestGenerationPreservesSourceAndRejectsInvalidResults(t *testing.T) {
 	require.Equal(t, 1, repo.saved)
 	require.Len(t, repo.input.Days, 1)
 	require.Equal(t, "profile-v2", client.input.FeatureSchemaVersion)
+	require.Equal(t, 1, client.input.Exercises[0].ExerciseID)
 	client.result.Days[0].Weekday = 2
 	_, err = service.Generate(context.Background(), "1", "another", "req", 3)
 	var domain *core_errors.DomainError
@@ -72,6 +82,61 @@ func TestGenerationPreservesSourceAndRejectsInvalidResults(t *testing.T) {
 	client.err = context.DeadlineExceeded
 	_, err = service.Generate(context.Background(), "1", "deadline", "req", 3)
 	require.True(t, errors.Is(err, context.DeadlineExceeded))
+	require.Equal(t, 1, repo.saved)
+}
+
+func TestGenerationCatalogFailureDoesNotCallMLOrSave(t *testing.T) {
+	for _, catalogErr := range []error{nil, errors.New("catalog unavailable")} {
+		repo := &repoStub{profile: completeProfile(), exercises: []mlclient.ExerciseCandidate{}, catalogErr: catalogErr}
+		client := &clientStub{}
+		_, err := NewService(repo, client).Generate(context.Background(), "1", "key", "req", 3)
+		require.Error(t, err)
+		if catalogErr != nil {
+			require.ErrorIs(t, err, catalogErr)
+		}
+		require.Zero(t, client.calls)
+		require.Zero(t, repo.saved)
+	}
+}
+
+// TestGenerationPythonContract runs against an explicitly started disposable ML service.
+// It exercises real CatBoost/Pydantic and Go validation without a database or user data.
+func TestGenerationPythonContract(t *testing.T) {
+	url := os.Getenv("SPORTIK_ML_TEST_URL")
+	if url == "" {
+		t.Skip("set SPORTIK_ML_TEST_URL to a disposable local ML service")
+	}
+	profile := completeProfile()
+	profile.TrainingDays = []int{1, 3, 5}
+	gender, activity, injuries := "м", "Средняя активность", false
+	profile.Gender, profile.ActivityLevel, profile.InjuriesNotes = &gender, &activity, &injuries
+	candidates := []mlclient.ExerciseCandidate{}
+	for i, group := range []string{"Ноги", "Грудь", "Спина", "Плечи", "Руки", "Пресс"} {
+		candidates = append(candidates, mlclient.ExerciseCandidate{ExerciseID: 1001 + i, MuscleGroup: group, EquipmentIDs: []string{}})
+	}
+	repo := &repoStub{profile: profile, exercises: candidates}
+	client := mlclient.NewV2Client(mlclient.Config{BaseURL: url, ServiceToken: "synthetic-integration-token"})
+	service := NewService(repo, client)
+	_, err := service.Generate(context.Background(), "1", "integration", "req-python-contract", 3)
+	require.NoError(t, err)
+	require.Equal(t, 1, repo.saved)
+	require.Len(t, repo.input.Days, 3)
+	for _, day := range repo.input.Days {
+		require.NotEmpty(t, day.Exercises)
+		for _, ex := range day.Exercises {
+			require.GreaterOrEqual(t, ex.ExerciseID, 1001)
+			require.LessOrEqual(t, ex.ExerciseID, 1006)
+			require.Nil(t, ex.WeightKg)
+		}
+	}
+	// Exclude the entire catalog: failure must leave the previously saved plan alone.
+	for _, ex := range candidates {
+		repo.profile.ExcludedExerciseIDs = append(repo.profile.ExcludedExerciseIDs, ex.ExerciseID)
+	}
+	_, err = service.Generate(context.Background(), "1", "infeasible", "req-python-infeasible", 3)
+	var domain *core_errors.DomainError
+	require.ErrorAs(t, err, &domain)
+	require.Equal(t, "NO_FEASIBLE_PLAN", domain.Code)
 	require.Equal(t, 1, repo.saved)
 }
 func TestGenerationIncompleteStaleAndCached(t *testing.T) {

@@ -43,6 +43,33 @@ func (r *Repository) Profile(ctx context.Context, user int) (profile_postgres_re
 func (r *Repository) History(ctx context.Context, user int) (workouts_domain.Data, error) {
 	return r.workouts.Data(ctx, user)
 }
+
+// Exercises читает активный каталог с заданной группой мышц для ML без привязки ID к seed.
+// Возвращает требования оборудования; ошибки запроса, сканирования и чтения строк сохраняет в цепочке.
+func (r *Repository) Exercises(ctx context.Context) ([]mlclient.ExerciseCandidate, error) {
+	ctx, cancel := context.WithTimeout(ctx, r.pool.OpTimeout())
+	defer cancel()
+	rows, err := r.pool.Query(ctx, `SELECT e.id, e.muscular_group, NULLIF(btrim(e.muscular_subgroup), ''),
+		ARRAY(SELECT equipment_id FROM sportapp.exercise_equipment WHERE exercise_id=e.id ORDER BY equipment_id)
+		FROM sportapp.exercises e WHERE e.is_active AND NULLIF(btrim(e.muscular_group), '') IS NOT NULL ORDER BY e.id`)
+	if err != nil {
+		return nil, fmt.Errorf("read ML exercise catalog: %w", err)
+	}
+	defer rows.Close()
+	items := []mlclient.ExerciseCandidate{}
+	for rows.Next() {
+		var item mlclient.ExerciseCandidate
+		if err := rows.Scan(&item.ExerciseID, &item.MuscleGroup, &item.MuscleSubgroup, &item.EquipmentIDs); err != nil {
+			return nil, fmt.Errorf("scan ML exercise: %w", err)
+		}
+		items = append(items, item)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("read ML exercise rows: %w", err)
+	}
+	return items, nil
+}
+
 func (r *Repository) Save(ctx context.Context, user int, key, hash string, profileVersion int64, input plans_postgres_repository.Input, ml mlclient.GenerateResult) (Result, error) {
 	var result Result
 	err := r.workouts.Transaction(ctx, user, func(ctx context.Context, tx core_postgres_pool.Tx) error {

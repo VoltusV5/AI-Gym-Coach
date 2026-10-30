@@ -22,6 +22,7 @@ type Repository interface {
 	Cached(context.Context, int, string, string) (generation_postgres_repository.Result, bool, error)
 	Profile(context.Context, int) (profile_postgres_repository.Profile, error)
 	History(context.Context, int) (workouts_domain.Data, error)
+	Exercises(context.Context) ([]mlclient.ExerciseCandidate, error)
 	Save(context.Context, int, string, string, int64, plans_postgres_repository.Input, mlclient.GenerateResult) (generation_postgres_repository.Result, error)
 }
 type Client interface {
@@ -36,6 +37,9 @@ type Service struct {
 func NewService(repo Repository, client Client) *Service {
 	return &Service{repo: repo, client: client, now: time.Now}
 }
+
+// Generate собирает профиль, историю и актуальный каталог для ML, валидирует назначения и сохраняет новый план.
+// Соблюдает идемпотентность и версию профиля; при ошибке ML существующие планы не изменяет.
 func (s *Service) Generate(ctx context.Context, raw, key, requestID string, version int64) (generation_postgres_repository.Result, error) {
 	id, err := v2request.UserID(raw)
 	if err != nil {
@@ -68,6 +72,13 @@ func (s *Service) Generate(ctx context.Context, raw, key, requestID string, vers
 	if err != nil {
 		return result, err
 	}
+	exercises, err := s.repo.Exercises(ctx)
+	if err != nil {
+		return result, err
+	}
+	if len(exercises) == 0 {
+		return result, mlclient.NoFeasiblePlan()
+	}
 	now := s.now()
 	start := now.AddDate(0, 0, -28)
 	aggregate := workouts_domain.Aggregate(history, "window", start, now, now, time.UTC)
@@ -98,7 +109,7 @@ func (s *Service) Generate(ctx context.Context, raw, key, requestID string, vers
 	}
 	ctx, cancel := context.WithTimeout(ctx, 8*time.Second)
 	defer cancel()
-	ml, err := s.client.Generate(ctx, mlclient.GenerateInput{RequestID: requestID, FeatureSchemaVersion: "profile-v2", Profile: profile, History: &mlHistory})
+	ml, err := s.client.Generate(ctx, mlclient.GenerateInput{RequestID: requestID, FeatureSchemaVersion: "profile-v2", Profile: profile, History: &mlHistory, Exercises: exercises})
 	if err != nil {
 		return result, err
 	}
