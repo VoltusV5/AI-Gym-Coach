@@ -1,4 +1,5 @@
 fastapi>=0.100
+pydantic>=2,<3
 uvicorn[standard]>=0.20
 catboost
 pandas

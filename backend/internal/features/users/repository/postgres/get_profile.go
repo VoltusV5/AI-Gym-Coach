@@ -9,6 +9,8 @@ import (
 	core_postgres_pool "sport_app/internal/core/repository/postgres/pool"
 )
 
+// GetProfile читает анкету userID в формате v1; возвращает ErrNotFound либо ошибку БД.
+// Дробный вес общей анкеты проецируется в INTEGER по правилам PostgreSQL без изменения хранимого значения.
 func (r *UsersRepository) GetProfile(
 	ctx context.Context,
 	userID string,
@@ -17,7 +19,7 @@ func (r *UsersRepository) GetProfile(
 	defer cancel()
 
 	query := `
-	SELECT id, version, user_id, age, gender, height_cm, weight_kg,
+	SELECT id, version, user_id, age, gender, height_cm, weight_kg::integer,
 	       activity_level, injuries_notes, goal, fitness_level,
 	       training_days_map, created_at, updated_at
 	FROM sportapp.profile

@@ -41,3 +41,16 @@ type Row interface {
 type CommandTag interface {
 	RowsAffected() int64
 }
+
+type Tx interface {
+	Query(ctx context.Context, sql string, args ...any) (Rows, error)
+	QueryRow(ctx context.Context, sql string, args ...any) Row
+	Exec(ctx context.Context, sql string, args ...any) (CommandTag, error)
+	Commit(ctx context.Context) error
+	Rollback(ctx context.Context) error
+}
+
+type TransactionalPool interface {
+	Pool
+	Begin(ctx context.Context) (Tx, error)
+}
