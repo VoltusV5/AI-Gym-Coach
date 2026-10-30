@@ -168,7 +168,7 @@ func CORS() Middleware {
 			}
 
 			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PATCH, PUT, DELETE")
-			w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type, X-Request-ID")
+			w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type, X-Request-ID, Idempotency-Key")
 			w.Header().Set("Access-Control-Expose-Headers", "Authorization")
 
 			if r.Method == http.MethodOptions {

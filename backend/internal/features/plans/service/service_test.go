@@ -55,18 +55,18 @@ func TestPlanValidation(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			input := validInput()
 			tt.change(&input)
-			_, err := prepareInput(input, true)
+			_, err := PrepareInput(input, true)
 			assert.ErrorIs(t, err, core_errors.ErrInvalidArgument)
 		})
 	}
 	input := validInput()
 	input.Days[0].ID = ""
 	input.Schedule.Entries = []plans_postgres_repository.ScheduleEntry{}
-	ready, err := prepareInput(input, false)
+	ready, err := PrepareInput(input, false)
 	require.NoError(t, err)
 	assert.NotEmpty(t, ready.Days[0].ID)
 	assert.Empty(t, input.Days[0].ID)
-	_, err = prepareInput(plans_postgres_repository.Input{Title: "Новый", Days: []plans_postgres_repository.Day{}, Schedule: plans_postgres_repository.Schedule{TimeZone: "UTC", StartDate: "2026-10-29", Entries: []plans_postgres_repository.ScheduleEntry{}}}, false)
+	_, err = PrepareInput(plans_postgres_repository.Input{Title: "Новый", Days: []plans_postgres_repository.Day{}, Schedule: plans_postgres_repository.Schedule{TimeZone: "UTC", StartDate: "2026-10-29", Entries: []plans_postgres_repository.ScheduleEntry{}}}, false)
 	assert.NoError(t, err)
 }
 

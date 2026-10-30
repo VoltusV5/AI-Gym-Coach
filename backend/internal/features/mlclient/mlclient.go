@@ -34,6 +34,7 @@ type Muscules struct {
 
 // Config содержит адреса и таймауты ML-сервисов из переменных окружения с префиксом ML.
 type Config struct {
+	ServiceToken      string        `envconfig:"SERVICE_TOKEN"`
 	BaseURL           string        `envconfig:"BASE_URL" required:"true"`
 	ChatBaseURL       string        `envconfig:"CHAT_BASE_URL"`
 	ChatPath          string        `envconfig:"CHAT_PATH" default:"/ai/user/chat"`

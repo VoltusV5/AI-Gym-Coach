@@ -89,18 +89,7 @@ func replaceContents(ctx context.Context, tx core_postgres_pool.Tx, planID strin
 
 func (r *Repository) CreatePlan(ctx context.Context, userID int, input Input) (Plan, error) {
 	return r.write(ctx, userID, func(ctx context.Context, tx core_postgres_pool.Tx) (Plan, error) {
-		id := uuid.NewString()
-		if _, err := tx.Exec(ctx, `INSERT INTO sportapp.training_plans (id, owner_id, title, source_type) VALUES ($1,$2,$3,'manual')`, id, userID, input.Title); err != nil {
-			return Plan{}, fmt.Errorf("create plan: %w", err)
-		}
-		if err := replaceContents(ctx, tx, id, input); err != nil {
-			return Plan{}, err
-		}
-		plan, err := readPlan(ctx, tx, userID, id)
-		if err != nil {
-			return Plan{}, err
-		}
-		return plan, saveRevision(ctx, tx, plan)
+		return CreatePlanInTx(ctx, tx, userID, input, "manual")
 	})
 }
 
@@ -182,4 +171,19 @@ func (r *Repository) ArchivePlan(ctx context.Context, userID int, planID string)
 		return plan, saveRevision(ctx, tx, plan)
 	})
 	return err
+}
+
+func CreatePlanInTx(ctx context.Context, tx core_postgres_pool.Tx, userID int, input Input, source string) (Plan, error) {
+	id := uuid.NewString()
+	if _, err := tx.Exec(ctx, `INSERT INTO sportapp.training_plans (id, owner_id, title, source_type) VALUES ($1,$2,$3,$4)`, id, userID, input.Title, source); err != nil {
+		return Plan{}, fmt.Errorf("create plan: %w", err)
+	}
+	if err := replaceContents(ctx, tx, id, input); err != nil {
+		return Plan{}, err
+	}
+	plan, err := readPlan(ctx, tx, userID, id)
+	if err != nil {
+		return Plan{}, err
+	}
+	return plan, saveRevision(ctx, tx, plan)
 }

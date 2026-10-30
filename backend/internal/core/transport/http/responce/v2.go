@@ -33,6 +33,10 @@ func (h *HTTPResponceHandler) errorResponseV2(err error, msg string) {
 	case errors.Is(err, context.DeadlineExceeded):
 		status, code, message = http.StatusGatewayTimeout, "DEADLINE_EXCEEDED", "Request timed out"
 	}
+	var domain *core_errors.DomainError
+	if errors.As(err, &domain) {
+		status, code, message = domain.Status, domain.Code, domain.Message
+	}
 	h.log.Error(msg, zap.Error(err))
 	h.JSONResponse(map[string]any{
 		"error":      map[string]string{"code": code, "message": message},

@@ -51,7 +51,7 @@ func validTitle(title string) bool {
 	return strings.TrimSpace(title) != "" && !strings.ContainsRune(title, '\x00') && utf8.RuneCountInString(title) <= 200
 }
 
-func prepareInput(input plans_postgres_repository.Input, update bool) (plans_postgres_repository.Input, error) {
+func PrepareInput(input plans_postgres_repository.Input, update bool) (plans_postgres_repository.Input, error) {
 	invalid := fmt.Errorf("invalid personal plan: %w", core_errors.ErrInvalidArgument)
 	if !validTitle(input.Title) || input.Days == nil || input.Schedule.Entries == nil {
 		return input, invalid
@@ -177,7 +177,7 @@ func (s *Service) CreatePlan(ctx context.Context, rawID string, input plans_post
 	if err != nil {
 		return plans_postgres_repository.Plan{}, err
 	}
-	input, err = prepareInput(input, false)
+	input, err = PrepareInput(input, false)
 	if err != nil {
 		return plans_postgres_repository.Plan{}, err
 	}
@@ -193,7 +193,7 @@ func (s *Service) UpdatePlan(ctx context.Context, rawID, rawPlanID string, input
 	if err != nil {
 		return plans_postgres_repository.Plan{}, err
 	}
-	input, err = prepareInput(input, true)
+	input, err = PrepareInput(input, true)
 	if err != nil {
 		return plans_postgres_repository.Plan{}, err
 	}

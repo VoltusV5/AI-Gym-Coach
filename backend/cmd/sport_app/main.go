@@ -16,6 +16,9 @@ import (
 	catalog_postgres_repository "sport_app/internal/features/catalog/repository/postgres"
 	catalog_service "sport_app/internal/features/catalog/service"
 	catalog_transport_http "sport_app/internal/features/catalog/transport/http"
+	generation_postgres_repository "sport_app/internal/features/generation/repository/postgres"
+	generation_service "sport_app/internal/features/generation/service"
+	generation_transport_http "sport_app/internal/features/generation/transport/http"
 	"sport_app/internal/features/mlclient"
 	"sport_app/internal/features/mlclient/aichat"
 	"sport_app/internal/features/nutrition"
@@ -25,9 +28,18 @@ import (
 	profile_postgres_repository "sport_app/internal/features/profile/repository/postgres"
 	profile_service "sport_app/internal/features/profile/service"
 	profile_transport_http "sport_app/internal/features/profile/transport/http"
+	publications_postgres_repository "sport_app/internal/features/publications/repository/postgres"
+	publications_service "sport_app/internal/features/publications/service"
+	publications_transport_http "sport_app/internal/features/publications/transport/http"
+	trainers_postgres_repository "sport_app/internal/features/trainers/repository/postgres"
+	trainers_service "sport_app/internal/features/trainers/service"
+	trainers_transport_http "sport_app/internal/features/trainers/transport/http"
 	users_postgres_repository "sport_app/internal/features/users/repository/postgres"
 	users_service "sport_app/internal/features/users/service"
 	users_transport_http "sport_app/internal/features/users/transport/http"
+	workouts_postgres_repository "sport_app/internal/features/workouts/repository/postgres"
+	workouts_service "sport_app/internal/features/workouts/service"
+	workouts_transport_http "sport_app/internal/features/workouts/transport/http"
 	"syscall"
 
 	"go.uber.org/zap"
@@ -106,6 +118,13 @@ func main() {
 	apiVersion2Router.RegisterRoutes(profile_transport_http.NewProfileHTTPHandler(profile_service.NewService(profileRepository), jwt).Routes()...)
 	plansRepository := plans_postgres_repository.NewRepository(pool)
 	apiVersion2Router.RegisterRoutes(plans_transport_http.NewPlansHTTPHandler(plans_service.NewService(plansRepository), jwt).Routes()...)
+
+	apiVersion2Router.RegisterRoutes(trainers_transport_http.NewHandler(trainers_service.NewService(trainers_postgres_repository.NewRepository(pool)), jwt).Routes()...)
+	apiVersion2Router.RegisterRoutes(publications_transport_http.NewHandler(publications_service.NewService(publications_postgres_repository.NewRepository(pool)), jwt).Routes()...)
+
+	apiVersion2Router.RegisterRoutes(workouts_transport_http.NewHandler(workouts_service.NewService(workouts_postgres_repository.NewRepository(pool)), jwt).Routes()...)
+
+	apiVersion2Router.RegisterRoutes(generation_transport_http.NewHandler(generation_service.NewService(generation_postgres_repository.NewRepository(pool), mlclient.NewV2Client(mlCfg)), jwt).Routes()...)
 
 	registerV1 := func(method, path string, handler http.Handler) {
 		var hf http.HandlerFunc
