@@ -13,23 +13,62 @@ import time
 
 
 class BaseRecommendedSQL(ABC):
-
+    """
+    Базовый интерфейс для классов фильтрации и подбора программ через SQL.
+    """
     @abstractmethod
     def filltering_sql(self) -> pd.DataFrame|None:
+        """
+        Выполняет пайплайн фильтрации тренировочных программ.
+
+        Returns:
+            pd.DataFrame | None: Таблица с подходящими программами 
+            (колонки: program_id, description) либо None в случае ошибки/пустого результата.
+        """
         pass
 
 
 class SqlFillterPlans(BaseRecommendedSQL):
+    """
+    Класс для загрузки программ из БД и их последующей фильтрации
+    на основе параметров анкеты пользователя.
+
+    Attributes:
+        __FORM_USER (dict): Данные анкеты пользователя с целевыми параметрами.
+        __ENGINE (Engine): SQLAlchemy engine для подключения к базе данных.
+    """
+
     __FORM_USER: dict = {}
     __ENGINE = 0
 
-    def __init__(self, form_user, ENGINE) -> None:
+    def __init__(self, form_user, ENGINE):
+        """
+        Инициализирует экземпляр фильтра программ.
+
+        Args:
+            form_user (dict): Словарь с параметрами пользователя. Ожидаемые ключи:
+                - "goal": цель тренировок.
+                - "fitness_level": уровень физической подготовки.
+                - "training_days_map": коллекция/маппинг тренировочных дней.
+            ENGINE: SQLAlchemy Engine для выполнения запросов к БД.
+        """
         self.__FORM_USER = form_user
         self.__ENGINE = ENGINE
 
 
     def filltering_sql(self) -> pd.DataFrame|None:
-        """Метод в котором происходит отсечение планов по фильтрам"""
+        """
+        Выполняет полный цикл отбора программ: SQL-запрос с последующей фильтрацией в Pandas.
+
+        Сначала выгружает опубликованные версии активных программ из БД (до 50 записей),
+        затем отсекает неподходящие под анкету пользователя варианты и возвращает
+        только итоговые поля.
+
+        Returns:
+            pd.DataFrame | None: DataFrame с колонками ['program_id', 'description'],
+            либо None, если на одном из этапов произошла ошибка или данные отсутствуют.
+        """
+
         t1 = time.perf_counter()
         filter_table_df = self.__filter_sql_query_to_pd()
         if filter_table_df is None:
@@ -45,7 +84,18 @@ class SqlFillterPlans(BaseRecommendedSQL):
 
 
     def __filter_sql_query_to_pd(self):
-        """Функция, которая фильтрует данные в sql"""
+        """
+        Выполняет SQL-запрос к БД и загружает результаты в DataFrame.
+
+        Выбирает опубликованные версии активных программ со связкой параметров:
+        цель, уровень и количество тренировок в неделю (ограничение 50 записей).
+
+        Returns:
+            pd.DataFrame | None: DataFrame с сырыми данными из БД 
+            (program_id, description, goal, level, sessions_per_week) 
+            либо None при сбое подключения/выполнения запроса.
+        """
+
         t1 = time.perf_counter()
         filtered_table = None
         try:
@@ -70,7 +120,22 @@ class SqlFillterPlans(BaseRecommendedSQL):
 
 
     def __filter_with_user_form(self, filtered_table):
-        """Фильтрация получившейся таблицы под конкретного user"""
+        """
+        Фильтрует DataFrame по параметрам из пользовательской анкеты.
+
+        Сопоставляет колонки DataFrame со значениями анкеты:
+        - `goal` == `form['goal']`
+        - `level` == `form['fitness_level']`
+        - `sessions_per_week` == `len(form['training_days_map'])`
+
+        Args:
+            filtered_table (pd.DataFrame): Исходный DataFrame, полученный из БД.
+
+        Returns:
+            pd.DataFrame | None: Отфильтрованный DataFrame либо None, 
+            если в процессе фильтрации возникла ошибка (например, отсутствует нужный ключ в анкете).
+        """
+        
         form = self.__FORM_USER
         t1 = time.perf_counter()
         try:
