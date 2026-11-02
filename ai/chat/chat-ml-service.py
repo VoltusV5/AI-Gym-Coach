@@ -8,7 +8,8 @@ from fastapi import Body, FastAPI
 from pydantic import BaseModel
 from cerebras.cloud.sdk import Cerebras
 from dotenv import load_dotenv
-from typing import Any, Dict, Optional
+from typing import Dict, Optional
+from ai.chat.recommended_system.pipline import RecommendationPipline
 import os
 
 def prompt(chat: list[dict], user,plan) -> list[dict[str,str]]:
@@ -58,13 +59,13 @@ app = FastAPI(title="sportik-ml-chat", version="0.1.0")
 async def ai_chat(chat:ChatRequest) -> Dict[str,str]:
     completion = client.chat.completions.create(
       messages=prompt(chat.messages, chat.user, chat.plan),
-      model="llama3.1-8b",
+      model="qwen-3.8-27b",
       max_completion_tokens=1024,
       temperature=0.2,
       top_p=1,
       stream=False
     )
-    print(chat.plan)
-    return {"role":"assistant", "content": completion.choices[0].message.content}
+    print(chat.plan, chat.user)
+    return {"role":"assistant", "content": completion.choices[0].message.content}#completion.choices[0].message.content
 
 
