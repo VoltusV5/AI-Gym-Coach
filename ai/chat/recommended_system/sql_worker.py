@@ -6,7 +6,7 @@ TODO:
 from abc import ABC, abstractmethod
 from sqlalchemy.engine import Engine
 from sqlalchemy import text
-from sqlalchemy import create_engine, inspect
+from sqlalchemy import create_engine
 from ..logger_config import logger
 import pandas as pd
 import time
@@ -135,7 +135,7 @@ class SqlFillterPlans(BaseRecommendedSQL):
             pd.DataFrame | None: Отфильтрованный DataFrame либо None, 
             если в процессе фильтрации возникла ошибка (например, отсутствует нужный ключ в анкете).
         """
-        
+
         form = self.__FORM_USER
         t1 = time.perf_counter()
         try:

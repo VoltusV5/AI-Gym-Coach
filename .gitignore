@@ -23,6 +23,8 @@ scripts/**/__pycache__/
 
 ai/chat/recommended_system/test_db_data.py
 ai/chat/recommended_system/test_db_data.py
+ai/chat/recommended_system/model/*
+ai/chat/recommended_system/*.html
 marketplace.db
 
 # AI (Python)
