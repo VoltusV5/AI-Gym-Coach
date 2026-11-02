@@ -24,7 +24,7 @@ ai/env/
 ai/*.egg-info/
 ai/.env
 ai/.env.local
-
+*__pycache__
 # Frontend (Vue + Capacitor)
 frontend/node_modules/
 frontend/dist/
