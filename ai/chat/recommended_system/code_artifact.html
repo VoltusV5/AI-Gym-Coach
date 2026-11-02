@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Схема маркетплейса тренировок</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f8fafc;
+      color: #1e293b;
+      padding: 30px;
+    }
+    h1 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 24px;
+      color: #0f172a;
+    }
+    .diagram-container {
+      position: relative;
+      display: grid;
+      grid-template-columns: 280px 320px 330px 320px;
+      gap: 40px 60px;
+      align-items: start;
+      width: max-content;
+      margin-top: 10px;
+    }
+    svg#arrows {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+    .card {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      position: relative;
+      z-index: 2;
+      overflow: hidden;
+    }
+    .card-header {
+      background: #f1f5f9;
+      padding: 7px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: monospace;
+      border-bottom: 1px solid #cbd5e1;
+      display: flex;
+      justify-content: space-between;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+    }
+    th, td {
+      padding: 4px 8px;
+      text-align: left;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    th {
+      color: #64748b;
+      font-weight: 500;
+      background: #fafafa;
+    }
+    .badge {
+      font-size: 9px;
+      font-weight: 700;
+      padding: 1px 4px;
+      border-radius: 3px;
+      margin-right: 4px;
+    }
+    .pk { background: #dbeafe; color: #1e40af; }
+    .fk { background: #fef3c7; color: #92400e; }
+    .sample-row {
+      color: #475569;
+      font-family: monospace;
+      font-size: 10px;
+      background: #ffffff;
+      word-break: break-all;
+    }
+    .sample-head {
+      background: #f8fafc;
+      font-size: 10px;
+      color: #94a3b8;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Схема БД маркетплейса (все поля по спецификации)</h1>
+
+  <div class="diagram-container" id="diagram">
+    <svg id="arrows">
+      <defs>
+        <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 1 L 8 5 L 0 9 z" fill="#64748b" />
+        </marker>
+      </defs>
+    </svg>
+
+    <!-- КОЛОНКА 1 -->
+    <div style="display: flex; flex-direction: column; gap: 35px;">
+      <!-- users -->
+      <div class="card" id="card-users">
+        <div class="card-header">users</div>
+        <table>
+          <tr><th>Поле</th><th>Тип</th></tr>
+          <tr><td><span class="badge pk">PK</span><span id="pt-user_id">id</span></td><td>int</td></tr>
+          <tr><td>version</td><td>bigint</td></tr>
+          <tr><td>is_anonymous</td><td>bool</td></tr>
+          <tr><td>email</td><td>varchar(200)</td></tr>
+          <tr><td>subscription_status</td><td>varchar(200)</td></tr>
+          <tr><td>created_at / updated_at</td><td>timestamptz</td></tr>
+          <tr class="sample-head"><td colspan="2">Пример данных:</td></tr>
+          <tr class="sample-row"><td colspan="2">42 | 1 | false | 'coach@sport.app'</td></tr>
+        </table>
+      </div>
+
+      <!-- trainer_profiles -->
+      <div class="card" id="card-trainer_profiles">
+        <div class="card-header">trainer_profiles</div>
+        <table>
+          <tr><th>Поле</th><th>Тип</th></tr>
+          <tr><td><span class="badge pk">PK</span><span class="badge fk">FK</span><span id="pt-trainer_id">user_id</span></td><td>int</td></tr>
+          <tr><td>display_name</td><td>text</td></tr>
+          <tr><td>photo_ref</td><td>text</td></tr>
+          <tr><td>bio</td><td>text</td></tr>
+          <tr><td>experience_years</td><td>int</td></tr>
+          <tr><td>qualifications</td><td>text</td></tr>
+          <tr><td>specializations</td><td>text[]</td></tr>
+          <tr><td>verified_at</td><td>timestamptz</td></tr>
+          <tr class="sample-head"><td colspan="2">Пример данных:</td></tr>
+          <tr class="sample-row"><td colspan="2">42 | 'Алексей' | 'FPA' | {strength}</td></tr>
+        </table>
+      </div>
+
+      <!-- equipment -->
+      <div class="card" id="card-equipment">
+        <div class="card-header">equipment</div>
+        <table>
+          <tr><th>Поле</th><th>Тип</th></tr>
+          <tr><td><span class="badge pk">PK</span><span id="pt-equip_id">id</span></td><td>text</td></tr>
+          <tr><td>code</td><td>text</td></tr>
+          <tr><td>name</td><td>text</td></tr>
+          <tr class="sample-head"><td colspan="2">Пример данных:</td></tr>
+          <tr class="sample-row"><td colspan="2">'barbell' | 'barbell' | 'Штанга'</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- КОЛОНКА 2 -->
+    <div style="display: flex; flex-direction: column; gap: 35px;">
+      <!-- programs -->
+      <div class="card" id="card-programs">
+        <div class="card-header">programs</div>
+        <table>
+          <tr><th>Поле</th><th>Тип</th></tr>
+          <tr><td><span class="badge pk">PK</span><span id="pt-prog_id">id</span></td><td>uuid</td></tr>
+          <tr><td><span class="badge fk">FK</span><span id="pt-prog_trainer">trainer_id</span></td><td>int</td></tr>
+          <tr><td><span class="badge fk">FK</span><span id="pt-prog_pub_ver">published_version_id</span></td><td>uuid</td></tr>
+          <tr><td>status</td><td>text</td></tr>
+          <tr><td>version</td><td>bigint</td></tr>
+          <tr><td>created_at</td><td>timestamptz</td></tr>
+          <tr class="sample-head"><td colspan="2">Пример данных:</td></tr>
+          <tr class="sample-row"><td colspan="2">prog-1 | 42 | ver-1 | 'active' | 1</td></tr>
+        </table>
+      </div>
+
+      <!-- program_version_equipment -->
+      <div class="card" id="card-version_equipment">
+        <div class="card-header">program_version_equipment</div>
+        <table>
+          <tr><th>Поле</th><th>Тип</th></tr>
+          <tr><td><span class="badge pk">PK</span><span class="badge fk">FK</span><span id="pt-ve_version">version_id</span></td><td>uuid</td></tr>
+          <tr><td><span class="badge pk">PK</span><span class="badge fk">FK</span><span id="pt-ve_equip">equipment_id</span></td><td>text</td></tr>
+          <tr class="sample-head"><td colspan="2">Пример данных:</td></tr>
+          <tr class="sample-row"><td colspan="2">ver-1 | 'barbell'</td></tr>
+        </table>
+      </div>
+
+      <!-- entitlements -->
+      <div class="card" id="card-entitlements">
+        <div class="card-header">entitlements</div>
+        <table>
+          <tr><th>Поле</th><th>Тип</th></tr>
+          <tr><td><span class="badge pk">PK</span>id</td><td>uuid</td></tr>
+          <tr><td><span class="badge fk">FK</span><span id="pt-ent_user">user_id</span></td><td>int</td></tr>
+          <tr><td><span class="badge fk">FK</span><span id="pt-ent_prog">program_id</span></td><td>uuid</td></tr>
+          <tr><td>status</td><td>text</td></tr>
+          <tr><td>granted_at</td><td>timestamptz</td></tr>
+          <tr><td>order_id</td><td>uuid</td></tr>
+          <tr class="sample-head"><td colspan="2">Пример данных:</td></tr>
+          <tr class="sample-row"><td colspan="2">ent-1 | 101 | prog-1 | 'active'</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- КОЛОНКА 3 -->
+    <div style="display: flex; flex-direction: column; gap: 35px;">
+      <!-- program_versions -->
+      <div class="card" id="card-program_versions">
+        <div class="card-header">program_versions</div>
+        <table>
+          <tr><th>Поле</th><th>Тип</th></tr>
+          <tr><td><span class="badge pk">PK</span><span id="pt-ver_id">id</span></td><td>uuid</td></tr>
+          <tr><td><span class="badge fk">FK</span><span id="pt-ver_prog">program_id</span></td><td>uuid</td></tr>
+          <tr><td>number</td><td>int</td></tr>
+          <tr><td>title</td><td>text</td></tr>
+          <tr><td>description</td><td>text</td></tr>
+          <tr><td>goal</td><td>text</td></tr>
+          <tr><td>level</td><td>text</td></tr>
+          <tr><td>duration_weeks</td><td>int</td></tr>
+          <tr><td>sessions_per_week</td><td>int</td></tr>
+          <tr><td>price_minor</td><td>bigint</td></tr>
+          <tr><td>currency</td><td>text</td></tr>
+          <tr><td>allow_public_remix</td><td>bool</td></tr>
+          <tr><td>status</td><td>text</td></tr>
+          <tr><td>created_at</td><td>timestamptz</td></tr>
+          <tr class="sample-head"><td colspan="2">Пример данных:</td></tr>
+          <tr class="sample-row"><td colspan="2">ver-1 | prog-1 | 1 | "Базовый старт" | 'beginner' | 199000</td></tr>
+        </table>
+      </div>
+
+      <!-- exercises -->
+      <div class="card" id="card-exercises">
+        <div class="card-header">exercises</div>
+        <table>
+          <tr><th>Поле</th><th>Тип</th></tr>
+          <tr><td><span class="badge pk">PK</span><span id="pt-ex_id">id</span></td><td>int</td></tr>
+          <tr><td>exercises_name</td><td>varchar(100)</td></tr>
+          <tr><td>muscular_group</td><td>varchar(100)</td></tr>
+          <tr><td>muscular_subgroup</td><td>varchar(100)</td></tr>
+          <tr><td>working_weights</td><td>int</td></tr>
+          <tr><td>safe_for_injuries</td><td>bool</td></tr>
+          <tr><td>equipment</td><td>varchar(100)</td></tr>
+          <tr><td>video_url / image_url</td><td>varchar(100)</td></tr>
+          <tr><td>is_active</td><td>bool</td></tr>
+          <tr class="sample-head"><td colspan="2">Пример данных:</td></tr>
+          <tr class="sample-row"><td colspan="2">1 | "Жим штанги лежа" | "Грудь" | true</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- КОЛОНКА 4 -->
+    <div style="display: flex; flex-direction: column; gap: 35px;">
+      <!-- program_days -->
+      <div class="card" id="card-program_days">
+        <div class="card-header">program_days</div>
+        <table>
+          <tr><th>Поле</th><th>Тип</th></tr>
+          <tr><td><span class="badge pk">PK</span><span id="pt-day_id">id</span></td><td>uuid</td></tr>
+          <tr><td><span class="badge fk">FK</span><span id="pt-day_version">program_version_id</span></td><td>uuid</td></tr>
+          <tr><td>title</td><td>text</td></tr>
+          <tr><td>position</td><td>int</td></tr>
+          <tr class="sample-head"><td colspan="2">Пример данных:</td></tr>
+          <tr class="sample-row"><td colspan="2">day-1 | ver-1 | "День 1: Жим" | 1</td></tr>
+        </table>
+      </div>
+
+      <!-- program_exercises -->
+      <div class="card" id="card-program_exercises">
+        <div class="card-header">program_exercises</div>
+        <table>
+          <tr><th>Поле</th><th>Тип</th></tr>
+          <tr><td><span class="badge pk">PK</span>id</td><td>uuid</td></tr>
+          <tr><td><span class="badge fk">FK</span><span id="pt-pe_day">program_day_id</span></td><td>uuid</td></tr>
+          <tr><td><span class="badge fk">FK</span><span id="pt-pe_ex">exercise_id</span></td><td>int</td></tr>
+          <tr><td>position</td><td>int</td></tr>
+          <tr><td>sets</td><td>int</td></tr>
+          <tr><td>reps_min / reps_max</td><td>int</td></tr>
+          <tr><td>weight_kg</td><td>numeric</td></tr>
+          <tr><td>rest_sec</td><td>int</td></tr>
+          <tr class="sample-head"><td colspan="2">Пример данных:</td></tr>
+          <tr class="sample-row"><td colspan="2">pe-1 | day-1 | 1 | pos:1 | 4x(8-10) | 60kg | 120s</td></tr>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    function drawArrow(fromId, toId, fromSide = 'left', toSide = 'right') {
+      const fromEl = document.getElementById(fromId);
+      const toEl = document.getElementById(toId);
+      const svg = document.getElementById('arrows');
+      const container = document.getElementById('diagram').getBoundingClientRect();
+      if (!fromEl || !toEl) return;
+
+      const r1 = fromEl.getBoundingClientRect();
+      const r2 = toEl.getBoundingClientRect();
+
+      const x1 = (fromSide === 'right' ? r1.right : r1.left) - container.left;
+      const y1 = r1.top + r1.height / 2 - container.top;
+
+      const x2 = (toSide === 'right' ? r2.right : r2.left) - container.left;
+      const y2 = r2.top + r2.height / 2 - container.top;
+
+      const dx = Math.abs(x2 - x1) * 0.45;
+      const cx1 = fromSide === 'right' ? x1 + dx : x1 - dx;
+      const cx2 = toSide === 'right' ? x2 + dx : x2 - dx;
+
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', `M ${x1} ${y1} C ${cx1} ${y1}, ${cx2} ${y2}, ${x2} ${y2}`);
+      path.setAttribute('stroke', '#64748b');
+      path.setAttribute('stroke-width', '1.5');
+      path.setAttribute('fill', 'none');
+      path.setAttribute('marker-end', 'url(#arrow)');
+      svg.appendChild(path);
+    }
+
+    function renderArrows() {
+      const svg = document.getElementById('arrows');
+      while (svg.children.length > 1) {
+        svg.removeChild(svg.lastChild);
+      }
+
+      // trainer_profiles.user_id -> users.id
+      drawArrow('pt-trainer_id', 'pt-user_id', 'left', 'left');
+
+      // programs.trainer_id -> trainer_profiles.user_id
+      drawArrow('pt-prog_trainer', 'pt-trainer_id', 'left', 'right');
+
+      // programs.published_version_id -> program_versions.id
+      drawArrow('pt-prog_pub_ver', 'pt-ver_id', 'right', 'left');
+
+      // program_versions.program_id -> programs.id
+      drawArrow('pt-ver_prog', 'pt-prog_id', 'left', 'right');
+
+      // program_version_equipment.version_id -> program_versions.id
+      drawArrow('pt-ve_version', 'pt-ver_id', 'right', 'left');
+
+      // program_version_equipment.equipment_id -> equipment.id
+      drawArrow('pt-ve_equip', 'pt-equip_id', 'left', 'right');
+
+      // entitlements.user_id -> users.id
+      drawArrow('pt-ent_user', 'pt-user_id', 'left', 'left');
+
+      // entitlements.program_id -> programs.id
+      drawArrow('pt-ent_prog', 'pt-prog_id', 'left', 'left');
+
+      // program_days.program_version_id -> program_versions.id
+      drawArrow('pt-day_version', 'pt-ver_id', 'left', 'right');
+
+      // program_exercises.program_day_id -> program_days.id
+      drawArrow('pt-pe_day', 'pt-day_id', 'right', 'right');
+
+      // program_exercises.exercise_id -> exercises.id
+      drawArrow('pt-pe_ex', 'pt-ex_id', 'left', 'right');
+    }
+
+    window.addEventListener('load', renderArrows);
+    window.addEventListener('resize', renderArrows);
+  </script>
+</body>
+</html>

@@ -1,8 +1,11 @@
 """
 Первый этап: достаёт данные из бд и фильтрует их при помощи фильтров.
+TODO:
+2. Сделать сортировку по рейтингу - когда он появиться:)
 """
 from abc import ABC, abstractmethod
-from sqlalchemy.engine import Engine 
+from sqlalchemy.engine import Engine
+from sqlalchemy import text
 from sqlalchemy import create_engine, inspect
 from ..logger_config import logger
 import pandas as pd
@@ -18,8 +21,7 @@ class BaseRecommendedSQL(ABC):
 
 class SqlFillterPlans(BaseRecommendedSQL):
     __FORM_USER: dict = {}
-    __ENGINE: Engine|None = None
-    __TABLES: list[str] = ['program_days', 'program_versions', 'programs']
+    __ENGINE = 0
 
     def __init__(self, form_user, ENGINE) -> None:
         self.__FORM_USER = form_user
@@ -29,127 +31,77 @@ class SqlFillterPlans(BaseRecommendedSQL):
     def filltering_sql(self) -> pd.DataFrame|None:
         """Метод в котором происходит отсечение планов по фильтрам"""
         t1 = time.perf_counter()
-        if self.__ENGINE is not None:
-            reader = self.__read_sql_to_pandas(self.__ENGINE)
-            if reader is None:
-                return None
-            else:
-                programs, program_versions, program_days = reader
-        else:
-            logger.error("Проблема с движком __ENGINE в SqlFillterPlans")
+        filter_table_df = self.__filter_sql_query_to_pd()
+        if filter_table_df is None:
+            logger.warning("Пустая таблица пришла из sql")
             return None
         
-        try:
-            programs, program_versions = self.__filtering_all_tables(programs, program_versions)
-        except Exception:
-            logger.exception("Ошибка на первом этапе sql-фильтрация")
+        filter_table_df = self.__filter_with_user_form(filter_table_df)
+        if filter_table_df is None:
             return None
-
-        try:
-            res = self.__create_final_df(programs, program_versions, program_days)
-        except Exception:
-            logger.exception("Ошибка на первом этапе sql-фильтрация")
-            return None
-        
         t2 = time.perf_counter()
-        logger.info("Успешная фильтрация бд %.3f сек", t2-t1)
+        logger.info("Фильтрация 1 этап SQL завершилась %0.3f сек", t2 - t1)
+        return filter_table_df[["program_id", "description"]]
 
-        if res is None:
-            logger.error("Вернулся None в результате первого этапа!")
-            return None
-        return res
-        
 
-    def __create_final_df(self, programs, program_versions,program_days):
-        programs_id = programs[["id", "published_version_id"]]
-        days = program_days[program_days["program_version_id"].isin(programs_id["published_version_id"])]
-        days = (
-            days.groupby("program_version_id")["title"]
-            .apply(lambda titles: ", ".join(titles.dropna()))
-            .reset_index()
-        )
-        program_description = program_versions[program_versions["id"].isin(programs_id["published_version_id"])][["id", "program_id","description"]]
-
+    def __filter_sql_query_to_pd(self):
+        """Функция, которая фильтрует данные в sql"""
+        t1 = time.perf_counter()
+        filtered_table = None
         try:
-
-            res = pd.merge(program_description, days, how="left",left_on="id", right_on="program_version_id")
-            res["description"] = res["description"].fillna("")
-            res["title"] = res["title"].fillna(" Нет данных о названии дня.")
-            res["full_info"] = res["description"] + res["title"] 
-            return res
+            with self.__ENGINE.connect() as conn:
+                query = text("""
+                            SELECT pr_ver.program_id, pr_ver.description, pr_ver.goal, pr_ver.level, pr_ver.sessions_per_week
+                            FROM programs pr
+                            LEFT JOIN program_versions pr_ver ON pr_ver.program_id = pr.id 
+                            AND pr.status = "active" 
+                            AND pr_ver.status = "published"
+                            LIMIT 50;
+                        """)
+                filtered_table = pd.read_sql_query(query,conn)
         except Exception:
-                logger.error("Ошибка при left join")
-                return None
-    
-                
-    
-    def __filtering_all_tables(self,programs, program_versions):
-        """
-        Фильтрация каждой таблицы
-        TODO: Провекрки на пустоты после фильтрации
-        """
-        if not programs.empty:
-            programs = programs[(programs["status"] == "active")]
-            logger.info("Успешная фильтрация таблицы programs %d штук", len(programs))
-        else:
-            logger.warning("Таблица programs пустая")
-        
-        if not program_versions.empty:
-            program_versions = program_versions[(program_versions["status"] == "published") & 
-                                               (program_versions["goal"] == self.__FORM_USER["goal"]) &
-                                               (program_versions["level"] == self.__FORM_USER["fitness_level"]) &
-                                               (program_versions["sessions_per_week"] == len(self.__FORM_USER["training_days_map"]))]
+            filtered_table = None
+            logger.exception("Ошибка фильтрации таблиц в sql!")
 
-            logger.info("Успешная фильтрация таблицы program_versions %d штук", len(program_versions))
-        else:
-            logger.warning("Таблица program_versions пустая")
+        t2 = time.perf_counter()
+        logger.info("Фильтрация таблиц в sql %0.3f сек - завершена", t2-t1)
+        return filtered_table
 
-        return programs, program_versions
 
-    def __read_sql_to_pandas(self, engine:Engine):
-        programs = pd.DataFrame()
-        program_versions = pd.DataFrame()
-        program_days = pd.DataFrame()
-        for table_name in self.__TABLES:
-            if table_name == "programs":
-                programs = pd.read_sql_table(table_name=table_name, con=engine)
-                if programs.empty:
-                    logger.error("Таблица programs пустая, при считывании из БД")
-                    programs = None
-            elif table_name == "program_versions":
-                program_versions = pd.read_sql_table(table_name=table_name, con=engine)
-                if program_versions.empty:
-                    program_versions = None
-                    logger.warning("Таблица program_versions пустая, при считывании из БД")
-            elif table_name == "program_days":
-                program_days = pd.read_sql_table(table_name=table_name, con=engine)
-                if program_days.empty:
-                    program_days = None
-                    logger.warning("Таблица program_days пустая, при считывании из БД")
-        if programs is None:
-            logger.error("Пустая таблица маркетплейса")
-            return None
-        if program_days is not None and program_versions is not None and programs is not None:
-            logger.info("Успешное считываение из бд в pandas programs: %d стр, program_versions %d стр, program_days %d стр", len(programs), len(program_versions), len(program_days))
-        return programs, program_versions, program_days
+
+    def __filter_with_user_form(self, filtered_table):
+        """Фильтрация получившейся таблицы под конкретного user"""
+        form = self.__FORM_USER
+        t1 = time.perf_counter()
+        try:
+            filtered_table = filtered_table[(filtered_table["goal"] == form["goal"]) &
+                                            (filtered_table["level"] == form["fitness_level"]) &
+                                            (filtered_table["sessions_per_week"] == len(form["training_days_map"]))]
+            
+        except:
+            filtered_table = None
+            logger.exception("Ошибка фильтрации на уровне pandas")
+        t2 = time.perf_counter()
+        logger.info("Фильтрация в pandas завершилась %0.3f сек",t2-t1)
+        return filtered_table
 
 
 if __name__ == "__main__":
     DATABASE_URL = "sqlite:///marketplace.db"
     engine = create_engine(DATABASE_URL)
     form_user = {
-  "version": 1,
-  "age": 26,
-  "height_cm": 175,
-  "weight_kg": 75,
-  "goal": "Набрать мышцы",
-  "fitness_level": "новичок",
-  "training_days_map": [
-    "Пн",
-    "Ср",
-    "Пт"
-  ]
-}
+    "version": 1,
+    "age": 26,
+    "height_cm": 175,
+    "weight_kg": 75,
+    "goal": "Набрать мышцы",
+    "fitness_level": "новичок",
+    "training_days_map": [
+        "Пн",
+        "Ср",
+        "Пт"
+    ]
+    }
     filtery = SqlFillterPlans(form_user, engine)
     t1= filtery.filltering_sql()
     print(t1)
