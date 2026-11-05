@@ -39,6 +39,10 @@ func (r *UsersRepository) CreateUser(
 	inserted_data AS (
 		INSERT INTO sportapp.user_data (user_id, created_at)
 		SELECT id, $3 FROM inserted_user
+	),
+	inserted_role AS (
+		INSERT INTO sportapp.user_roles (user_id, role)
+		SELECT id, 'user' FROM inserted_user
 	)
 	SELECT id, version, is_anonymous, email, subscription_status, created_at, updated_at
 	FROM inserted_user;

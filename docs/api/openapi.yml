@@ -2739,10 +2739,10 @@
     "post":
       "operationId": "ml_plan_post_v2_plans_generate"
       "summary": "Генерация плана с назначениями"
-      "description": "**Проектируется, пока не реализовано.** Правила оборудования/ограничений приоритетнее classifier score. Go повторно валидирует упражнения, частоту и состав. null weight требует подтверждения. Предлагаемый deadline 8 секунд, p95 полной цепочки Go ≤5 секунд. Старый план не теряется при ошибке."
+      "description": "Реализовано: CatBoost baseline и актуальный каталог Go → валидированные назначения. Требуется служебный Bearer. Учитываются ISO-дни, оборудование, исключения и оценка длительности. При fallback возвращаются rules-v1, fallback=true и warnings. При невозможности плана — 422. Go повторно проверяет каталог перед сохранением."
       "tags":
-        - "ML · Семестр"
-      "x-status": "planned"
+        - "ML · Планы"
+      "x-status": "existing"
       "x-service": "ml-plan"
       "servers":
         -
@@ -2762,36 +2762,29 @@
               "$ref": "#/components/schemas/MLGenerateInput"
       "responses":
         "200":
-          "description": "Успешный результат"
+          "description": "Валидный план или явно отмеченный fallback"
           "content":
             "application/json":
               "schema":
                 "$ref": "#/components/schemas/MLGenerateResult"
+        "401":
+          "description": "Неверный или отсутствующий служебный токен"
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/MLPlanError"
         "422":
-          "description": "Невалидные признаки или нет допустимого результата"
+          "description": "Ошибка схемы или NO_FEASIBLE_PLAN"
           "content":
             "application/json":
               "schema":
-                "$ref": "#/components/schemas/MLError"
-        "500":
-          "description": "Ошибка загрузки модели, inference или формирования ответа"
-          "content":
-            "text/plain":
-              "schema":
-                "type": "string"
+                "$ref": "#/components/schemas/MLPlanError"
         "503":
-          "description": "Модель/зависимость недоступна"
+          "description": "Служебный токен ML не настроен"
           "content":
             "application/json":
               "schema":
-                "$ref": "#/components/schemas/MLError"
-      "parameters":
-        -
-          "name": "X-Request-ID"
-          "in": "header"
-          "required": true
-          "schema":
-            "type": "string"
+                "$ref": "#/components/schemas/MLPlanError"
   "/v2/recommendations/rank":
     "post":
       "operationId": "ml_plan_post_v2_recommendations_rank"
@@ -10079,7 +10072,7 @@
     "ServiceAuth":
       "type": "http"
       "scheme": "bearer"
-      "description": "Проектируемый служебный токен Go↔ML; не пользовательский JWT"
+      "description": "Служебный токен Go ↔ ML; не пользовательский JWT"
   "schemas":
     "ErrorV1":
       "type": "object"
@@ -12957,91 +12950,193 @@
                 "type": "string"
                 "format": "date-time"
     "MLProfileV2":
-      "type": "object"
+      "additionalProperties": false
       "properties":
         "age":
+          "exclusiveMinimum": true
+          "maximum": 2147483647
+          "title": "Age"
           "type": "integer"
+          "minimum": 0
         "height_cm":
+          "exclusiveMinimum": true
+          "maximum": 2147483647
+          "title": "Height Cm"
           "type": "number"
+          "minimum": 0
         "weight_kg":
+          "exclusiveMinimum": true
+          "maximum": 2147483647
+          "title": "Weight Kg"
           "type": "number"
+          "minimum": 0
         "level":
+          "enum":
+            - "beginner"
+            - "intermediate"
+            - "advanced"
+          "title": "Level"
           "type": "string"
         "goal":
+          "maxLength": 200
+          "minLength": 1
+          "pattern": "^[^\\x00]+$"
+          "title": "Goal"
           "type": "string"
         "training_days":
-          "type": "array"
           "items":
-            "type": "integer"
-            "minimum": 1
             "maximum": 7
-        "equipment_ids":
-          "type": "array"
-          "items":
-            "type": "string"
-        "excluded_exercise_ids":
-          "type": "array"
-          "items":
+            "minimum": 1
             "type": "integer"
+          "maxItems": 7
+          "minItems": 1
+          "title": "Training Days"
+          "type": "array"
+        "equipment_ids":
+          "items":
+            "maxLength": 200
+            "minLength": 1
+            "pattern": "^[^\\x00]+$"
+            "type": "string"
+          "title": "Equipment Ids"
+          "type": "array"
+        "excluded_exercise_ids":
+          "items":
+            "exclusiveMinimum": true
+            "maximum": 2147483647
+            "type": "integer"
+            "minimum": 0
+          "title": "Excluded Exercise Ids"
+          "type": "array"
+        "session_duration_min":
+          "default": 60
+          "exclusiveMinimum": true
+          "maximum": 2147483647
+          "title": "Session Duration Min"
+          "type": "integer"
+          "minimum": 0
+        "gender":
+          "default": null
+          "title": "Gender"
+          "maxLength": 200
+          "minLength": 1
+          "pattern": "^[^\\x00]+$"
+          "type": "string"
+          "nullable": true
+        "activity_level":
+          "default": null
+          "title": "Activity Level"
+          "maxLength": 200
+          "minLength": 1
+          "pattern": "^[^\\x00]+$"
+          "type": "string"
+          "nullable": true
+        "injuries_notes":
+          "default": null
+          "title": "Injuries Notes"
+          "type": "boolean"
+          "nullable": true
       "required":
+        - "age"
+        - "height_cm"
+        - "weight_kg"
         - "level"
         - "goal"
         - "training_days"
         - "equipment_ids"
-    "MLGenerateInput":
+      "title": "Profile"
       "type": "object"
+    "MLGenerateInput":
+      "additionalProperties": false
       "properties":
         "request_id":
+          "maxLength": 200
+          "minLength": 1
+          "pattern": "^[^\\x00]+$"
+          "title": "Request Id"
           "type": "string"
         "feature_schema_version":
+          "title": "Feature Schema Version"
           "type": "string"
+          "enum":
+            - "profile-v2"
         "profile":
           "$ref": "#/components/schemas/MLProfileV2"
         "history":
+          "default": null
           "allOf":
             -
-              "$ref": "#/components/schemas/MLHistory"
+              "$ref": "#/components/schemas/MLPlanHistory"
           "nullable": true
+        "exercises":
+          "items":
+            "$ref": "#/components/schemas/MLExerciseCandidate"
+          "minItems": 1
+          "title": "Exercises"
+          "type": "array"
       "required":
         - "request_id"
         - "feature_schema_version"
         - "profile"
-    "MLGenerateResult":
+        - "exercises"
+      "title": "GeneratePlanRequest"
       "type": "object"
+    "MLGenerateResult":
+      "additionalProperties": false
       "properties":
         "request_id":
+          "maxLength": 200
+          "minLength": 1
+          "pattern": "^[^\\x00]+$"
+          "title": "Request Id"
           "type": "string"
         "model_version":
+          "maxLength": 200
+          "minLength": 1
+          "pattern": "^[^\\x00]+$"
+          "title": "Model Version"
           "type": "string"
         "feature_schema_version":
+          "title": "Feature Schema Version"
           "type": "string"
+          "enum":
+            - "profile-v2"
         "split":
+          "enum":
+            - "full_body"
+            - "upper_lower"
+            - "push_pull"
+            - "push_pull_legs"
+            - "split"
+          "title": "Split"
           "type": "string"
         "days":
-          "type": "array"
           "items":
-            "type": "object"
-            "properties":
-              "weekday":
-                "type": "integer"
-              "title":
-                "type": "string"
-              "exercises":
-                "type": "array"
-                "items":
-                  "$ref": "#/components/schemas/Prescription"
+            "$ref": "#/components/schemas/MLWorkoutDay"
+          "maxItems": 7
+          "minItems": 1
+          "title": "Days"
+          "type": "array"
         "warnings":
-          "type": "array"
           "items":
+            "maxLength": 200
+            "minLength": 1
+            "pattern": "^[^\\x00]+$"
             "type": "string"
+          "title": "Warnings"
+          "type": "array"
         "fallback":
+          "default": false
+          "title": "Fallback"
           "type": "boolean"
       "required":
         - "request_id"
         - "model_version"
+        - "feature_schema_version"
         - "split"
         - "days"
-        - "fallback"
+      "title": "GeneratePlanResponse"
+      "type": "object"
     "MLCandidate":
       "type": "object"
       "properties":
@@ -13273,6 +13368,183 @@
       "required":
         - "request_id"
         - "error"
+    "MLExerciseCandidate":
+      "additionalProperties": false
+      "properties":
+        "exercise_id":
+          "exclusiveMinimum": true
+          "maximum": 2147483647
+          "title": "Exercise Id"
+          "type": "integer"
+          "minimum": 0
+        "muscle_group":
+          "maxLength": 200
+          "minLength": 1
+          "pattern": "^[^\\x00]+$"
+          "title": "Muscle Group"
+          "type": "string"
+        "muscle_subgroup":
+          "default": null
+          "title": "Muscle Subgroup"
+          "maxLength": 200
+          "minLength": 1
+          "pattern": "^[^\\x00]+$"
+          "type": "string"
+          "nullable": true
+        "equipment_ids":
+          "items":
+            "maxLength": 200
+            "minLength": 1
+            "pattern": "^[^\\x00]+$"
+            "type": "string"
+          "title": "Equipment Ids"
+          "type": "array"
+      "required":
+        - "exercise_id"
+        - "muscle_group"
+        - "equipment_ids"
+      "title": "ExerciseCandidate"
+      "type": "object"
+    "MLPlanHistory":
+      "additionalProperties": false
+      "properties":
+        "completed_28d":
+          "default": 0
+          "minimum": 0
+          "title": "Completed 28D"
+          "type": "integer"
+        "adherence_28d":
+          "default": null
+          "title": "Adherence 28D"
+          "maximum": 1
+          "minimum": 0
+          "type": "number"
+          "nullable": true
+        "exercise_metrics":
+          "items":
+            "$ref": "#/components/schemas/MLPlanHistoryMetric"
+          "title": "Exercise Metrics"
+          "type": "array"
+      "title": "History"
+      "type": "object"
+    "MLPlanHistoryMetric":
+      "additionalProperties": false
+      "properties":
+        "exercise_id":
+          "exclusiveMinimum": true
+          "maximum": 2147483647
+          "title": "Exercise Id"
+          "type": "integer"
+          "minimum": 0
+        "weight_kg":
+          "minimum": 0
+          "title": "Weight Kg"
+          "type": "number"
+        "reps":
+          "exclusiveMinimum": true
+          "maximum": 2147483647
+          "title": "Reps"
+          "type": "integer"
+          "minimum": 0
+        "volume_kg":
+          "minimum": 0
+          "title": "Volume Kg"
+          "type": "number"
+        "measured_at":
+          "format": "date-time"
+          "title": "Measured At"
+          "type": "string"
+      "required":
+        - "exercise_id"
+        - "weight_kg"
+        - "reps"
+        - "volume_kg"
+        - "measured_at"
+      "title": "HistoryMetric"
+      "type": "object"
+    "MLExerciseItem":
+      "additionalProperties": false
+      "properties":
+        "exercise_id":
+          "exclusiveMinimum": true
+          "maximum": 2147483647
+          "title": "Exercise Id"
+          "type": "integer"
+          "minimum": 0
+        "position":
+          "minimum": 0
+          "title": "Position"
+          "type": "integer"
+        "sets":
+          "exclusiveMinimum": true
+          "maximum": 2147483647
+          "title": "Sets"
+          "type": "integer"
+          "minimum": 0
+        "reps_min":
+          "exclusiveMinimum": true
+          "maximum": 2147483647
+          "title": "Reps Min"
+          "type": "integer"
+          "minimum": 0
+        "reps_max":
+          "exclusiveMinimum": true
+          "maximum": 2147483647
+          "title": "Reps Max"
+          "type": "integer"
+          "minimum": 0
+        "weight_kg":
+          "default": null
+          "title": "Weight Kg"
+          "minimum": 0
+          "type": "number"
+          "nullable": true
+        "rest_sec":
+          "minimum": 0
+          "title": "Rest Sec"
+          "type": "integer"
+      "required":
+        - "exercise_id"
+        - "position"
+        - "sets"
+        - "reps_min"
+        - "reps_max"
+        - "rest_sec"
+      "title": "ExerciseItem"
+      "type": "object"
+    "MLWorkoutDay":
+      "additionalProperties": false
+      "properties":
+        "weekday":
+          "maximum": 7
+          "minimum": 1
+          "title": "Weekday"
+          "type": "integer"
+        "title":
+          "maxLength": 200
+          "minLength": 1
+          "pattern": "^[^\\x00]+$"
+          "title": "Title"
+          "type": "string"
+        "exercises":
+          "items":
+            "$ref": "#/components/schemas/MLExerciseItem"
+          "minItems": 1
+          "title": "Exercises"
+          "type": "array"
+      "required":
+        - "weekday"
+        - "title"
+        - "exercises"
+      "title": "WorkoutDay"
+      "type": "object"
+    "MLPlanError":
+      "type": "object"
+      "properties":
+        "detail": {}
+      "required":
+        - "detail"
+      "description": "Pydantic detail[] при неверном вводе; detail.code при 401/503 или NO_FEASIBLE_PLAN."
 "security":
   -
     "BearerAuth": []

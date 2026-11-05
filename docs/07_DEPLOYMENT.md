@@ -74,6 +74,7 @@ Workflow использует `StrictHostKeyChecking=yes` и временный 
 | `ML_TIMEOUT` | Таймаут HTTP генератора: `30s` |
 | `ML_CHAT_TIMEOUT` | Отдельный HTTP-таймаут чата: в production-примере `60s`; без настройки backend сохраняет общий `ML_TIMEOUT` |
 | `ML_GENERATION_TIMEOUT` | Общая граница генерации плана: `52s` |
+| `ML_SERVICE_TOKEN` | Обязательный отдельный случайный токен Go ↔ ML v2; Compose передаёт одинаковое значение обоим сервисам. Deadline генерации v2 — 8 секунд |
 | `HTTP_SHUTDOWN_TIMEOUT` | Ожидание завершения HTTP-запросов: `30s` |
 | `LOGGER_LEVEL` | Уровень журнала: `INFO` |
 | `HTTP_BIND`, `HTTP_PORT` | Адрес и порт frontend на хосте: `127.0.0.1`, `3000` |

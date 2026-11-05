@@ -15,8 +15,9 @@ import (
 
 // HTTPResponceHandler формирует HTTP-ответы и записывает ошибки в журнал.
 type HTTPResponceHandler struct {
-	log *core_logger.Logger
-	rw  http.ResponseWriter
+	log       *core_logger.Logger
+	rw        http.ResponseWriter
+	requestID *string
 }
 
 // NewHTTPResponce создаёт обработчик ответов с журналом log и потоком ответа rw.
@@ -50,6 +51,10 @@ func (h *HTTPResponceHandler) NoContentResponse() {
 
 // ErrorResponse сопоставляет err с HTTP-статусом, записывает ошибку и контекст msg в журнал и отправляет JSON с полями message и error. Неизвестной ошибке соответствует HTTP 500.
 func (h *HTTPResponceHandler) ErrorResponse(err error, msg string) {
+	if h.requestID != nil {
+		h.errorResponseV2(err, msg)
+		return
+	}
 	var (
 		statusCode int
 		logFunc    func(string, ...zap.Field)
@@ -94,6 +99,10 @@ func (h *HTTPResponceHandler) ErrorResponse(err error, msg string) {
 func (h *HTTPResponceHandler) PanicResponce(p any, msg string) {
 	statusCode := http.StatusInternalServerError
 	err := fmt.Errorf("unexpected panic: %v", p)
+	if h.requestID != nil {
+		h.errorResponseV2(err, msg)
+		return
+	}
 
 	h.log.Error(msg, zap.Error(err))
 	h.errorResponse(

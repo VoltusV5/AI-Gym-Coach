@@ -34,6 +34,9 @@ func (r *APIVersionRouter) RegisterRoutes(routes ...Route) {
 		pattern := fmt.Sprintf("%s %s", route.Method, route.Path)
 
 		handler := core_http_middleware.ChainMiddleware(route.Handler, route.Middlewares...)
+		if r.apiVersion == ApiVersion2 {
+			handler = core_http_middleware.PanicV2()(handler)
+		}
 
 		r.Handle(pattern, handler)
 	}

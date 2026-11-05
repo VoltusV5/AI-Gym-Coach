@@ -1,0 +1,414 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Sportik Go profile v2",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5050/api/v2"
+    }
+  ],
+  "paths": {
+    "/me/profile": {
+      "get": {
+        "operationId": "getCurrentProfile",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current persisted profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Profile"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid JSON, field value or referenced ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid JWT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Profile not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error; details are not exposed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Database deadline exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "patchCurrentProfile",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current persisted profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Profile"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid JSON, field value or referenced ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid JWT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Profile not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Stale profile version; nothing changed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error; details are not exposed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Database deadline exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfilePatch"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "Profile": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "age": {
+            "type": "integer",
+            "minimum": -2147483648,
+            "maximum": 2147483647,
+            "nullable": true
+          },
+          "height_cm": {
+            "type": "integer",
+            "minimum": -2147483648,
+            "maximum": 2147483647,
+            "nullable": true
+          },
+          "weight_kg": {
+            "type": "number",
+            "minimum": -2147483648,
+            "maximum": 2147483647,
+            "nullable": true
+          },
+          "gender": {
+            "type": "string",
+            "maxLength": 100,
+            "description": "Existing legacy value is preserved, including an empty or whitespace-only string.",
+            "nullable": true
+          },
+          "activity_level": {
+            "type": "string",
+            "maxLength": 200,
+            "description": "Existing legacy value is preserved, including an empty or whitespace-only string.",
+            "nullable": true
+          },
+          "goal": {
+            "type": "string",
+            "maxLength": 200,
+            "description": "Existing legacy value is preserved, including an empty or whitespace-only string.",
+            "nullable": true
+          },
+          "level": {
+            "type": "string",
+            "enum": [
+              "beginner",
+              "intermediate",
+              "advanced",
+              null
+            ],
+            "nullable": true
+          },
+          "training_days": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 7
+            },
+            "uniqueItems": true,
+            "maxItems": 7
+          },
+          "equipment_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Existing equipment ID, no U+0000."
+            },
+            "uniqueItems": true
+          },
+          "session_duration_min": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2147483647,
+            "nullable": true
+          },
+          "excluded_exercise_ids": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647,
+              "description": "Previously stored exclusions remain visible if an exercise becomes inactive; new exclusions must reference active exercises."
+            },
+            "uniqueItems": true
+          },
+          "injuries_notes": {
+            "type": "boolean",
+            "description": "Existing v1 flag, never used to infer diagnoses or exclusions.",
+            "nullable": true
+          }
+        },
+        "required": [
+          "version",
+          "training_days",
+          "equipment_ids",
+          "excluded_exercise_ids"
+        ],
+        "description": "Persisted profile. Empty arrays are returned as [], incomplete scalar fields as null. ISO days are sorted. Unknown legacy fitness labels have a null canonical level."
+      },
+      "ProfilePatch": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9223372036854775806
+          },
+          "age": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2147483647
+          },
+          "height_cm": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2147483647
+          },
+          "weight_kg": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "maximum": 2147483647
+          },
+          "gender": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "description": "Must contain non-whitespace text and no U+0000."
+          },
+          "activity_level": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Must contain non-whitespace text and no U+0000."
+          },
+          "goal": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Must contain non-whitespace text and no U+0000."
+          },
+          "level": {
+            "type": "string",
+            "enum": [
+              "beginner",
+              "intermediate",
+              "advanced"
+            ]
+          },
+          "training_days": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 7
+            },
+            "uniqueItems": true,
+            "maxItems": 7
+          },
+          "equipment_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Existing equipment ID, no U+0000."
+            },
+            "uniqueItems": true
+          },
+          "session_duration_min": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2147483647
+          },
+          "excluded_exercise_ids": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            },
+            "uniqueItems": true
+          },
+          "injuries_notes": {
+            "type": "boolean",
+            "description": "Existing v1 flag, never used to infer diagnoses or exclusions."
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "additionalProperties": false,
+        "description": "At least one field other than version is required. Omitted fields are preserved; null and duplicate list items are rejected."
+      },
+      "ErrorV2": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "details": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "required": [
+              "code",
+              "message"
+            ]
+          },
+          "request_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "error",
+          "request_id"
+        ]
+      }
+    }
+  }
+}

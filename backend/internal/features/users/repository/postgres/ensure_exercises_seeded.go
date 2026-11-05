@@ -6,26 +6,41 @@ import (
 	"os"
 	"strconv"
 	"strings"
+
+	core_postgres_pool "sport_app/internal/core/repository/postgres/pool"
 )
 
 func (r *UsersRepository) EnsureExercisesSeeded(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, r.pool.OpTimeout())
 	defer cancel()
 
-	var n int64
-	if err := r.pool.QueryRow(ctx, `SELECT COUNT(*) FROM sportapp.exercises`).Scan(&n); err != nil {
-		return fmt.Errorf("count exercises: %w", err)
+	pool, ok := r.pool.(core_postgres_pool.TransactionalPool)
+	if !ok {
+		return fmt.Errorf("exercise seed requires transactions")
 	}
-	if n == 0 {
-		if err := r.insertExercises(ctx); err != nil {
-			return err
-		}
+	tx, err := pool.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("begin exercise seed: %w", err)
+	}
+	defer func() {
+		rollbackCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), r.pool.OpTimeout())
+		defer cancel()
+		_ = tx.Rollback(rollbackCtx)
+	}()
+	if _, err := tx.Exec(ctx, `SELECT pg_advisory_xact_lock(20261026)`); err != nil {
+		return fmt.Errorf("lock exercise seed: %w", err)
+	}
+	if err := r.insertExercises(ctx, tx); err != nil {
+		return err
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("commit exercise seed: %w", err)
 	}
 
 	return r.SyncExerciseMedia(ctx)
 }
 
-func (r *UsersRepository) insertExercises(ctx context.Context) error {
+func (r *UsersRepository) insertExercises(ctx context.Context, tx core_postgres_pool.Tx) error {
 	exercises := []struct {
 		Name     string
 		Group    string
@@ -102,18 +117,21 @@ func (r *UsersRepository) insertExercises(ctx context.Context) error {
 		{"Пуловер", "Спина", strPtr("тяга сверху широким хватом"), intPtr(5), false},
 	}
 
-	query := `INSERT INTO sportapp.exercises (exercises_name, muscular_group, muscular_subgroup, working_weights, safe_for_injuries) VALUES `
+	query := `INSERT INTO sportapp.exercises (exercises_name, muscular_group, muscular_subgroup, working_weights, safe_for_injuries)
+		SELECT seed.* FROM (VALUES `
 	args := make([]any, 0, len(exercises)*5)
 	for i, ex := range exercises {
 		if i > 0 {
 			query += ","
 		}
-		query += fmt.Sprintf("($%d, $%d, $%d, $%d, $%d)",
+		query += fmt.Sprintf("($%d::text, $%d::text, $%d::text, $%d::integer, $%d::boolean)",
 			i*5+1, i*5+2, i*5+3, i*5+4, i*5+5)
 		args = append(args, ex.Name, ex.Group, ex.Subgroup, ex.Weights, ex.Injuries)
 	}
 
-	if _, err := r.pool.Exec(ctx, query, args...); err != nil {
+	query += `) AS seed(exercises_name, muscular_group, muscular_subgroup, working_weights, safe_for_injuries)
+		WHERE NOT EXISTS (SELECT 1 FROM sportapp.exercises e WHERE e.exercises_name = seed.exercises_name)`
+	if _, err := tx.Exec(ctx, query, args...); err != nil {
 		return fmt.Errorf("seed exercises: %w", err)
 	}
 

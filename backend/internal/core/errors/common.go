@@ -4,6 +4,8 @@ package core_errors
 import "errors"
 
 var (
+	ErrForbidden     = errors.New("forbidden")
+	ErrUnprocessable = errors.New("unprocessable entity")
 	// ErrNotFound означает, что объект не существует, удалён или недоступен пользователю; соответствует HTTP 404.
 	ErrNotFound = errors.New("not found")
 

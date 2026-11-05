@@ -9,6 +9,48 @@ permissions:
   contents: read
 
 jobs:
+  ml-test:
+    name: ML contract and Go integration
+    runs-on: ubuntu-latest
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
+      ML_SERVICE_TOKEN: synthetic-integration-token
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: ai/requirements*.txt
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+      - name: Install ML test dependencies
+        run: python -m pip install -r ai/requirements-test.txt
+      - name: Validate ML constraints and unchanged legacy contract
+        run: make -C ai test
+      - name: Exercise Go against the real Python service
+        run: |
+          python -m uvicorn main:app --app-dir ai --host 127.0.0.1 --port 18000 > "$RUNNER_TEMP/ml-contract.log" 2>&1 &
+          ml_pid=$!
+          trap 'kill "$ml_pid" 2>/dev/null || true' EXIT
+          python - <<'PY'
+          import time, urllib.request
+          for attempt in range(60):
+              try:
+                  urllib.request.urlopen('http://127.0.0.1:18000/health', timeout=1).close()
+                  break
+              except OSError:
+                  time.sleep(0.5)
+          else:
+              raise SystemExit('ML service did not start')
+          PY
+          cd backend
+          SPORTIK_ML_TEST_URL=http://127.0.0.1:18000 go test ./internal/features/generation/service -run '^TestGenerationPythonContract$' -count=1 -v
+
   test:
     name: Lint, Test & Build
     runs-on: ubuntu-latest

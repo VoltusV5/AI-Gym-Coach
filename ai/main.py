@@ -4,10 +4,14 @@ from fastapi import Body, FastAPI
 import pandas as pd
 import json
 import random
+from pathlib import Path
+
+from plan_service import create_router
 
 
 programs = []
-with open("dataset/dataset.jsonlines", 'r', encoding='utf-8') as f:
+BASE_DIR = Path(__file__).resolve().parent
+with (BASE_DIR / "dataset/dataset.jsonlines").open('r', encoding='utf-8') as f:
     for line in f:
         programs.append(json.loads(line)["output"])
 
@@ -37,7 +41,7 @@ reverse_map = {
 
 
 model = CatBoostClassifier()
-model.load_model("models/model/workout_model.cbm")
+model.load_model(str(BASE_DIR / "models/model/workout_model.cbm"))
 def predict(data):
 
 
@@ -112,3 +116,6 @@ async def plan_user(user: Dict[str, Any] = Body(default_factory=dict)) -> Dict[s
     split_name, days = predict(user)
 
     return get_random_program(programs=programs, split_name=split_name, days=days)
+
+
+app.include_router(create_router(predict, programs))
