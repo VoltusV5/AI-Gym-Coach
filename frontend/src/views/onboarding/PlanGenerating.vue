@@ -92,7 +92,6 @@ const startGeneration = async () => {
       router.replace('/home')
     }, 500)
   } catch (err) {
-    console.error('Failed to generate plan:', err)
     const status = err?.response?.status
     if (status === 502 || status === 504) {
       errorMsg.value = 'Сервис генерации временно недоступен (502/504). Пожалуйста, попробуйте позже.'

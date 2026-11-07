@@ -1,33 +1,32 @@
-import { SecureStorage } from '@aparajita/capacitor-secure-storage';
+import { SecureStorage } from '@aparajita/capacitor-secure-storage'
 
-const TOKEN_KEY = 'auth_token';
+const TOKEN_KEY = 'auth_token'
 
-
-export async function saveToken(token) {
-  try {
-    await SecureStorage.set({ key: TOKEN_KEY, value: token });
-  } catch (error) {
-    console.error('Error saving token:', error);
-    localStorage.setItem(TOKEN_KEY, token);
-  }
+/** Serialize credential writes across web tabs when the browser supports Web Locks. */
+function withTokenLock(operation) {
+  const locks = globalThis.navigator?.locks
+  return locks ? locks.request('sportik-auth-token', operation) : operation()
 }
 
+/** Store a credential using Capacitor Secure Storage. Rejects if the write fails. */
+export function saveToken(token) {
+  return withTokenLock(async () => {
+    await SecureStorage.set(TOKEN_KEY, token)
+    localStorage.removeItem(TOKEN_KEY)
+  })
+}
 
+/** Read the current credential, with migration support for older web installs. */
 export async function getToken() {
-  try {
-    const { value } = await SecureStorage.get({ key: TOKEN_KEY });
-    return value;
-  } catch (error) {
-    return localStorage.getItem(TOKEN_KEY) || null;
-  }
+  const token = await SecureStorage.get(TOKEN_KEY).catch(() => null)
+  if (typeof token === 'string') return token
+  return localStorage.getItem(TOKEN_KEY)
 }
 
-
-export async function removeToken() {
-  localStorage.removeItem(TOKEN_KEY);
-  try {
-    await SecureStorage.remove({ key: TOKEN_KEY });
-  } catch (error) {
-    console.warn('Error removing token from secure storage:', error);
-  }
+/** Remove only the expired credential. Another tab may have already signed in. */
+export function removeToken(expected) {
+  return withTokenLock(async () => {
+    if (localStorage.getItem(TOKEN_KEY) === expected) localStorage.removeItem(TOKEN_KEY)
+    if (await SecureStorage.get(TOKEN_KEY) === expected) await SecureStorage.remove(TOKEN_KEY)
+  })
 }

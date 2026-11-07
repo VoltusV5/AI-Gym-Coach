@@ -16,6 +16,8 @@ import '@ionic/vue/css/flex-utils.css'
 import '@ionic/vue/css/display.css'
 
 import '@/theme/sportik.css'
+import '@/theme/features.css'
+import api from '@/api/api'
 import { useAuthStore } from '@/stores/auth'
 
 async function bootstrap() {
@@ -28,14 +30,27 @@ async function bootstrap() {
   app.use(IonicVue)
   const pinia = createPinia()
   app.use(pinia)
+  const auth = useAuthStore(pinia)
+  api.interceptors.response.use(undefined, async (error) => {
+    const request = error.config
+    const authAction = request?.url?.startsWith('/api/v1/auth/')
+    if (error.response?.status === 401 && (!authAction || request.url === '/api/v1/auth/register')) {
+      await auth.expire(request?.headers?.get?.('Authorization') ?? request?.headers?.Authorization).catch(() => {})
+    }
+    throw error
+  })
+  const initialized = auth.initialize()
+  router.beforeEach(async (to) => {
+    await initialized
+    if (to.meta.session && !auth.token) {
+      return { name: 'Login', query: { return_to: to.fullPath } }
+    }
+  })
   app.use(router)
-
   await router.isReady()
-  await useAuthStore(pinia).initialize()
-
   app.mount('#app')
 }
 
-bootstrap().catch((e) => {
-  console.error('Bootstrap failed:', e)
+bootstrap().catch(() => {
+  console.error('Не удалось запустить Спортик')
 })

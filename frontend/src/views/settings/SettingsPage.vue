@@ -1,384 +1,93 @@
-<template>
-  <workout-chrome active-tab-key="settings">
-    <div class="settings-frame">
-      <div class="settings-top-row">
-        <p class="settings-brand-line" :class="{ 'settings-brand-line--auth': isAuthHint }">{{ brandLine }}</p>
-        <button type="button" class="avatar-btn" @click="openProfilePage">
-          {{ t.avatar }}
-        </button>
-      </div>
-
-      <section class="achievements-block">
-        <p class="block-title">{{ t.achievements }}</p>
-        <div class="achievements-field">
-          <div v-if="loadingAchievements" class="ach-loading">
-            <ion-spinner name="crescent"></ion-spinner>
-          </div>
-          <div v-else-if="achievements.length === 0" class="ach-empty">
-            <p>{{ t.achievementsHint }}</p>
-          </div>
-          <div v-else class="ach-grid">
-            <div v-for="ach in achievements" :key="ach.id" class="ach-item" @click="showAchDetails(ach)">
-              <div class="ach-icon-wrap">
-                <span class="ach-emoji">{{ getAchEmoji(ach.title) }}</span>
-              </div>
-              <p class="ach-label">{{ formatAchTitle(ach.title) }}</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="trackers-block">
-        <ion-button expand="block" fill="outline" class="trackers-btn" @click="onTrackers">
-          {{ t.trackers }}
-        </ion-button>
-      </section>
-
-      <section class="subscription-block">
-        <ion-button expand="block" class="sportik-footer-btn subscription-btn" @click="noActionYet()">
-          {{ t.subscription }}
-        </ion-button>
-      </section>
-
-      <section class="quick-options-row">
-        <div class="quick-item quick-item--left">
-          <ion-icon :icon="themeOn ? sunnyOutline : moonOutline" />
-          <ion-toggle v-model="themeOn" />
-        </div>
-
-        <a href="#" class="faq-link" @click.prevent="noActionYet('FAQ')">FAQ</a>
-
-        <div class="quick-item quick-item--right">
-          <ion-icon :icon="notificationsOn ? notificationsOutline : notificationsOffOutline" />
-          <ion-toggle v-model="notificationsOn" />
-        </div>
-      </section>
-
-      <p
-        class="build-stamp"
-        title="Меняется при каждой сборке. Хвост после # — уникален; если не меняется после деплоя, подгружается старый образ (пересоберите frontend в Docker: npm run docker:rebuild)."
-      >
-        Сборка: {{ sportikBuildId }}
-      </p>
-    </div>
-  </workout-chrome>
-</template>
-
 <script setup>
-defineOptions({ name: 'SettingsPage' })
-
-import { computed, ref, watch, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { IonButton, IonToggle, IonIcon, IonSpinner, toastController, alertController } from '@ionic/vue'
-import { moonOutline, sunnyOutline, notificationsOutline, notificationsOffOutline, PersonCircleOutline } from 'ionicons/icons'
-import WorkoutChrome from '@/components/workout/WorkoutChrome.vue'
-import { useAuthStore } from '@/stores/auth'
+import { ref } from 'vue'
+import { alertController, onIonViewWillEnter } from '@ionic/vue'
+import FeaturePage from '@/components/layout/FeaturePage.vue'
+import RequestState from '@/components/ui/RequestState.vue'
 import api from '@/api/api'
-const sportikBuildId = __SPORTIK_BUILD_ID__
+import { apiStatus, v2 } from '@/api/v2'
+import { useRead } from '@/composables/useRequest'
+import { useAuthStore } from '@/stores/auth'
 
-const router = useRouter()
-const authStore = useAuthStore()
-
-const t = {
-  subscription: '\u041f\u043e\u0434\u043f\u0438\u0441\u043a\u0430',
-  avatar: '\u041f',
-  achievements: '\u0414\u043e\u0441\u0442\u0438\u0436\u0435\u043d\u0438\u044f',
-  achievementsHint: '\u0417\u0434\u0435\u0441\u044c \u0431\u0443\u0434\u0435\u0442 \u043b\u0435\u043d\u0442\u0430 \u0434\u043e\u0441\u0442\u0438\u0436\u0435\u043d\u0438\u0439 \u0438 \u043d\u0430\u0433\u0440\u0430\u0434.',
-  trackers: '\u041f\u043e\u0434\u043a\u043b\u044e\u0447\u0438\u0442\u044c \u0442\u0440\u0435\u043a\u043a\u0435\u0440\u044b',
-  trackersToast: '\u041f\u043e\u0434\u043a\u043b\u044e\u0447\u0438\u0442\u044c \u0442\u0440\u0435\u043a\u043a\u0435\u0440\u044b: UI \u0433\u043e\u0442\u043e\u0432, \u0438\u043d\u0442\u0435\u0433\u0440\u0430\u0446\u0438\u044f \u0441 API \u043f\u043e\u0441\u043b\u0435 backend',
-  authHint: '\u0410\u0432\u0442\u043e\u0440\u0438\u0437\u0443\u0439\u0442\u0435\u0441\u044c, \u0447\u0442\u043e\u0431\u044b \u0441\u043e\u0445\u0440\u0430\u043d\u0438\u0442\u044c \u043f\u0440\u043e\u0433\u0440\u0435\u0441\u0441',
-  brand: '\u0421\u043f\u043e\u0440\u0442\u0438\u043a',
-  toastSuffix: '\u0444\u0443\u043d\u043a\u0446\u0438\u043e\u043d\u0430\u043b \u043f\u043e\u044f\u0432\u0438\u0442\u0441\u044f \u043f\u043e\u0437\u0436\u0435'
-}
-
-function parseJwtPayload(token) {
-  if (!token || typeof token !== 'string') return null
-  const parts = token.split('.')
-  if (parts.length < 2) return null
-  try {
-    const b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/')
-    const pad = b64.length % 4 === 0 ? '' : '='.repeat(4 - (b64.length % 4))
-    return JSON.parse(atob(b64 + pad))
-  } catch {
-    return null
-  }
-}
-
-const isAuthHint = computed(() => {
-  if (!authStore.profile) return true
-  const claims = parseJwtPayload(authStore.token)
-  return Boolean(claims && claims.is_anonymous === true)
-})
-
-const brandLine = computed(() => (isAuthHint.value ? t.authHint : t.brand))
-
+const auth = useAuthStore()
 const themeOn = ref(document.documentElement.classList.contains('dark-theme'))
-
-watch(themeOn, (val) => {
-  if (val) {
-    document.documentElement.classList.add('dark-theme')
-  } else {
-    document.documentElement.classList.remove('dark-theme')
-  }
+const trainer = ref(false)
+const admin = ref(false)
+const { data: achievements, loading, error, status, load } = useRead(async (signal) => {
+  const { data } = await api.get('/api/v1/achievements/get_achievements', { signal })
+  return data.achievements ?? []
 })
 
-const notificationsOn = ref(false)
-
-function openProfilePage() {
-  router.push('/settings/profile')
-}
-
-const achievements = ref([])
-const loadingAchievements = ref(false)
-
-async function fetchAchievements() {
-  loadingAchievements.value = true
-  try {
-    const res = await api.get('/api/v1/achievements/get_achievements')
-    achievements.value = res.data.achievements || []
-  } catch (e) {
-    console.error('Failed to fetch achievements:', e)
-  } finally {
-    loadingAchievements.value = false
+/** Probe role-protected endpoints, then show only sections the server allows. */
+async function checkRoles() {
+  trainer.value = false
+  admin.value = false
+  if (!auth.token || auth.isGuest) return
+  const token = auth.token
+  const [trainerAccess, adminAccess] = await Promise.all([
+    v2('GET', '/trainer/programs', { params: { limit: 1 } }).then(() => true, () => false),
+    v2('GET', '/admin/trainers', { params: { limit: 1 } }).then(() => true, (err) => apiStatus(err) === 404),
+  ])
+  if (token === auth.token) {
+    trainer.value = trainerAccess
+    admin.value = adminAccess
   }
 }
+onIonViewWillEnter(() => {
+  load()
+  checkRoles()
+})
 
-function getAchEmoji(title) {
-  const map = {
-    first_workout: '🏆',
-    five_workouts: '⭐',
-    ten_workouts: '🌟',
-    twenty_five_workouts: '👑',
-    week_warrior: '🔥',
-    consistent_month: '📅',
-    comeback: '🔄',
-    early_bird: '🌅',
-    night_owl: '🦉',
-    volume_session_5k: '💪',
-    volume_session_10k: '🏋️',
-    double_digit_sets: '🔢',
-    profile_ready: '✅'
-  }
-  return map[title] || '🏅'
+/** Toggle theme for the current application instance. */
+function toggleTheme() {
+  document.documentElement.classList.toggle('dark-theme', themeOn.value)
 }
 
-function formatAchTitle(title) {
-  return title
-    .split('_')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ')
-}
-
-async function showAchDetails(ach) {
+/** Show the server-supplied description for the selected achievement. */
+async function showAchievement(achievement) {
   const alert = await alertController.create({
-    header: formatAchTitle(ach.title),
-    message: ach.description,
-    buttons: ['OK'],
-    mode: 'ios'
+    header: achievement.title.replaceAll('_', ' '),
+    message: achievement.description,
+    buttons: ['Закрыть'],
   })
   await alert.present()
 }
-
-onMounted(() => {
-  fetchAchievements()
-})
-
-async function noActionYet() {
-  const toast = await toastController.create({
-    message: 'Скоро...',
-    duration: 1500,
-    color: 'medium'
-  })
-  await toast.present()
-}
-
-async function onTrackers() {
-  await noActionYet()
-}
 </script>
 
-<style scoped>
-.settings-frame {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  min-height: calc(100svh - 220px - env(safe-area-inset-bottom, 0px));
-  padding-bottom: 4px;
-}
-
-.settings-top-row {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 10px;
-  align-items: center;
-}
-
-.settings-brand-line {
-  margin: 0;
-  font-size: 0.92rem;
-  line-height: 1.35;
-  font-weight: 600;
-  color: var(--sportik-text);
-}
-
-.settings-brand-line--auth {
-  text-align: center;
-}
-
-.avatar-btn {
-  border: 1px solid var(--sportik-border);
-  width: 46px;
-  height: 46px;
-  border-radius: 50%;
-  background: var(--sportik-surface-soft);
-  color: var(--sportik-text);
-  font-size: 1.1rem;
-  font-weight: 700;
-}
-
-.achievements-block {
-  flex: 1;
-  min-height: 36vh;
-  background: var(--sportik-surface-soft);
-  border: 1px solid var(--sportik-border);
-  border-radius: 16px;
-  box-shadow: var(--sportik-shadow-md);
-  padding: 12px;
-}
-
-.block-title {
-  margin: 0 0 10px;
-  font-weight: 700;
-  color: var(--sportik-text);
-}
-
-.trackers-block {
-  background: var(--sportik-surface-soft);
-  border: 1px solid var(--sportik-border);
-  border-radius: 14px;
-  box-shadow: var(--sportik-shadow-md);
-  padding: 10px 12px;
-}
-
-.trackers-btn {
-  margin: 0;
-}
-
-.subscription-block {
-  background: var(--sportik-surface-soft);
-  border: 1px solid var(--sportik-border);
-  border-radius: 14px;
-  box-shadow: var(--sportik-shadow-md);
-  padding: 10px 12px;
-}
-
-.subscription-btn {
-  margin: 0;
-}
-
-.achievements-field {
-  min-height: calc(100% - 30px);
-  border-radius: 12px;
-  background: var(--sportik-surface);
-  padding: 12px;
-  color: var(--sportik-text-soft);
-  line-height: 1.4;
-  overflow-y: auto;
-}
-
-.ach-loading, .ach-empty {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 120px;
-  text-align: center;
-}
-
-.ach-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-}
-
-.ach-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  text-align: center;
-}
-
-.ach-icon-wrap {
-  width: 54px;
-  height: 54px;
-  background: var(--sportik-bg);
-  border: 1px solid var(--sportik-border);
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.8rem;
-  box-shadow: var(--sportik-shadow-sm);
-  transition: transform 0.2s ease;
-}
-
-.ach-item:active .ach-icon-wrap {
-  transform: scale(0.92);
-}
-
-.ach-label {
-  margin: 0;
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: var(--sportik-text);
-  line-height: 1.2;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.quick-options-row {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-  gap: 10px;
-  background: var(--sportik-surface-soft);
-  border: 1px solid var(--sportik-border);
-  border-radius: 14px;
-  box-shadow: var(--sportik-shadow-md);
-  padding: 10px 12px;
-}
-
-.quick-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--sportik-text);
-}
-
-.quick-item--left {
-  justify-self: start;
-}
-
-.quick-item--right {
-  justify-self: end;
-}
-
-.faq-link {
-  color: var(--sportik-text);
-  text-decoration: underline;
-  font-weight: 600;
-  justify-self: center;
-}
-
-.build-stamp {
-  margin-top: auto;
-  padding-top: 16px;
-  font-size: 0.7rem;
-  line-height: 1.3;
-  color: var(--sportik-text-muted);
-  text-align: center;
-  word-break: break-all;
-}
-</style>
+<template>
+  <FeaturePage eyebrow="Аккаунт" title="Профиль и настройки" subtitle="Анкета, достижения и дополнительные инструменты." tab="settings">
+    <div class="feature-stack">
+      <nav class="feature-card" aria-label="Настройки и инструменты">
+        <div class="feature-row">
+          <RouterLink class="feature-button" to="/settings/profile">Мои данные</RouterLink>
+          <RouterLink class="feature-button secondary" to="/auth/login">{{ auth.isGuest || !auth.token ? 'Войти' : 'Управление аккаунтом' }}</RouterLink>
+        </div>
+        <div class="feature-row">
+          <RouterLink class="feature-link" to="/workout-tools">Инструменты тренировки</RouterLink>
+          <RouterLink class="feature-link" to="/ai-chat">AI-чат</RouterLink>
+          <RouterLink class="feature-link" to="/nutrition">Питание</RouterLink>
+          <RouterLink class="feature-link" to="/notes">Заметки</RouterLink>
+        </div>
+        <div v-if="trainer || admin" class="feature-row">
+          <RouterLink v-if="trainer" class="feature-link" to="/trainer/profile">Кабинет тренера</RouterLink>
+          <template v-if="admin">
+            <RouterLink class="feature-link" to="/admin/verifications">Проверка тренеров</RouterLink>
+            <RouterLink class="feature-link" to="/admin/programs">Модерация программ</RouterLink>
+          </template>
+        </div>
+      </nav>
+      <section class="feature-card">
+        <h2>Достижения</h2>
+        <div v-if="achievements?.length" class="feature-row">
+          <button v-for="achievement in achievements" :key="achievement.id" class="feature-button secondary" type="button" @click="showAchievement(achievement)">
+            {{ achievement.title.replaceAll('_', ' ') }}
+          </button>
+        </div>
+        <RequestState :loading="loading" :error="error" :status="status" :retry="load" :empty="achievements?.length === 0 ? 'Достижения появятся по мере тренировок.' : ''" />
+      </section>
+      <section class="feature-card">
+        <h2>Оформление</h2>
+        <label class="feature-choice"><input v-model="themeOn" type="checkbox" @change="toggleTheme" /> Тёмная тема</label>
+      </section>
+    </div>
+  </FeaturePage>
+</template>

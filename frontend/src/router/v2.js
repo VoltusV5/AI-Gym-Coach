@@ -1,0 +1,37 @@
+const session = { session: true }
+const publicPage = { publicPage: true }
+
+export default [
+  { path: '/auth/login', name: 'Login', meta: publicPage, component: () => import('@/views/v2/LoginPage.vue') },
+  { path: '/equipment', name: 'Equipment', meta: session, props: { onboarding: true }, component: () => import('@/views/v2/ProfilePage.vue') },
+  { path: '/settings/profile', name: 'SettingsProfile', meta: publicPage, component: () => import('@/views/v2/ProfilePage.vue') },
+  { path: '/marketplace', name: 'Marketplace', meta: publicPage, component: () => import('@/views/v2/MarketplacePage.vue') },
+  { path: '/marketplace/programs/:programId', name: 'Program', meta: publicPage, props: true, component: () => import('@/views/v2/ProgramPage.vue') },
+  { path: '/plans', name: 'Plans', meta: session, component: () => import('@/views/v2/PlansPage.vue') },
+  { path: '/plans/new', name: 'NewPlan', meta: session, component: () => import('@/views/v2/NewPlanPage.vue') },
+  { path: '/plans/generate', name: 'GeneratePlan', meta: session, component: () => import('@/views/v2/GeneratePage.vue') },
+  { path: '/plans/:planId', name: 'Plan', meta: session, props: true, component: () => import('@/views/v2/PlanPage.vue') },
+  { path: '/plans/:planId/edit', name: 'EditPlan', meta: session, props: true, component: () => import('@/views/v2/PlanEditPage.vue') },
+  { path: '/plans/:planId/exercises', redirect: (to) => ({ name: 'EditPlan', params: to.params, query: { section: 'exercises' } }) },
+  { path: '/plans/:planId/schedule', redirect: (to) => ({ name: 'EditPlan', params: to.params, query: { section: 'schedule' } }) },
+  { path: '/workout/session/:planId/:dayId', name: 'WorkoutV2', meta: session, props: true, component: () => import('@/views/v2/WorkoutPage.vue') },
+  {
+    path: '/workout/success/:sessionId', name: 'WorkoutResultV2', meta: session,
+    props: (route) => ({ sessionId: route.params.sessionId, success: true }),
+    component: () => import('@/views/v2/WorkoutDetailsPage.vue'),
+  },
+  { path: '/progress', name: 'Progress', meta: session, component: () => import('@/views/v2/ProgressPage.vue') },
+  { path: '/progress/history', name: 'WorkoutHistory', meta: session, component: () => import('@/views/v2/ProgressListPage.vue') },
+  { path: '/progress/summaries', name: 'ProgressSummaries', meta: session, props: { summaries: true }, component: () => import('@/views/v2/ProgressListPage.vue') },
+  { path: '/progress/workouts/:sessionId', name: 'WorkoutDetails', meta: session, props: true, component: () => import('@/views/v2/WorkoutDetailsPage.vue') },
+  { path: '/progress/exercises/:exerciseId', name: 'ExerciseProgress', meta: session, props: true, component: () => import('@/views/v2/ExerciseProgressPage.vue') },
+  { path: '/trainers/:trainerId', name: 'PublicTrainer', meta: publicPage, props: true, component: () => import('@/views/v2/TrainerProfilePage.vue') },
+  { path: '/trainer', redirect: '/trainer/profile' },
+  { path: '/trainer/profile', name: 'TrainerProfile', meta: session, component: () => import('@/views/v2/TrainerProfilePage.vue') },
+  { path: '/trainer/verification', name: 'TrainerVerification', meta: session, component: () => import('@/views/v2/VerificationPage.vue') },
+  { path: '/trainer/programs', name: 'TrainerPrograms', meta: session, component: () => import('@/views/v2/TrainerProgramsPage.vue') },
+  { path: '/trainer/programs/new', name: 'NewTrainerProgram', meta: session, component: () => import('@/views/v2/TrainerProgramEditPage.vue') },
+  { path: '/trainer/programs/:programId/edit', name: 'EditTrainerProgram', meta: session, props: true, component: () => import('@/views/v2/TrainerProgramEditPage.vue') },
+  { path: '/admin/verifications', name: 'AdminVerifications', meta: session, component: () => import('@/views/v2/AdminQueuePage.vue') },
+  { path: '/admin/programs', name: 'AdminPrograms', meta: session, props: { programs: true }, component: () => import('@/views/v2/AdminQueuePage.vue') },
+]
