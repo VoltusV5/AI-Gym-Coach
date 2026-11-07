@@ -10,6 +10,13 @@
 
           <div class="home-sheet">
             <div class="home-sheet-inner ion-padding">
+              <section class="home-plan feature-card">
+                <span class="feature-badge">{{ activePlan ? 'Активный план' : 'Мои планы' }}</span>
+                <h2 v-if="activePlan">{{ activePlan.title }}</h2>
+                <RouterLink class="feature-button" :to="activePlan ? '/plans/' + activePlan.id : '/plans'">
+                  {{ activePlan ? 'Открыть план' : 'Открыть библиотеку планов' }}
+                </RouterLink>
+              </section>
               <p class="home-hero-title">Упражнения</p>
               <p v-if="splitLabel" class="home-split-hint">{{ splitLabel }}</p>
 
@@ -29,9 +36,7 @@
                 нет, показан демо-список (моки включены).
               </p>
               <p v-else-if="!hasPlan && !mocksOn" class="home-empty-hint">
-                Сгенерируйте план после онбординга. Демо-план отключён
-                <code class="home-code">VITE_USE_WORKOUT_MOCKS=false</code>
-                — без ответа API список пуст.
+                Создайте тренировку в библиотеке планов.
               </p>
               <p v-else-if="isDemoPlan" class="home-empty-hint">
                 Сейчас показан демо-план (мок) для превью экрана тренировки. После генерации плана с сервера
@@ -90,14 +95,15 @@
 <script setup>
 defineOptions({ name: 'HomePage' })
 
-import { computed, onMounted } from 'vue'
-import { IonPage, IonContent, IonFooter, IonButton, useIonRouter } from '@ionic/vue'
+import { computed, ref, onMounted } from 'vue'
+import { IonPage, IonContent, IonFooter, IonButton, useIonRouter, onIonViewWillEnter } from '@ionic/vue'
 import { useAuthStore } from '@/stores/auth'
 import { useWorkoutPlanStore } from '@/stores/workoutPlan'
 import { useWorkoutSessionStore } from '@/stores/workoutSession'
 import { workoutMocksEnabled } from '@/config/workoutMocks'
 import { getWorkoutBackgroundImageUrl } from '@/utils/localImages'
 import { staticUrl } from '@/api/api'
+import { v2 } from '@/api/v2'
 import AppTabBar from '@/components/navigation/AppTabBar.vue'
 
 const ionRouter = useIonRouter()
@@ -109,6 +115,28 @@ onMounted(() => {
   workoutPlanStore.hydrateFromStorage()
   workoutSessionStore.hydrate()
   workoutSessionStore.syncWithPlanStore(workoutPlanStore)
+})
+
+const activePlan = ref(null)
+
+onIonViewWillEnter(async () => {
+  activePlan.value = null
+  if (!authStore.token) return
+  const account = authStore.accountId
+  const seen = new Set()
+  let cursor
+  do {
+    try {
+      const page = await v2('GET', '/me/plans', { params: { cursor, limit: 100 } })
+      if (authStore.accountId !== account) return
+      activePlan.value = page.items?.find((plan) => plan.is_active) ?? null
+      cursor = page.next_cursor
+      if (seen.has(cursor)) break
+      seen.add(cursor)
+    } catch {
+      break
+    }
+  } while (!activePlan.value && cursor)
 })
 
 const exercises = computed(() => workoutSessionStore.homeRows)
@@ -144,18 +172,10 @@ const onStart = async () => {
   await ionRouter.push('/workout/session?context=home')
 }
 
-const resetSession = async () => {
-  try {
-    await authStore.restartSessionForTesting()
-    workoutSessionStore.clear()
-    await ionRouter.replace('/')
-  } catch (e) {
-    console.error(e)
-  }
-}
 </script>
 
 <style scoped>
+.home-plan { margin-bottom: 1rem; }
 .home-content {
   --background: var(--sportik-bg);
 }

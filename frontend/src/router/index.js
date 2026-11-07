@@ -1,5 +1,6 @@
 
 import { createRouter, createWebHistory } from '@ionic/vue-router'
+import v2Routes from './v2'
 import Welcome from '@/views/Welcome.vue'
 import BodyMetrics from '@/views/onboarding/BodyMetrics.vue'
 import Gender from '@/views/onboarding/Gender.vue'
@@ -12,6 +13,7 @@ import TrainingDays from '@/views/onboarding/TrainingDays.vue'
 import PlanGenerating from '@/views/onboarding/PlanGenerating.vue'
 
 const routes = [
+  ...v2Routes,
   {
     path: '/',
     name: 'Welcome',
@@ -75,11 +77,13 @@ const routes = [
   {
     path: '/workout/session',
     name: 'WorkoutSession',
+    meta: { session: true },
     component: () => import('@/views/workout/WorkoutExerciseScreen.vue')
   },
   {
     path: '/workout/alternatives/:slotIndex',
     name: 'WorkoutAlternatives',
+    meta: { session: true },
     component: () => import('@/views/workout/WorkoutAlternativesScreen.vue'),
     props: true
   },
@@ -96,11 +100,13 @@ const routes = [
   {
     path: '/notes',
     name: 'Notes',
+    meta: { session: true },
     component: () => import('@/views/notes/NotesList.vue')
   },
   {
     path: '/notes/:id',
     name: 'NoteEditor',
+    meta: { session: true },
     component: () => import('@/views/notes/NotesEditor.vue'),
     props: true
   },
@@ -108,11 +114,6 @@ const routes = [
     path: '/settings',
     name: 'Settings',
     component: () => import('@/views/settings/SettingsPage.vue')
-  },
-  {
-    path: '/settings/profile',
-    name: 'SettingsProfile',
-    component: () => import('@/views/settings/SettingsProfilePage.vue')
   },
   {
     path: '/nutrition',

@@ -28,11 +28,16 @@
         </div>
 
         <div class="welcome-zone welcome-zone--bot">
-          <ion-button class="sportik-footer-btn welcome-cta" expand="block" @click="startOnboarding">
+          <ion-button class="sportik-footer-btn welcome-cta" expand="block" :disabled="starting" @click="startOnboarding">
             Далее
           </ion-button>
 
+          <p v-if="startError" role="alert">{{ startError }}</p>
           <p class="welcome-sub">Займёт меньше минуты</p>
+          <div class="feature-row welcome-links">
+            <RouterLink to="/marketplace">Каталог программ</RouterLink>
+            <RouterLink to="/auth/login">Войти</RouterLink>
+          </div>
 
         </div>
       </div>
@@ -44,6 +49,7 @@
 defineOptions({ name: 'WelcomePage' })
 
 import { IonPage, IonContent, IonButton } from '@ionic/vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { getWelcomeApolloLeftUrl, getWelcomeHeroPhotoUrl } from '@/utils/localImages'
@@ -54,27 +60,29 @@ const authStore = useAuthStore()
 const apolloLeftUrl = getWelcomeApolloLeftUrl()
 const heroPhotoUrl = getWelcomeHeroPhotoUrl()
 
-const startOnboarding = () => {
-  const step = authStore.nextOnboardingStep
-  if (step === 'Home') {
-    router.push('/home')
-    return
+const starting = ref(false)
+const startError = ref('')
+
+/** Start or resume the guest questionnaire from the latest available profile. */
+const startOnboarding = async () => {
+  if (starting.value) return
+  starting.value = true
+  startError.value = ''
+  try {
+    if (!authStore.token) await authStore.guestLogin()
+    const step = authStore.nextOnboardingStep
+    await router.push({ name: step === 'Welcome' ? 'BodyMetrics' : step })
+  } catch {
+    startError.value = 'Не удалось начать. Проверьте соединение и повторите попытку.'
+  } finally {
+    starting.value = false
   }
-  const name = step === 'Welcome' ? 'BodyMetrics' : step
-  router.push({ name })
 }
 
-const newTestSession = async () => {
-  try {
-    await authStore.restartSessionForTesting()
-    await router.replace('/')
-  } catch (e) {
-    console.error(e)
-  }
-}
 </script>
 
 <style scoped>
+.welcome-links { justify-content: center; padding: .65rem 0; }
 .welcome-ion-content {
   --overflow: hidden;
 }

@@ -8,7 +8,7 @@
       </div>
     </div>
 
-    <div v-else-if="authStore.error" class="loader-container error-container ion-padding">
+    <div v-else-if="authStore.error && !route.meta.publicPage" class="loader-container error-container ion-padding">
       <div class="loader-card sportik-glass-card">
         <ion-icon :icon="alertCircleOutline" color="danger" style="font-size: 56px;"></ion-icon>
         <h2>Ошибка подключения</h2>
@@ -19,7 +19,7 @@
       </div>
     </div>
 
-    <ion-router-outlet v-else />
+    <ion-router-outlet v-else :key="route.name === 'Login' ? 'login' : authStore.accountEpoch" />
   </ion-app>
 </template>
 

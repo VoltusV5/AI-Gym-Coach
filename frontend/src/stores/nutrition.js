@@ -1,5 +1,17 @@
 import { defineStore } from 'pinia'
-import api from '@/api/api'
+import { CanceledError } from 'axios'
+import api, { currentRequest } from '@/api/api'
+
+/** Capture the bearer used by a multi-request action for guarded local cleanup. */
+function requestScope() {
+  const authorization = api.defaults.headers.common.Authorization
+  return { headers: { get: () => authorization } }
+}
+
+/** Stop a chained action before it applies an earlier session's state. */
+function requireCurrentRequest(scope) {
+  if (!currentRequest(scope)) throw new CanceledError('Session changed')
+}
 
 function toNum(v) {
   const n = Number(v)
@@ -74,6 +86,7 @@ export const useNutritionStore = defineStore('nutrition', {
     },
 
     async hydrateAll(day) {
+      const scope = requestScope()
       this.loading = true
       try {
         this.day = resolveJournalDay(day, this.day)
@@ -90,11 +103,13 @@ export const useNutritionStore = defineStore('nutrition', {
           const statsRes = await api.get('/api/v1/nutrition/stats')
           this.stats = statsRes.data ?? null
         } catch {
+          requireCurrentRequest(scope)
           this.stats = null
         }
+        requireCurrentRequest(scope)
         await this.fetchGoal()
       } finally {
-        this.loading = false
+        if (currentRequest(scope)) this.loading = false
       }
     },
 
@@ -223,17 +238,19 @@ export const useNutritionStore = defineStore('nutrition', {
     },
 
     async fetchReports(days = 30) {
+      const scope = requestScope()
       try {
         const { data } = await api.get('/api/v1/nutrition/analytics', { params: { days } })
         this.reports = data
         return data
       } catch {
-        this.reports = null
+        if (currentRequest(scope)) this.reports = null
         return null
       }
     },
 
     async addEntry(payload) {
+      const scope = requestScope()
       if (!payload?.day) {
         this.day = nutritionJournalDayISO()
       }
@@ -255,6 +272,7 @@ export const useNutritionStore = defineStore('nutrition', {
       const { data } = await api.post('/api/v1/nutrition/entries', body)
       if (data) this.mergeServerEntry(data)
       await this.hydrateAll(this.day)
+      requireCurrentRequest(scope)
       if (data?.id != null && !this.entries.some((e) => Number(e.id) === Number(data.id))) {
         this.mergeServerEntry(data)
         await this.fetchDashboard(this.day)
@@ -262,7 +280,7 @@ export const useNutritionStore = defineStore('nutrition', {
       try {
         await this.fetchStats()
       } catch {
-
+        // Local cache is optional when browser storage is unavailable.
       }
       return data
     },

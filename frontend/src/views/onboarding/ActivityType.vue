@@ -4,6 +4,8 @@
     :progress="38"
     :disabled="!activityLevel"
     :loading="isSubmitting"
+    :error="submitError"
+    :status="submitStatus"
     @next="submit"
   >
     <div class="options-list" role="radiogroup" aria-label="Тип активности">
@@ -27,6 +29,7 @@
 <script setup>
 import { ref } from 'vue'
 import OnboardingLayout from '@/components/layout/OnboardingLayout.vue'
+import { apiStatus, errorText } from '@/api/v2'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
 
@@ -35,6 +38,8 @@ const router = useRouter()
 
 const activityLevel = ref(authStore.profile?.activity_level || null)
 const isSubmitting = ref(false)
+const submitError = ref('')
+const submitStatus = ref(0)
 
 const activityLevels = [
   {
@@ -59,15 +64,19 @@ const activityLevels = [
   }
 ]
 
+/** Save this questionnaire step once and leave the input intact on errors. */
 const submit = async () => {
-  if (!activityLevel.value) return
+  if (isSubmitting.value || !activityLevel.value) return
 
   isSubmitting.value = true
+  submitError.value = ''
+  submitStatus.value = 0
   try {
     await authStore.updateProfile({ activity_level: activityLevel.value })
     router.push('/health-restrictions')
   } catch (error) {
-    console.error('Submit error:', error)
+    submitStatus.value = apiStatus(error)
+    submitError.value = errorText(error)
   } finally {
     isSubmitting.value = false
   }
