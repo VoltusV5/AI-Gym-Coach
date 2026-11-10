@@ -32,6 +32,7 @@ ai/env/
 ai/*.egg-info/
 ai/.env
 ai/.env.local
+ai/chat/recommended_system/model/*
 
 # Frontend (Vue + Capacitor)
 frontend/node_modules/
