@@ -8,6 +8,7 @@ Thumbs.db
 .idea/
 client_secret.json
 .env
+
 backend/bin/
 backend/out/
 backend/coverage.out
@@ -18,6 +19,13 @@ docs/api/.qa/
 docs/**/__pycache__/
 docs/**/*.pyc
 scripts/**/__pycache__/
+
+
+ai/chat/recommended_system/test_db_data.py
+ai/chat/recommended_system/test_db_data.py
+ai/chat/recommended_system/model/*
+ai/chat/recommended_system/*.html
+marketplace.db
 
 # AI (Python)
 ai/generateData/dataset*
@@ -32,6 +40,11 @@ ai/env/
 ai/*.egg-info/
 ai/.env
 ai/.env.local
+
+ai/chat/recommended_system/model/*
+
+
+*__pycache__
 
 # Frontend (Vue + Capacitor)
 frontend/node_modules/
