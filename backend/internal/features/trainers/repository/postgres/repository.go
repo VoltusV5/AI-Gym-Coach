@@ -26,7 +26,7 @@ type Reader interface {
 func RequireRole(ctx context.Context, reader Reader, id int, role string) error {
 	var found int
 	err := reader.QueryRow(ctx, `SELECT u.id FROM sportapp.users u JOIN sportapp.user_roles r ON r.user_id=u.id
- WHERE u.id=$1 AND NOT u.is_anonymous AND r.role=$2 FOR SHARE OF u,r`, id, role).Scan(&found)
+ WHERE u.id=$1 AND NOT u.is_anonymous AND NOT u.blocked AND r.role=$2 FOR SHARE OF u,r`, id, role).Scan(&found)
 	if errors.Is(err, core_postgres_pool.ErrNoRows) {
 		return fmt.Errorf("role required: %w", core_errors.ErrForbidden)
 	}

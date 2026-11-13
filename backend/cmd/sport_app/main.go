@@ -6,6 +6,12 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	administration_postgres_repository "sport_app/internal/features/administration/repository/postgres"
+	administration_service "sport_app/internal/features/administration/service"
+	administration_transport_http "sport_app/internal/features/administration/transport/http"
+	commerce_postgres_repository "sport_app/internal/features/commerce/repository/postgres"
+	commerce_service "sport_app/internal/features/commerce/service"
+	commerce_transport_http "sport_app/internal/features/commerce/transport/http"
 	"time"
 
 	core_auth "sport_app/internal/core/auth"
@@ -103,6 +109,7 @@ func main() {
 		core_http_middleware.CORS(),
 		core_http_middleware.Logger(logger),
 		core_http_middleware.Trace(),
+		core_http_middleware.AccountStatus(jwt, pool),
 		core_http_middleware.Panic(),
 	)
 
@@ -113,6 +120,8 @@ func main() {
 		logger.Fatal("failed to ensure reference data", zap.Error(err))
 	}
 	apiVersion2Router := core_http_server.NewAPIVersionRouter(core_http_server.ApiVersion2)
+	apiVersion2Router.RegisterRoutes(commerce_transport_http.NewHandler(commerce_service.NewService(commerce_postgres_repository.NewRepository(pool), commerce_service.Config{Stub: os.Getenv("PAYMENTS_MODE") == "" || os.Getenv("PAYMENTS_MODE") == "stub", WebhookSecret: os.Getenv("PAYMENTS_WEBHOOK_SECRET")}), jwt).Routes()...)
+	apiVersion2Router.RegisterRoutes(administration_transport_http.NewHandler(administration_service.NewService(administration_postgres_repository.NewRepository(pool)), jwt).Routes()...)
 	apiVersion2Router.RegisterRoutes(catalog_transport_http.NewCatalogHTTPHandler(catalog_service.NewService(catalogRepository), jwt).Routes()...)
 	profileRepository := profile_postgres_repository.NewRepository(pool)
 	apiVersion2Router.RegisterRoutes(profile_transport_http.NewProfileHTTPHandler(profile_service.NewService(profileRepository), jwt).Routes()...)

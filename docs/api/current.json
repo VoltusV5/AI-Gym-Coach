@@ -4207,6 +4207,1992 @@
         "x-service": "go",
         "x-source": "backend/internal/features/users/transport/http/complete_workout.go"
       }
+    },
+    "/api/v2/admin/users": {
+      "get": {
+        "summary": "Управление пользователями",
+        "description": "**Реализовано в Go.** Управление пользователями.\n\nВсе `/admin/*` требуют admin. Изменение записывает actor,reason,timestamp,request_id в аудит.\n\nАктивный пользователь имеет ≥ 1 значимое подтверждённое событие за период. Продажи — paid заказы, возвраты отдельно. Оборот gross/net, комиссия начисленная/выплаченная разделяются. Число кликов не считается доходом.\n\nЕдиные примеры frontend/backend: пустой каталог, бесплатный доступ, успешная/отклонённая оплата, повтор webhook, конфликт версии, Fork, отзыв до/после порога, отозванная ссылка, ML timeout, снятая программа, blocked пользователь. Данные и ML меняются вместе с контрактом.\n\nОбщие правила: JWT и право на конкретный объект проверяет Go. Деньги в минимальных единицах. Изменение плана/черновика с version; конфликт 409. Коллекции items/next_cursor, limit 1–100, default 20. Технические подробности ошибок не выдаются пользователю. Только admin; изменение требует причины и аудита. Аудит сохраняет состояние ролей и блокировки до и после изменения. Изменение собственного доступа возвращает 409.",
+        "operationId": "v2_get_admin_users",
+        "tags": [
+          "01 · Пользователи и роли"
+        ],
+        "x-status": "existing",
+        "responses": {
+          "200": {
+            "description": "Успешный результат",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserAdminPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Нужен действительный JWT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Недостаточно прав",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Объект не найден или недоступен",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт состояния или версии",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ограничение предметной области",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Превышен лимит",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Сервис временно недоступен",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Истёк deadline",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          }
+        },
+        "x-service": "go",
+        "x-feature": "F12",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 200
+            },
+            "description": "Поиск по email без учёта регистра; курсор связан с поиском и пользователем."
+          }
+        ],
+        "x-implementation-order": 1
+      }
+    },
+    "/api/v2/admin/users/{user_id}": {
+      "patch": {
+        "summary": "Блокировка и назначение ролей",
+        "description": "**Реализовано в Go.** Блокировка и назначение ролей.\n\nВсе `/admin/*` требуют admin. Изменение записывает actor,reason,timestamp,request_id в аудит.\n\nАктивный пользователь имеет ≥ 1 значимое подтверждённое событие за период. Продажи — paid заказы, возвраты отдельно. Оборот gross/net, комиссия начисленная/выплаченная разделяются. Число кликов не считается доходом.\n\nЕдиные примеры frontend/backend: пустой каталог, бесплатный доступ, успешная/отклонённая оплата, повтор webhook, конфликт версии, Fork, отзыв до/после порога, отозванная ссылка, ML timeout, снятая программа, blocked пользователь. Данные и ML меняются вместе с контрактом.\n\nОбщие правила: JWT и право на конкретный объект проверяет Go. Деньги в минимальных единицах. Изменение плана/черновика с version; конфликт 409. Коллекции items/next_cursor, limit 1–100, default 20. Технические подробности ошибок не выдаются пользователю. Только admin; изменение требует причины и аудита. Аудит сохраняет состояние ролей и блокировки до и после изменения. Изменение собственного доступа возвращает 409.",
+        "operationId": "v2_patch_admin_users_user_id",
+        "tags": [
+          "01 · Пользователи и роли"
+        ],
+        "x-status": "existing",
+        "responses": {
+          "200": {
+            "description": "Успешный результат",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserAdmin"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Нужен действительный JWT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Недостаточно прав",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Объект не найден или недоступен",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт состояния или версии",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ограничение предметной области",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Превышен лимит",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Сервис временно недоступен",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Истёк deadline",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BlockInput"
+              }
+            }
+          }
+        },
+        "x-service": "go",
+        "x-feature": "F12",
+        "x-implementation-order": 2
+      }
+    },
+    "/api/v2/admin/settings/commission": {
+      "get": {
+        "summary": "Комиссия платформы: 20%",
+        "description": "**Реализовано в Go с тестовой платёжной заглушкой. Реальных платежей и выплат нет.** Комиссия платформы: 20%.\n\nВсе `/admin/*` требуют admin. Изменение записывает actor,reason,timestamp,request_id в аудит.\n\nАктивный пользователь имеет ≥ 1 значимое подтверждённое событие за период. Продажи — paid заказы, возвраты отдельно. Оборот gross/net, комиссия начисленная/выплаченная разделяются. Число кликов не считается доходом.\n\nЕдиные примеры frontend/backend: пустой каталог, бесплатный доступ, успешная/отклонённая оплата, повтор webhook, конфликт версии, Fork, отзыв до/после порога, отозванная ссылка, ML timeout, снятая программа, blocked пользователь. Данные и ML меняются вместе с контрактом.\n\nОбщие правила: JWT и право на конкретный объект проверяет Go. Деньги в минимальных единицах. Изменение плана/черновика с version; конфликт 409. Коллекции items/next_cursor, limit 1–100, default 20. Технические подробности ошибок не выдаются пользователю. Только admin; изменение требует причины и аудита.",
+        "operationId": "v2_get_admin_settings_commission",
+        "tags": [
+          "10 · Покупки, комиссия и выплаты"
+        ],
+        "x-status": "existing",
+        "responses": {
+          "200": {
+            "description": "Успешный результат",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Commission"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Нужен действительный JWT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Недостаточно прав",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Объект не найден или недоступен",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт состояния или версии",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ограничение предметной области",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Превышен лимит",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Сервис временно недоступен",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Истёк deadline",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          }
+        },
+        "x-service": "go",
+        "x-feature": "F12",
+        "x-implementation-order": 50
+      },
+      "patch": {
+        "summary": "Комиссия платформы: 20%",
+        "description": "**Реализовано в Go с тестовой платёжной заглушкой. Реальных платежей и выплат нет.** Комиссия платформы: 20%.\n\nВсе `/admin/*` требуют admin. Изменение записывает actor,reason,timestamp,request_id в аудит.\n\nАктивный пользователь имеет ≥ 1 значимое подтверждённое событие за период. Продажи — paid заказы, возвраты отдельно. Оборот gross/net, комиссия начисленная/выплаченная разделяются. Число кликов не считается доходом.\n\nЕдиные примеры frontend/backend: пустой каталог, бесплатный доступ, успешная/отклонённая оплата, повтор webhook, конфликт версии, Fork, отзыв до/после порога, отозванная ссылка, ML timeout, снятая программа, blocked пользователь. Данные и ML меняются вместе с контрактом.\n\nОбщие правила: JWT и право на конкретный объект проверяет Go. Деньги в минимальных единицах. Изменение плана/черновика с version; конфликт 409. Коллекции items/next_cursor, limit 1–100, default 20. Технические подробности ошибок не выдаются пользователю. Только admin; изменение требует причины и аудита.",
+        "operationId": "v2_patch_admin_settings_commission",
+        "tags": [
+          "10 · Покупки, комиссия и выплаты"
+        ],
+        "x-status": "existing",
+        "responses": {
+          "200": {
+            "description": "Успешный результат",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Commission"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Нужен действительный JWT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Недостаточно прав",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Объект не найден или недоступен",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт состояния или версии",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ограничение предметной области",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Превышен лимит",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Сервис временно недоступен",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Истёк deadline",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommissionInput"
+              }
+            }
+          }
+        },
+        "x-service": "go",
+        "x-feature": "F12",
+        "x-implementation-order": 51
+      }
+    },
+    "/api/v2/orders": {
+      "post": {
+        "summary": "Создать заказ на программу",
+        "description": "**Реализовано в Go с тестовой платёжной заглушкой. Реальных платежей и выплат нет.** Создать заказ на программу.\n\nЗаказ: created → pending → paid/failed/cancelled/expired; после paid возможны refund_pending → refunded. Снимок цены и комиссии берётся из опубликованной версии при создании. Повторная покупка уже доступной программы → 409 ALREADY_OWNED.\n\nПредложенная формула: `commission_minor = round_half_up(amount_minor × commission_bps / 10000)`; `author_minor = amount_minor - commission_minor`. Пример проверки: 100000 копеек при 2000 bps → 20000 комиссии и 80000 автору. Ставка проекта — 20% (2000 bps). Эквайринг, налоги, удержания и срок доступности выплаты определяются отдельно.\n\nПосле подтверждения оплаты в одной транзакции сохраняются paid, entitlement и проводки; уведомление через outbox. Выплата только из подтверждённых доступных начислений. Полный возврат создаёт обратные проводки и отзывает исходный доступ. Право на ранее созданный Fork после возврата требует утверждения лицензии; собственная история пользователя сохраняется. Частичные возвраты требуют отдельного контракта.\n\nСхема подписи webhook определяется провайдером. Проверяются подпись, event_id, payment_id, сумма, валюта и переход статуса. Redirect браузера не подтверждает платёж.\n\nОбщие правила: JWT и право на конкретный объект проверяет Go. Деньги в минимальных единицах. Изменение плана/черновика с version; конфликт 409. Коллекции items/next_cursor, limit 1–100, default 20. Технические подробности ошибок не выдаются пользователю.\n\nIdempotency-Key обязателен: одинаковые ключ и тело возвращают исходный результат, другое тело с тем же ключом даёт 409.",
+        "operationId": "v2_post_orders",
+        "tags": [
+          "10 · Покупки, комиссия и выплаты"
+        ],
+        "x-status": "existing",
+        "responses": {
+          "201": {
+            "description": "Успешный результат",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Order"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Нужен действительный JWT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Недостаточно прав",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Объект не найден или недоступен",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт состояния или версии",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ограничение предметной области",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Превышен лимит",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Сервис временно недоступен",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Истёк deadline",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrderInput"
+              }
+            }
+          }
+        },
+        "x-service": "go",
+        "x-feature": "F02",
+        "x-implementation-order": 52
+      }
+    },
+    "/api/v2/payments/webhook": {
+      "post": {
+        "summary": "Подтверждение платежа от провайдера",
+        "description": "**Реализовано в Go с тестовой платёжной заглушкой. Реальных платежей и выплат нет.** Подтверждение платежа от провайдера.\n\nЗаказ: created → pending → paid/failed/cancelled/expired; после paid возможны refund_pending → refunded. Снимок цены и комиссии берётся из опубликованной версии при создании. Повторная покупка уже доступной программы → 409 ALREADY_OWNED.\n\nПредложенная формула: `commission_minor = round_half_up(amount_minor × commission_bps / 10000)`; `author_minor = amount_minor - commission_minor`. Пример проверки: 100000 копеек при 2000 bps → 20000 комиссии и 80000 автору. Ставка проекта — 20% (2000 bps). Эквайринг, налоги, удержания и срок доступности выплаты определяются отдельно.\n\nПосле подтверждения оплаты в одной транзакции сохраняются paid, entitlement и проводки; уведомление через outbox. Выплата только из подтверждённых доступных начислений. Полный возврат создаёт обратные проводки и отзывает исходный доступ. Право на ранее созданный Fork после возврата требует утверждения лицензии; собственная история пользователя сохраняется. Частичные возвраты требуют отдельного контракта.\n\nСхема подписи webhook определяется провайдером. Проверяются подпись, event_id, payment_id, сумма, валюта и переход статуса. Redirect браузера не подтверждает платёж.\n\nОбщие правила: JWT и право на конкретный объект проверяет Go. Деньги в минимальных единицах. Изменение плана/черновика с version; конфликт 409. Коллекции items/next_cursor, limit 1–100, default 20. Технические подробности ошибок не выдаются пользователю.\n\nФормат и подпись зависят от ещё не выбранного провайдера. ProviderWebhook ниже — согласуемая нормализованная схема, не формат конкретного платёжного API. Нельзя интегрировать провайдера без адаптера и проверки подписи. В заглушке требуется X-Payment-Signature: hex HMAC-SHA256 точных байтов тела на PAYMENTS_WEBHOOK_SECRET. При пустом секрете внешний webhook отключён.",
+        "operationId": "v2_post_payments_webhook",
+        "tags": [
+          "10 · Покупки, комиссия и выплаты"
+        ],
+        "x-status": "existing",
+        "responses": {
+          "200": {
+            "description": "Успешный результат",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OK"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Нужен действительный JWT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Недостаточно прав",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Объект не найден или недоступен",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт состояния или версии",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ограничение предметной области",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Превышен лимит",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Сервис временно недоступен",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Истёк deadline",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "x-service": "go",
+        "x-feature": "F02",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProviderWebhook"
+              }
+            }
+          }
+        },
+        "x-provider-contract-pending": true,
+        "x-implementation-order": 53,
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Payment-Signature",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v2/orders/{order_id}": {
+      "get": {
+        "summary": "Проверить статус заказа",
+        "description": "**Реализовано в Go с тестовой платёжной заглушкой. Реальных платежей и выплат нет.** Проверить статус заказа.\n\nЗаказ: created → pending → paid/failed/cancelled/expired; после paid возможны refund_pending → refunded. Снимок цены и комиссии берётся из опубликованной версии при создании. Повторная покупка уже доступной программы → 409 ALREADY_OWNED.\n\nПредложенная формула: `commission_minor = round_half_up(amount_minor × commission_bps / 10000)`; `author_minor = amount_minor - commission_minor`. Пример проверки: 100000 копеек при 2000 bps → 20000 комиссии и 80000 автору. Ставка проекта — 20% (2000 bps). Эквайринг, налоги, удержания и срок доступности выплаты определяются отдельно.\n\nПосле подтверждения оплаты в одной транзакции сохраняются paid, entitlement и проводки; уведомление через outbox. Выплата только из подтверждённых доступных начислений. Полный возврат создаёт обратные проводки и отзывает исходный доступ. Право на ранее созданный Fork после возврата требует утверждения лицензии; собственная история пользователя сохраняется. Частичные возвраты требуют отдельного контракта.\n\nСхема подписи webhook определяется провайдером. Проверяются подпись, event_id, payment_id, сумма, валюта и переход статуса. Redirect браузера не подтверждает платёж.\n\nОбщие правила: JWT и право на конкретный объект проверяет Go. Деньги в минимальных единицах. Изменение плана/черновика с version; конфликт 409. Коллекции items/next_cursor, limit 1–100, default 20. Технические подробности ошибок не выдаются пользователю.",
+        "operationId": "v2_get_orders_order_id",
+        "tags": [
+          "10 · Покупки, комиссия и выплаты"
+        ],
+        "x-status": "existing",
+        "responses": {
+          "200": {
+            "description": "Успешный результат",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Order"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Нужен действительный JWT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Недостаточно прав",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Объект не найден или недоступен",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт состояния или версии",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ограничение предметной области",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Превышен лимит",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Сервис временно недоступен",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Истёк deadline",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "order_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "x-service": "go",
+        "x-feature": "F02",
+        "x-implementation-order": 54
+      }
+    },
+    "/api/v2/me/orders": {
+      "get": {
+        "summary": "История покупок",
+        "description": "**Реализовано в Go с тестовой платёжной заглушкой. Реальных платежей и выплат нет.** История покупок.\n\nЗаказ: created → pending → paid/failed/cancelled/expired; после paid возможны refund_pending → refunded. Снимок цены и комиссии берётся из опубликованной версии при создании. Повторная покупка уже доступной программы → 409 ALREADY_OWNED.\n\nПредложенная формула: `commission_minor = round_half_up(amount_minor × commission_bps / 10000)`; `author_minor = amount_minor - commission_minor`. Пример проверки: 100000 копеек при 2000 bps → 20000 комиссии и 80000 автору. Ставка проекта — 20% (2000 bps). Эквайринг, налоги, удержания и срок доступности выплаты определяются отдельно.\n\nПосле подтверждения оплаты в одной транзакции сохраняются paid, entitlement и проводки; уведомление через outbox. Выплата только из подтверждённых доступных начислений. Полный возврат создаёт обратные проводки и отзывает исходный доступ. Право на ранее созданный Fork после возврата требует утверждения лицензии; собственная история пользователя сохраняется. Частичные возвраты требуют отдельного контракта.\n\nСхема подписи webhook определяется провайдером. Проверяются подпись, event_id, payment_id, сумма, валюта и переход статуса. Redirect браузера не подтверждает платёж.\n\nОбщие правила: JWT и право на конкретный объект проверяет Go. Деньги в минимальных единицах. Изменение плана/черновика с version; конфликт 409. Коллекции items/next_cursor, limit 1–100, default 20. Технические подробности ошибок не выдаются пользователю.",
+        "operationId": "v2_get_me_orders",
+        "tags": [
+          "10 · Покупки, комиссия и выплаты"
+        ],
+        "x-status": "existing",
+        "responses": {
+          "200": {
+            "description": "Успешный результат",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Нужен действительный JWT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Недостаточно прав",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Объект не найден или недоступен",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт состояния или версии",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ограничение предметной области",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Превышен лимит",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Сервис временно недоступен",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Истёк deadline",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          }
+        },
+        "x-service": "go",
+        "x-feature": "F02",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "x-implementation-order": 55
+      }
+    },
+    "/api/v2/admin/orders": {
+      "get": {
+        "summary": "Покупки и платежные состояния",
+        "description": "**Реализовано в Go с тестовой платёжной заглушкой. Реальных платежей и выплат нет.** Покупки и платежные состояния.\n\nВсе `/admin/*` требуют admin. Изменение записывает actor,reason,timestamp,request_id в аудит.\n\nАктивный пользователь имеет ≥ 1 значимое подтверждённое событие за период. Продажи — paid заказы, возвраты отдельно. Оборот gross/net, комиссия начисленная/выплаченная разделяются. Число кликов не считается доходом.\n\nЕдиные примеры frontend/backend: пустой каталог, бесплатный доступ, успешная/отклонённая оплата, повтор webhook, конфликт версии, Fork, отзыв до/после порога, отозванная ссылка, ML timeout, снятая программа, blocked пользователь. Данные и ML меняются вместе с контрактом.\n\nОбщие правила: JWT и право на конкретный объект проверяет Go. Деньги в минимальных единицах. Изменение плана/черновика с version; конфликт 409. Коллекции items/next_cursor, limit 1–100, default 20. Технические подробности ошибок не выдаются пользователю. Только admin; изменение требует причины и аудита.",
+        "operationId": "v2_get_admin_orders",
+        "tags": [
+          "10 · Покупки, комиссия и выплаты"
+        ],
+        "x-status": "existing",
+        "responses": {
+          "200": {
+            "description": "Успешный результат",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Нужен действительный JWT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Недостаточно прав",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Объект не найден или недоступен",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт состояния или версии",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ограничение предметной области",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Превышен лимит",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Сервис временно недоступен",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Истёк deadline",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          }
+        },
+        "x-service": "go",
+        "x-feature": "F12",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "x-implementation-order": 56
+      }
+    },
+    "/api/v2/admin/payouts": {
+      "post": {
+        "summary": "Реестр и создание выплат",
+        "description": "**Реализовано в Go с тестовой платёжной заглушкой. Реальных платежей и выплат нет.** Реестр и создание выплат.\n\nВсе `/admin/*` требуют admin. Изменение записывает actor,reason,timestamp,request_id в аудит.\n\nАктивный пользователь имеет ≥ 1 значимое подтверждённое событие за период. Продажи — paid заказы, возвраты отдельно. Оборот gross/net, комиссия начисленная/выплаченная разделяются. Число кликов не считается доходом.\n\nЕдиные примеры frontend/backend: пустой каталог, бесплатный доступ, успешная/отклонённая оплата, повтор webhook, конфликт версии, Fork, отзыв до/после порога, отозванная ссылка, ML timeout, снятая программа, blocked пользователь. Данные и ML меняются вместе с контрактом.\n\nОбщие правила: JWT и право на конкретный объект проверяет Go. Деньги в минимальных единицах. Изменение плана/черновика с version; конфликт 409. Коллекции items/next_cursor, limit 1–100, default 20. Технические подробности ошибок не выдаются пользователю. Только admin; изменение требует причины и аудита.\n\nIdempotency-Key обязателен: одинаковые ключ и тело возвращают исходный результат, другое тело с тем же ключом даёт 409.",
+        "operationId": "v2_post_admin_payouts",
+        "tags": [
+          "10 · Покупки, комиссия и выплаты"
+        ],
+        "x-status": "existing",
+        "responses": {
+          "201": {
+            "description": "Успешный результат",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payout"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Нужен действительный JWT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Недостаточно прав",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Объект не найден или недоступен",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт состояния или версии",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ограничение предметной области",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Превышен лимит",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Сервис временно недоступен",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Истёк deadline",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PayoutInput"
+              }
+            }
+          }
+        },
+        "x-service": "go",
+        "x-feature": "F12",
+        "x-implementation-order": 57
+      },
+      "get": {
+        "summary": "Реестр и создание выплат",
+        "description": "**Реализовано в Go с тестовой платёжной заглушкой. Реальных платежей и выплат нет.** Реестр и создание выплат.\n\nВсе `/admin/*` требуют admin. Изменение записывает actor,reason,timestamp,request_id в аудит.\n\nАктивный пользователь имеет ≥ 1 значимое подтверждённое событие за период. Продажи — paid заказы, возвраты отдельно. Оборот gross/net, комиссия начисленная/выплаченная разделяются. Число кликов не считается доходом.\n\nЕдиные примеры frontend/backend: пустой каталог, бесплатный доступ, успешная/отклонённая оплата, повтор webhook, конфликт версии, Fork, отзыв до/после порога, отозванная ссылка, ML timeout, снятая программа, blocked пользователь. Данные и ML меняются вместе с контрактом.\n\nОбщие правила: JWT и право на конкретный объект проверяет Go. Деньги в минимальных единицах. Изменение плана/черновика с version; конфликт 409. Коллекции items/next_cursor, limit 1–100, default 20. Технические подробности ошибок не выдаются пользователю. Только admin; изменение требует причины и аудита.",
+        "operationId": "v2_get_admin_payouts",
+        "tags": [
+          "10 · Покупки, комиссия и выплаты"
+        ],
+        "x-status": "existing",
+        "responses": {
+          "200": {
+            "description": "Успешный результат",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayoutPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Нужен действительный JWT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Недостаточно прав",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Объект не найден или недоступен",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт состояния или версии",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ограничение предметной области",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Превышен лимит",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Сервис временно недоступен",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Истёк deadline",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          }
+        },
+        "x-service": "go",
+        "x-feature": "F12",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "x-implementation-order": 58
+      }
+    },
+    "/api/v2/admin/payouts/{payout_id}": {
+      "patch": {
+        "summary": "Повтор, отмена или сверка выплаты",
+        "description": "**Реализовано в Go с тестовой платёжной заглушкой. Реальных платежей и выплат нет.** Повтор, отмена или сверка выплаты.\n\nВсе `/admin/*` требуют admin. Изменение записывает actor,reason,timestamp,request_id в аудит.\n\nАктивный пользователь имеет ≥ 1 значимое подтверждённое событие за период. Продажи — paid заказы, возвраты отдельно. Оборот gross/net, комиссия начисленная/выплаченная разделяются. Число кликов не считается доходом.\n\nЕдиные примеры frontend/backend: пустой каталог, бесплатный доступ, успешная/отклонённая оплата, повтор webhook, конфликт версии, Fork, отзыв до/после порога, отозванная ссылка, ML timeout, снятая программа, blocked пользователь. Данные и ML меняются вместе с контрактом.\n\nОбщие правила: JWT и право на конкретный объект проверяет Go. Деньги в минимальных единицах. Изменение плана/черновика с version; конфликт 409. Коллекции items/next_cursor, limit 1–100, default 20. Технические подробности ошибок не выдаются пользователю. Только admin; изменение требует причины и аудита.",
+        "operationId": "v2_patch_admin_payouts_payout_id",
+        "tags": [
+          "10 · Покупки, комиссия и выплаты"
+        ],
+        "x-status": "existing",
+        "responses": {
+          "200": {
+            "description": "Успешный результат",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payout"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Нужен действительный JWT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Недостаточно прав",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Объект не найден или недоступен",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт состояния или версии",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ограничение предметной области",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Превышен лимит",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Сервис временно недоступен",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Истёк deadline",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "payout_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PayoutDecision"
+              }
+            }
+          }
+        },
+        "x-service": "go",
+        "x-feature": "F12",
+        "x-implementation-order": 59
+      }
+    },
+    "/api/v2/trainer/payouts": {
+      "get": {
+        "summary": "Выплаты автору",
+        "description": "**Реализовано в Go с тестовой платёжной заглушкой. Реальных платежей и выплат нет.** Выплаты автору.\n\nЗаказ: created → pending → paid/failed/cancelled/expired; после paid возможны refund_pending → refunded. Снимок цены и комиссии берётся из опубликованной версии при создании. Повторная покупка уже доступной программы → 409 ALREADY_OWNED.\n\nПредложенная формула: `commission_minor = round_half_up(amount_minor × commission_bps / 10000)`; `author_minor = amount_minor - commission_minor`. Пример проверки: 100000 копеек при 2000 bps → 20000 комиссии и 80000 автору. Ставка проекта — 20% (2000 bps). Эквайринг, налоги, удержания и срок доступности выплаты определяются отдельно.\n\nПосле подтверждения оплаты в одной транзакции сохраняются paid, entitlement и проводки; уведомление через outbox. Выплата только из подтверждённых доступных начислений. Полный возврат создаёт обратные проводки и отзывает исходный доступ. Право на ранее созданный Fork после возврата требует утверждения лицензии; собственная история пользователя сохраняется. Частичные возвраты требуют отдельного контракта.\n\nСхема подписи webhook определяется провайдером. Проверяются подпись, event_id, payment_id, сумма, валюта и переход статуса. Redirect браузера не подтверждает платёж.\n\nОбщие правила: JWT и право на конкретный объект проверяет Go. Деньги в минимальных единицах. Изменение плана/черновика с version; конфликт 409. Коллекции items/next_cursor, limit 1–100, default 20. Технические подробности ошибок не выдаются пользователю. Только тренер; собственные объекты.",
+        "operationId": "v2_get_trainer_payouts",
+        "tags": [
+          "10 · Покупки, комиссия и выплаты"
+        ],
+        "x-status": "existing",
+        "responses": {
+          "200": {
+            "description": "Успешный результат",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayoutPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Нужен действительный JWT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Недостаточно прав",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Объект не найден или недоступен",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт состояния или версии",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ограничение предметной области",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Превышен лимит",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Сервис временно недоступен",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Истёк deadline",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          }
+        },
+        "x-service": "go",
+        "x-feature": "F02",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "x-implementation-order": 60
+      }
+    },
+    "/api/v2/me/session": {
+      "get": {
+        "summary": "Текущая учётная запись и роли",
+        "description": "**Реализовано в Go.** Требует JWT; возвращает только собственную учётную запись и текущие серверные роли. Гостевой аккаунт имеет is_anonymous=true. Блокировка запрещает запросы с ранее выданным JWT.",
+        "operationId": "v2_get_me_session",
+        "tags": [
+          "01 · Пользователи и роли"
+        ],
+        "x-status": "existing",
+        "responses": {
+          "200": {
+            "description": "Успешный результат",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionIdentity"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Нужен действительный JWT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Недостаточно прав",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Объект не найден или недоступен",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт состояния или версии",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ограничение предметной области",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Превышен лимит",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Сервис временно недоступен",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Истёк deadline",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          }
+        },
+        "x-service": "go",
+        "x-feature": "F12",
+        "parameters": [],
+        "x-implementation-order": 1
+      }
+    },
+    "/api/v2/payments/sandbox/{order_id}": {
+      "post": {
+        "summary": "Подтвердить тестовый исход заказа",
+        "description": "**Реализовано только для платёжной заглушки.** Требуется JWT владельца заказа. action pay, fail или refund; деньги не списываются. PAYMENTS_MODE=disabled или неизвестное значение отключает операцию. Доступ выдаётся серверной транзакцией.",
+        "operationId": "v2_post_payments_sandbox_order_id",
+        "tags": [
+          "10 · Покупки, комиссия и выплаты"
+        ],
+        "x-status": "existing",
+        "responses": {
+          "400": {
+            "description": "Некорректный запрос",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Нужен действительный JWT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Недостаточно прав",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Объект не найден или недоступен",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт состояния или версии",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ограничение предметной области",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Превышен лимит",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Сервис временно недоступен",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Истёк deadline",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorV2"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Успешный результат",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Order"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "order_id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SandboxPaymentInput"
+              }
+            }
+          }
+        },
+        "x-service": "go",
+        "x-feature": "F02",
+        "x-implementation-order": 52
+      }
     }
   },
   "components": {
@@ -4228,6 +6214,37 @@
             "type": "string"
           }
         }
+      },
+      "ErrorV2": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "details": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "required": [
+              "code",
+              "message"
+            ]
+          },
+          "request_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "error",
+          "request_id"
+        ]
       },
       "Credentials": {
         "type": "object",
@@ -4633,6 +6650,149 @@
             }
           ]
         }
+      },
+      "OrderInput": {
+        "type": "object",
+        "properties": {
+          "program_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "program_version_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "program_id",
+          "program_version_id"
+        ],
+        "example": {
+          "program_id": "11111111-1111-4111-8111-111111111111",
+          "program_version_id": "22222222-2222-4222-8222-222222222222"
+        }
+      },
+      "Order": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "created",
+              "pending",
+              "paid",
+              "failed",
+              "cancelled",
+              "expired",
+              "refund_pending",
+              "refunded"
+            ]
+          },
+          "amount_minor": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "currency": {
+            "type": "string"
+          },
+          "checkout_url": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true
+          },
+          "entitlement": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": true
+          },
+          "program_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "program_version_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "trainer_id": {
+            "type": "integer"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "BlockInput": {
+        "type": "object",
+        "properties": {
+          "blocked": {
+            "type": "boolean"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "user",
+                "trainer",
+                "admin"
+              ]
+            }
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      },
+      "PayoutInput": {
+        "type": "object",
+        "properties": {
+          "trainer_id": {
+            "type": "integer"
+          },
+          "amount_minor": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "currency": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "trainer_id",
+          "amount_minor",
+          "currency"
+        ]
+      },
+      "CommissionInput": {
+        "type": "object",
+        "properties": {
+          "commission_bps": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10000,
+            "default": 2000
+          },
+          "effective_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "version": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "commission_bps",
+          "effective_at",
+          "version"
+        ]
       },
       "ProfileUpdate": {
         "type": "object",
@@ -5262,6 +7422,268 @@
             }
           }
         }
+      },
+      "Payout": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "trainer_id": {
+            "type": "integer"
+          },
+          "amount_minor": {
+            "type": "integer"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "requested",
+              "processing",
+              "paid",
+              "failed",
+              "cancelled"
+            ]
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "provider_payout_id": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "trainer_id",
+          "amount_minor",
+          "currency",
+          "status"
+        ]
+      },
+      "PayoutDecision": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "retry",
+              "cancel",
+              "reconcile"
+            ]
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "action",
+          "reason"
+        ]
+      },
+      "Commission": {
+        "type": "object",
+        "properties": {
+          "commission_bps": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10000,
+            "default": 2000
+          },
+          "effective_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "version": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "commission_bps",
+          "version"
+        ],
+        "example": {
+          "commission_bps": 2000,
+          "effective_at": "2026-10-05T00:00:00Z",
+          "version": 1
+        }
+      },
+      "UserAdmin": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "blocked": {
+            "type": "boolean"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "roles",
+          "blocked"
+        ]
+      },
+      "PayoutPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Payout"
+            }
+          },
+          "next_cursor": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "UserAdminPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserAdmin"
+            }
+          },
+          "next_cursor": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "OrderPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Order"
+            }
+          },
+          "next_cursor": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "ProviderWebhook": {
+        "type": "object",
+        "properties": {
+          "provider_event_id": {
+            "type": "string"
+          },
+          "provider_payment_id": {
+            "type": "string"
+          },
+          "order_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "event_type": {
+            "type": "string",
+            "enum": [
+              "payment_succeeded",
+              "payment_failed",
+              "refund_succeeded"
+            ]
+          },
+          "amount_minor": {
+            "type": "integer"
+          },
+          "currency": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider_event_id",
+          "provider_payment_id",
+          "order_id",
+          "event_type",
+          "amount_minor",
+          "currency"
+        ],
+        "description": "Нормализованное предложение; реальный формат и подпись определяет выбранный провайдер. Статус доступа меняется только после проверенного события."
+      },
+      "SessionIdentity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "blocked": {
+            "type": "boolean"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "is_anonymous": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "roles",
+          "blocked",
+          "is_anonymous"
+        ]
+      },
+      "SandboxPaymentInput": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "pay",
+              "fail",
+              "refund"
+            ]
+          }
+        },
+        "required": [
+          "action"
+        ]
       }
     }
   },
@@ -5306,6 +7728,14 @@
     },
     {
       "name": "Go v1 · Тренировки"
+    },
+    {
+      "name": "01 · Пользователи и роли",
+      "description": "Основа доступа: пользователи, блокировки и назначение ролей."
+    },
+    {
+      "name": "10 · Покупки, комиссия и выплаты",
+      "description": "Настроить комиссию; реализовать заказ и подтверждение платежа, затем учёт и выплаты автору."
     }
   ]
 }

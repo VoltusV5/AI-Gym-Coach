@@ -3,6 +3,9 @@ package features_test
 import (
 	"bytes"
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -19,9 +22,15 @@ import (
 	core_pgx_pool "sport_app/internal/core/repository/postgres/pool/pgx"
 	core_http_middleware "sport_app/internal/core/transport/http/middleware"
 	core_http_server "sport_app/internal/core/transport/http/server"
+	administration_postgres_repository "sport_app/internal/features/administration/repository/postgres"
+	administration_service "sport_app/internal/features/administration/service"
+	administration_transport_http "sport_app/internal/features/administration/transport/http"
 	catalog_postgres_repository "sport_app/internal/features/catalog/repository/postgres"
 	catalog_service "sport_app/internal/features/catalog/service"
 	catalog_transport_http "sport_app/internal/features/catalog/transport/http"
+	commerce_postgres_repository "sport_app/internal/features/commerce/repository/postgres"
+	commerce_service "sport_app/internal/features/commerce/service"
+	commerce_transport_http "sport_app/internal/features/commerce/transport/http"
 	generation_postgres_repository "sport_app/internal/features/generation/repository/postgres"
 	generation_service "sport_app/internal/features/generation/service"
 	generation_transport_http "sport_app/internal/features/generation/transport/http"
@@ -91,6 +100,12 @@ func TestSprintIntegration(t *testing.T) {
 	apply("000011_*.up.sql")
 	apply("000011_*.down.sql")
 	apply("000011_*.up.sql")
+	apply("000012_*.up.sql")
+	apply("000012_*.down.sql")
+	apply("000012_*.up.sql")
+	apply("000013_*.up.sql")
+	apply("000013_*.down.sql")
+	apply("000013_*.up.sql")
 	var mlMode atomic.Int32
 	var mlCalls atomic.Int32
 	ml := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -129,6 +144,8 @@ func TestSprintIntegration(t *testing.T) {
 	router := core_http_server.NewAPIVersionRouter(core_http_server.ApiVersion2)
 	planSvc := plans_service.NewService(plans_postgres_repository.NewRepository(pool))
 	workoutRepo := workouts_postgres_repository.NewRepository(pool)
+	router.RegisterRoutes(commerce_transport_http.NewHandler(commerce_service.NewService(commerce_postgres_repository.NewRepository(pool), commerce_service.Config{Stub: true, WebhookSecret: "sprint-stub-signing-secret"}), jwt).Routes()...)
+	router.RegisterRoutes(administration_transport_http.NewHandler(administration_service.NewService(administration_postgres_repository.NewRepository(pool)), jwt).Routes()...)
 	router.RegisterRoutes(catalog_transport_http.NewCatalogHTTPHandler(catalog_service.NewService(catalogRepo), jwt).Routes()...)
 	router.RegisterRoutes(profile_transport_http.NewProfileHTTPHandler(profile_service.NewService(profile_postgres_repository.NewRepository(pool)), jwt).Routes()...)
 	router.RegisterRoutes(plans_transport_http.NewPlansHTTPHandler(planSvc, jwt).Routes()...)
@@ -136,7 +153,7 @@ func TestSprintIntegration(t *testing.T) {
 	router.RegisterRoutes(publications_transport_http.NewHandler(publications_service.NewService(publications_postgres_repository.NewRepository(pool)), jwt).Routes()...)
 	router.RegisterRoutes(workouts_transport_http.NewHandler(workouts_service.NewService(workoutRepo), jwt).Routes()...)
 	router.RegisterRoutes(generation_transport_http.NewHandler(generation_service.NewService(generation_postgres_repository.NewRepository(pool), mlclient.NewV2Client(mlclient.Config{BaseURL: ml.URL, ServiceToken: "sprint-test-service"})), jwt).Routes()...)
-	handler := core_http_middleware.RequestID()(http.StripPrefix("/api/v2", router))
+	handler := core_http_middleware.RequestID()(core_http_middleware.AccountStatus(jwt, pool)(http.StripPrefix("/api/v2", router)))
 	tokens := map[int]string{}
 	for _, id := range []int{101, 102, 103, 201, 202, 301} {
 		tokens[id], err = jwt.CreateToken(fmt.Sprint(id), id == 103)
@@ -170,6 +187,47 @@ func TestSprintIntegration(t *testing.T) {
 		}
 		return w
 	}
+	t.Run("account roles blocks and audit", func(t *testing.T) {
+		_, err := pool.Exec(ctx, `INSERT INTO sportapp.users(id,is_anonymous,created_at,email) VALUES(104,FALSE,NOW(),'fixture104@example.com')`)
+		require.NoError(t, err)
+		tokens[104], err = jwt.CreateToken("104", false)
+		require.NoError(t, err)
+		check("GET", "/me/session", 0, nil, "", 401)
+		w := check("GET", "/me/session", 104, nil, "", 200)
+		require.Contains(t, w.Body.String(), `"roles":["user"]`)
+		check("GET", "/admin/users", 104, nil, "", 403)
+		check("PATCH", "/admin/users/104", 104, map[string]any{"roles": []string{"admin"}, "reason": "self"}, "", 403)
+		check("PATCH", "/admin/users/301", 301, map[string]any{"blocked": true, "reason": "self"}, "", 409)
+		check("PATCH", "/admin/users/104", 301, map[string]any{"roles": []string{"root"}, "reason": "bad"}, "", 400)
+		check("PATCH", "/admin/users/104", 301, map[string]any{"blocked": true, "reason": "fixture block"}, "", 200)
+		check("GET", "/me/profile", 104, nil, "", 403)
+		v1 := core_http_middleware.AccountStatus(jwt, pool)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { t.Fatal("blocked v1 handler executed") }))
+		req := httptest.NewRequest("GET", "/api/v1/profile", nil)
+		req.Header.Set("Authorization", "Bearer "+tokens[104])
+		rec := httptest.NewRecorder()
+		v1.ServeHTTP(rec, req)
+		require.Equal(t, 403, rec.Code)
+		check("GET", "/me/session", 104, nil, "", 403)
+		check("PATCH", "/admin/users/104", 301, map[string]any{"blocked": false, "roles": []string{"user", "trainer"}, "reason": "restore fixture"}, "", 200)
+		w = check("GET", "/me/session", 104, nil, "", 200)
+		require.Contains(t, w.Body.String(), `"trainer"`)
+		w = check("GET", "/admin/users?limit=1", 301, nil, "", 200)
+		var page administration_postgres_repository.Page
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &page))
+		require.Len(t, page.Items, 1)
+		require.NotNil(t, page.NextCursor)
+		check("GET", "/admin/users?limit=1&cursor="+*page.NextCursor, 104, nil, "", 400)
+		check("PATCH", "/admin/users/104", 301, map[string]any{"reason": ""}, "", 400)
+		var count int
+		require.NoError(t, pool.QueryRow(ctx, `SELECT count(*) FROM sportapp.account_audit WHERE target_id=104 AND request_id<>''`).Scan(&count))
+		require.Equal(t, 2, count)
+		var blockedBefore, blockedAfter bool
+		require.NoError(t, pool.QueryRow(ctx, `SELECT (before_state->>'blocked')::boolean,(after_state->>'blocked')::boolean FROM sportapp.account_audit WHERE target_id=104 AND reason='fixture block'`).Scan(&blockedBefore, &blockedAfter))
+		require.False(t, blockedBefore)
+		require.True(t, blockedAfter)
+		check("PATCH", "/admin/users/999999", 301, map[string]any{"blocked": true, "reason": "missing"}, "", 404)
+	})
+
 	var program publications_postgres_repository.Program
 	t.Run("trainer role verification privacy and concurrent decision", func(t *testing.T) {
 		for _, id := range []int{0, 101, 103} {
@@ -424,6 +482,124 @@ func TestSprintIntegration(t *testing.T) {
 		require.NoError(t, pool.QueryRow(ctx, `SELECT COUNT(*) FROM sportapp.plan_generations WHERE user_id=101`).Scan(&count))
 		require.Equal(t, 2, count)
 	})
+	t.Run("stub purchase ledger refunds payouts and signatures", func(t *testing.T) {
+		paidID, versionID := uuid.NewString(), uuid.NewString()
+		_, err := pool.Exec(ctx, `INSERT INTO sportapp.programs(id,trainer_id,status) VALUES($1,201,'active');`, paidID)
+		require.NoError(t, err)
+		_, err = pool.Exec(ctx, `INSERT INTO sportapp.program_versions(id,program_id,number,title,description,goal,level,duration_weeks,sessions_per_week,price_minor,currency,status) VALUES($1,$2,1,'Paid fixture','Synthetic paid fixture','muscle_gain','beginner',4,1,100000,'RUB','published')`, versionID, paidID)
+		require.NoError(t, err)
+		_, err = pool.Exec(ctx, `UPDATE sportapp.programs SET published_version_id=$1 WHERE id=$2`, versionID, paidID)
+		require.NoError(t, err)
+		input := commerce_postgres_repository.OrderInput{ProgramID: paidID, ProgramVersionID: versionID}
+		check("POST", "/orders", 103, input, "guest-order", 403)
+		check("POST", "/orders", 101, input, "", 400)
+		replies := make(chan *httptest.ResponseRecorder, 2)
+		var wg sync.WaitGroup
+		for i := 0; i < 2; i++ {
+			wg.Add(1)
+			go func() { defer wg.Done(); replies <- call("POST", "/orders", 101, input, "same-order") }()
+		}
+		wg.Wait()
+		close(replies)
+		var order commerce_postgres_repository.Order
+		for w := range replies {
+			require.Equal(t, 201, w.Code, w.Body.String())
+			var o commerce_postgres_repository.Order
+			require.NoError(t, json.Unmarshal(w.Body.Bytes(), &o))
+			if order.ID != "" {
+				require.Equal(t, order.ID, o.ID)
+			}
+			order = o
+		}
+		require.Equal(t, "pending", order.Status)
+		require.NotNil(t, order.CheckoutURL)
+		check("GET", "/orders/"+order.ID, 102, nil, "", 404)
+		check("POST", "/payments/sandbox/"+order.ID, 102, map[string]string{"action": "pay"}, "", 404)
+		check("POST", "/programs/"+paidID+"/access", 101, nil, "", 422)
+		check("GET", "/admin/orders", 101, nil, "", 403)
+		changed := input
+		changed.ProgramVersionID = uuid.NewString()
+		check("POST", "/orders", 101, changed, "same-order", 409)
+		event := commerce_postgres_repository.Event{EventID: "fixture-payment-event", PaymentID: "stub-" + order.ID, OrderID: order.ID, Type: "payment_succeeded", AmountMinor: 100000, Currency: "RUB"}
+		webhook := func(e commerce_postgres_repository.Event, valid bool) *httptest.ResponseRecorder {
+			raw, err := json.Marshal(e)
+			require.NoError(t, err)
+			req := httptest.NewRequest("POST", "/api/v2/payments/webhook", bytes.NewReader(raw))
+			if valid {
+				m := hmac.New(sha256.New, []byte("sprint-stub-signing-secret"))
+				_, _ = m.Write(raw)
+				req.Header.Set("X-Payment-Signature", hex.EncodeToString(m.Sum(nil)))
+			}
+			w := httptest.NewRecorder()
+			handler.ServeHTTP(w, req)
+			return w
+		}
+		require.Equal(t, 401, webhook(event, false).Code)
+		bad := event
+		bad.AmountMinor = 1
+		require.Equal(t, 400, webhook(bad, true).Code)
+		w := webhook(event, true)
+		require.Equal(t, 200, w.Code, w.Body.String())
+		require.Equal(t, 200, webhook(event, true).Code)
+		event.EventID = "second-success-event"
+		require.Equal(t, 200, webhook(event, true).Code)
+		w = check("GET", "/orders/"+order.ID, 101, nil, "", 200)
+		require.Contains(t, w.Body.String(), `"status":"paid"`)
+		check("POST", "/orders", 101, input, "already-owned", 409)
+		var gross, commission, author int64
+		require.NoError(t, pool.QueryRow(ctx, `SELECT SUM(gross_minor),SUM(commission_minor),SUM(author_minor) FROM sportapp.sales_ledger WHERE order_id=$1`, order.ID).Scan(&gross, &commission, &author))
+		require.Equal(t, int64(100000), gross)
+		require.Equal(t, int64(20000), commission)
+		require.Equal(t, int64(80000), author)
+		payout := commerce_postgres_repository.PayoutInput{TrainerID: 201, AmountMinor: 30000, Currency: "RUB"}
+		check("POST", "/admin/payouts", 201, payout, "payout-key", 403)
+		w = check("POST", "/admin/payouts", 301, payout, "payout-key", 201)
+		var p commerce_postgres_repository.Payout
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &p))
+		require.Equal(t, "paid", p.Status)
+		repeat := check("POST", "/admin/payouts", 301, payout, "payout-key", 201)
+		require.Contains(t, repeat.Body.String(), p.ID)
+		check("PATCH", "/admin/payouts/"+p.ID, 301, map[string]string{"action": "retry", "reason": "duplicate"}, "", 409)
+		check("PATCH", "/admin/payouts/"+p.ID, 301, map[string]string{"action": "reconcile", "reason": "test check"}, "", 200)
+		event.EventID = "refund-event"
+		event.Type = "refund_succeeded"
+		require.Equal(t, 200, webhook(event, true).Code)
+		require.Equal(t, 200, webhook(event, true).Code)
+		var access string
+		require.NoError(t, pool.QueryRow(ctx, `SELECT status FROM sportapp.entitlements WHERE order_id=$1`, order.ID).Scan(&access))
+		require.Equal(t, "revoked", access)
+		require.NoError(t, pool.QueryRow(ctx, `SELECT SUM(gross_minor),SUM(commission_minor),SUM(author_minor) FROM sportapp.sales_ledger WHERE order_id=$1`, order.ID).Scan(&gross, &commission, &author))
+		require.Zero(t, gross)
+		require.Zero(t, commission)
+		require.Zero(t, author)
+		check("POST", "/admin/payouts", 301, payout, "insufficient", 422)
+		failedID := uuid.NewString()
+		_, err = pool.Exec(ctx, `INSERT INTO sportapp.payouts(id,trainer_id,amount_minor,currency,status) VALUES($1,201,100000,'RUB','failed')`, failedID)
+		require.NoError(t, err)
+		check("PATCH", "/admin/payouts/"+failedID, 301, map[string]string{"action": "retry", "reason": "insufficient"}, "", 422)
+		check("PATCH", "/admin/payouts/"+failedID, 301, map[string]string{"action": "cancel", "reason": "cancel fixture"}, "", 200)
+		var count int
+		require.NoError(t, pool.QueryRow(ctx, `SELECT COUNT(*) FROM sportapp.payouts WHERE trainer_id=201 AND status='paid'`).Scan(&count))
+		require.Equal(t, 1, count)
+		check("POST", "/payments/sandbox/"+order.ID, 101, map[string]string{"action": "pay"}, "", 409)
+		w = check("GET", "/admin/settings/commission", 301, nil, "", 200)
+		var c commerce_postgres_repository.Commission
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &c))
+		c.Bps = 2500
+		c.EffectiveAt = time.Now().UTC()
+		check("PATCH", "/admin/settings/commission", 101, c, "", 403)
+		check("PATCH", "/admin/settings/commission", 301, c, "", 200)
+		check("PATCH", "/admin/settings/commission", 301, c, "", 409)
+		apply("000013_*.down.sql")
+		apply("000013_*.up.sql")
+		require.NoError(t, pool.QueryRow(ctx, `SELECT COUNT(*) FROM sportapp.operation_results WHERE operation IN ('order','payout')`).Scan(&count))
+		require.Zero(t, count)
+		w = check("POST", "/orders", 101, input, "same-order", 201)
+		var recreated commerce_postgres_repository.Order
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &recreated))
+		require.NotEqual(t, order.ID, recreated.ID)
+	})
+
 	t.Run("reconnect and rollback preserve legacy data", func(t *testing.T) {
 		second, err := core_pgx_pool.NewPool(ctx, core_pgx_pool.Config{Host: "127.0.0.1", Port: "55443", User: "sportik_test", Database: database, Timeout: 10 * time.Second})
 		require.NoError(t, err)
