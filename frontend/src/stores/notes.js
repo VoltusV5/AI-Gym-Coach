@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import api from '@/api/api'
+import api, { errorMessage } from '@/api/api'
 
 const STORAGE_KEY = 'sportik_notes'
 
@@ -11,7 +11,7 @@ function normalizeTitle(rawTitle, rawBody) {
   const t = String(rawTitle ?? '').trim()
   if (t) return t
   const body = String(rawBody ?? '').trim()
-  if (!body) return '��� ��������'
+  if (!body) return 'Без названия'
   return body.slice(0, 32)
 }
 
@@ -38,7 +38,10 @@ function isServerNoteId(id) {
 
 export const useNotesStore = defineStore('notes', {
   state: () => ({
-    notes: []
+    notes: [],
+    nextCursor: null,
+    loading: false,
+    error: null
   }),
 
   getters: {
@@ -59,7 +62,7 @@ export const useNotesStore = defineStore('notes', {
         const parsed = JSON.parse(raw)
         if (!Array.isArray(parsed)) return
         this.notes = parsed
-      } catch (_) {
+      } catch {
         this.notes = []
       }
     },
@@ -67,7 +70,7 @@ export const useNotesStore = defineStore('notes', {
     persist() {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(this.notes))
-      } catch (_) {
+      } catch {
 
       }
     },
@@ -88,12 +91,24 @@ export const useNotesStore = defineStore('notes', {
       return note
     },
 
-    async fetchNotesFromApi() {
-      const { data } = await api.get('/api/v1/notes')
-      const items = Array.isArray(data?.items) ? data.items : []
-      this.notes = items.map(toLocalNote)
-      this.persist()
-      return this.notes
+    async fetchNotesFromApi(append = false) {
+      if (this.loading || (append && !this.nextCursor)) return this.notes
+      this.loading = true
+      this.error = null
+      try {
+        const { data } = await api.get('/api/v1/notes', { params: { limit: 20, cursor: append ? this.nextCursor : undefined } })
+        const incoming = (data?.items || []).map(toLocalNote)
+        const drafts = this.notes.filter((note) => !isServerNoteId(note.id))
+        this.notes = append ? [...this.notes, ...incoming.filter((note) => !this.noteById(note.id))] : [...drafts, ...incoming]
+        this.nextCursor = data?.next_cursor ?? null
+        this.persist()
+        return this.notes
+      } catch (error) {
+        this.error = errorMessage(error)
+        throw error
+      } finally {
+        this.loading = false
+      }
     },
 
     saveNote(id, title, body) {
@@ -146,13 +161,13 @@ export const useNotesStore = defineStore('notes', {
     },
 
     async saveNoteWithApi(id, title, body) {
-      const exists = Boolean(this.noteById(id)) && isServerNoteId(id)
-      const local = this.upsertNote(id, title, body)
+      this.error = null
       try {
-        if (exists) return await this.updateNoteRemote(id, title, body)
+        if (isServerNoteId(id)) return await this.updateNoteRemote(id, title, body)
         return await this.createNoteRemote(id, title, body)
-      } catch (_) {
-        return local
+      } catch (error) {
+        this.error = errorMessage(error)
+        throw error
       }
     },
 
@@ -163,21 +178,19 @@ export const useNotesStore = defineStore('notes', {
     },
 
     async deleteNoteWithApi(id) {
-      this.deleteNote(id)
-      if (!isServerNoteId(id)) return
+      this.error = null
       try {
-        await api.delete(`/api/v1/notes/${id}`)
-      } catch (_) {
-
+        if (isServerNoteId(id)) await api.delete(`/api/v1/notes/${id}`)
+        this.deleteNote(id)
+      } catch (error) {
+        this.error = errorMessage(error)
+        throw error
       }
     },
 
     async syncWithApi() {
-      try {
-        await this.fetchNotesFromApi()
-      } catch (_) {
-
-      }
+      try { await this.fetchNotesFromApi() } catch { return false }
+      return true
     }
   }
 })

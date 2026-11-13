@@ -124,13 +124,11 @@ import { useRoute, useRouter } from 'vue-router'
 import {
   IonHeader,
   IonToolbar,
-  IonTitle,
   IonButtons,
   IonBackButton,
   IonButton,
   IonInput,
-  IonIcon,
-  toastController
+  IonIcon
 } from '@ionic/vue'
 import { arrowBack, arrowForward, swapHorizontalOutline } from 'ionicons/icons'
 import WorkoutChrome from '@/components/workout/WorkoutChrome.vue'
@@ -144,7 +142,6 @@ const isSubmitting = ref(false)
 
 
 const chromeTabKey = computed(() => (route.query.context === 'home' ? 'main' : 'workout'))
-const sessionBackHref = computed(() => (route.query.context === 'home' ? '/home' : '/workout-tools'))
 
 async function finishWorkout() {
   if (isSubmitting.value) return

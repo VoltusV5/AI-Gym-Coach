@@ -30,6 +30,7 @@
 </template>
 
 <script setup>
+defineOptions({ name: 'GenderPage' })
 import { ref } from 'vue'
 import OnboardingLayout from '@/components/layout/OnboardingLayout.vue'
 import { useAuthStore } from '@/stores/auth'

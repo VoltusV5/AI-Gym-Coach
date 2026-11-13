@@ -92,7 +92,6 @@ defineOptions({ name: 'HomePage' })
 
 import { computed, onMounted } from 'vue'
 import { IonPage, IonContent, IonFooter, IonButton, useIonRouter } from '@ionic/vue'
-import { useAuthStore } from '@/stores/auth'
 import { useWorkoutPlanStore } from '@/stores/workoutPlan'
 import { useWorkoutSessionStore } from '@/stores/workoutSession'
 import { workoutMocksEnabled } from '@/config/workoutMocks'
@@ -101,7 +100,6 @@ import { staticUrl } from '@/api/api'
 import AppTabBar from '@/components/navigation/AppTabBar.vue'
 
 const ionRouter = useIonRouter()
-const authStore = useAuthStore()
 const workoutPlanStore = useWorkoutPlanStore()
 const workoutSessionStore = useWorkoutSessionStore()
 
@@ -144,15 +142,6 @@ const onStart = async () => {
   await ionRouter.push('/workout/session?context=home')
 }
 
-const resetSession = async () => {
-  try {
-    await authStore.restartSessionForTesting()
-    workoutSessionStore.clear()
-    await ionRouter.replace('/')
-  } catch (e) {
-    console.error(e)
-  }
-}
 </script>
 
 <style scoped>

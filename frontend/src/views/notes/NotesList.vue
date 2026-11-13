@@ -15,7 +15,9 @@
                 {{ t.create }}
               </ion-button>
 
-              <p v-if="!items.length" class="notes-empty">
+              <p v-if="notesStore.error" role="alert">{{ notesStore.error }}</p>
+              <p v-if="notesStore.loading" role="status">Загружаем заметки…</p>
+              <p v-if="!items.length && !notesStore.loading && !notesStore.error" class="notes-empty">
                 {{ t.empty }}
               </p>
 
@@ -32,6 +34,7 @@
                   <p class="note-card-date">{{ formatDate(note.createdAt) }}</p>
                 </button>
               </div>
+              <ion-button v-if="notesStore.nextCursor" :disabled="notesStore.loading" @click="loadMore">Ещё заметки</ion-button>
             </div>
           </div>
         </div>
@@ -75,6 +78,8 @@ onMounted(() => {
 })
 
 const items = computed(() => notesStore.sortedNotes)
+
+async function loadMore() { try { await notesStore.fetchNotesFromApi(true) } catch { return } }
 
 function formatDate(value) {
   const d = new Date(value)

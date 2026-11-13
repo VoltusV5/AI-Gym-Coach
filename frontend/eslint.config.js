@@ -11,12 +11,13 @@ export default defineConfig([
     files: ['**/*.{vue,js,mjs,jsx}'],
   },
 
-  globalIgnores(['**/dist/**', '**/dist-ssr/**', '**/coverage/**']),
+  globalIgnores(['**/dist/**', '**/dist-ssr/**', '**/coverage/**', '**/test-results/**', '**/playwright-report/**']),
 
   {
     languageOptions: {
       globals: {
         ...globals.browser,
+        __SPORTIK_BUILD_ID__: 'readonly',
       },
     },
   },
@@ -26,5 +27,15 @@ export default defineConfig([
 
   ...pluginOxlint.buildFromOxlintConfigFile('.oxlintrc.json'),
 
+  {
+    files: ['*.config.js', 'tests/**/*.js'],
+    languageOptions: { globals: globals.node }
+  },
+  {
+    rules: {
+      'no-empty': ['error', { allowEmptyCatch: true }],
+      'vue/no-deprecated-slot-attribute': ['error', { ignore: ['/^ion-/'], ignoreParents: ['/^ion-/'] }]
+    }
+  },
   skipFormatting,
 ])

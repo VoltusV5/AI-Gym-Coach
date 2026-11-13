@@ -1,8 +1,10 @@
 import { defineStore } from 'pinia'
-import api, { setAuthHeader } from '@/api/api'
+import api, { setAuthHeader, errorMessage } from '@/api/api'
 import { useWorkoutPlanStore } from '@/stores/workoutPlan'
 import { useWorkoutSessionStore } from '@/stores/workoutSession'
 import { saveToken, getToken, removeToken } from '@/utils/auth'
+import { useNotesStore } from '@/stores/notes'
+import { useNutritionStore } from '@/stores/nutrition'
 import { isTrainingDaysComplete } from '@/utils/trainingDays'
 function profileNotYetCreated(err) {
   const status = Number(err?.response?.status)
@@ -14,12 +16,19 @@ function profileNotYetCreated(err) {
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     token: null,
+    identity: null,
+    profileV2: null,
+    sessionAttempt: 0,
+    sessionEpoch: 0,
+    initialized: false,
     profile: null,
     isLoading: false,
     error: null
   }),
 
   getters: {
+    isRegistered: (state) => Boolean(state.identity && !state.identity.is_anonymous),
+    roles: (state) => state.identity?.roles || [],
     nextOnboardingStep: (state) => {
       if (!state.profile) return 'Welcome'
       if (state.profile.height_cm == null || state.profile.weight_kg == null) return 'BodyMetrics'
@@ -43,6 +52,66 @@ export const useAuthStore = defineStore('auth', {
 
   actions: {
 
+    clearAccountData() {
+      this.sessionEpoch += 1
+      this.profile = null
+      this.profileV2 = null
+      this.identity = null
+      useWorkoutPlanStore().clearPlan()
+      useWorkoutSessionStore().clear()
+      useNotesStore().$reset()
+      useNutritionStore().$reset()
+      for (const key of ['sportik_notes', 'sportik_workout_plan', 'sportik_workout_session']) localStorage.removeItem(key)
+    },
+
+    async fetchIdentity() {
+      const { data } = await api.get('/api/v2/me/session')
+      const previous = localStorage.getItem('sportik_account_id')
+      if (previous && previous !== String(data.id)) this.clearAccountData()
+      localStorage.setItem('sportik_account_id', String(data.id))
+      this.identity = data
+      return data
+    },
+
+    async expire(expected) {
+      if (this.token !== expected) return
+      const stored = await getToken()
+      if (this.token !== expected) return
+      if (stored && stored !== expected) {
+        this.token = stored
+        setAuthHeader(stored)
+        this.clearAccountData()
+        await this.fetchIdentity()
+        return
+      }
+      this.sessionAttempt += 1
+      this.token = null
+      setAuthHeader(null)
+      this.clearAccountData()
+      this.error = 'Сессия истекла. Войдите снова.'
+      await removeToken()
+    },
+
+    async logout() {
+      this.sessionAttempt += 1
+      this.token = null
+      setAuthHeader(null)
+      this.clearAccountData()
+      await removeToken()
+    },
+
+    async fetchProfileV2() {
+      const { data } = await api.get('/api/v2/me/profile')
+      this.profileV2 = data
+      return data
+    },
+
+    async saveProfileV2(fields) {
+      const { data } = await api.patch('/api/v2/me/profile', { ...fields, version: this.profileV2?.version })
+      this.profileV2 = data
+      return data
+    },
+
     async initialize() {
       this.isLoading = true
       this.error = null
@@ -57,6 +126,7 @@ export const useAuthStore = defineStore('auth', {
           setAuthHeader(token)
 
           try {
+            await this.fetchIdentity()
             await this.fetchProfile()
           } catch (err) {
             if (Number(err?.response?.status) === 401) {
@@ -73,13 +143,14 @@ export const useAuthStore = defineStore('auth', {
         }
       } catch (err) {
         console.error('Auth initialization failed:', err)
-        const msg = err?.message || ''
+        const msg = errorMessage(err)
         const noResponse = err?.code === 'ERR_NETWORK' || !err?.response
         this.error = noResponse
           ? 'Не удаётся связаться с API. Backend — порт 5050; в Docker пересоберите frontend после правок nginx (docker compose up -d --build frontend).'
           : msg || 'Connection error'
       } finally {
         this.isLoading = false
+        this.initialized = true
       }
     },
 
@@ -97,6 +168,7 @@ export const useAuthStore = defineStore('auth', {
         this.token = token
         await saveToken(token)
         setAuthHeader(token)
+        await this.fetchIdentity()
         try {
           await this.fetchProfile()
         } catch (err) {
@@ -115,37 +187,16 @@ export const useAuthStore = defineStore('auth', {
 
 
     async fetchProfile() {
-      try {
-        const { data } = await api.get('/api/v1/profile')
-        this.profile = data
-        return data
-      } catch (err) {
-        throw err
-      }
+      const { data } = await api.get('/api/v1/profile')
+      this.profile = data
+      return data
     },
 
-
-    async updateProfile(fields, _retried = false) {
-      try {
-        const version = this.profile?.version ?? 0
-        const body = { ...fields, version }
-        const { data } = await api.post('/api/v1/profile', body)
-        this.profile = data
-        return data
-      } catch (err) {
-        const status = Number(err?.response?.status)
-        if (status === 401) {
-          await this.initialize()
-          return this.updateProfile(fields, _retried)
-        }
-        if (status === 409 && !_retried) {
-          await this.fetchProfile()
-          return this.updateProfile(fields, true)
-        }
-        throw err
-      }
+    async updateProfile(fields) {
+      const { data } = await api.post('/api/v1/profile', { ...fields, version: this.profile?.version ?? 0 })
+      this.profile = data
+      return data
     },
-
 
     async generatePlan() {
       try {
@@ -157,29 +208,24 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    async register({ email, password, name }) {
-      const { data } = await api.post('/api/v1/auth/register', { email, password, name })
-      const token = data?.token ?? null
-      if (token) {
-        this.token = token
-        await saveToken(token)
-        setAuthHeader(token)
-      }
-      this.profile = data?.user ?? null
+    async authenticate(kind, { email, password }) {
+      const attempt = ++this.sessionAttempt
+      const { data } = await api.post(`/api/v1/auth/${kind}`, { email, password })
+      if (attempt !== this.sessionAttempt) throw new Error('Выбрана другая сессия')
+      if (!data?.token) throw new Error('Сервер не вернул токен')
+      this.clearAccountData()
+      this.token = data.token
+      setAuthHeader(data.token)
+      await saveToken(data.token)
+      if (attempt !== this.sessionAttempt) throw new Error('Выбрана другая сессия')
+      await this.fetchIdentity()
+      await this.fetchProfile()
+      this.error = null
       return data
     },
 
-    async login({ email, password }) {
-      const { data } = await api.post('/api/v1/auth/login', { email, password })
-      const token = data?.token ?? null
-      if (token) {
-        this.token = token
-        await saveToken(token)
-        setAuthHeader(token)
-      }
-      this.profile = data?.user ?? null
-      return data
-    },
+    register(credentials) { return this.authenticate('register', credentials) },
+    login(credentials) { return this.authenticate('login', credentials) },
 
     async changePassword({ currentPassword, newPassword }) {
       const payload = {

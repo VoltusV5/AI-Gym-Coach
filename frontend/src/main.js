@@ -16,6 +16,7 @@ import '@ionic/vue/css/flex-utils.css'
 import '@ionic/vue/css/display.css'
 
 import '@/theme/sportik.css'
+import { onSessionExpired, setAuthHeader } from '@/api/api'
 import { useAuthStore } from '@/stores/auth'
 
 async function bootstrap() {
@@ -30,8 +31,20 @@ async function bootstrap() {
   app.use(pinia)
   app.use(router)
 
+  const auth = useAuthStore(pinia)
+  onSessionExpired((token) => auth.expire(token))
+  await auth.initialize()
+  window.addEventListener('storage', async (event) => {
+    if (event.key !== 'auth_token') return
+    auth.sessionAttempt += 1
+    auth.clearAccountData()
+    auth.token = event.newValue
+    setAuthHeader(event.newValue)
+    if (event.newValue) {
+      try { await auth.fetchIdentity(); await auth.fetchProfile() } catch { auth.error = 'Не удалось загрузить учётную запись' }
+    }
+  })
   await router.isReady()
-  await useAuthStore(pinia).initialize()
 
   app.mount('#app')
 }

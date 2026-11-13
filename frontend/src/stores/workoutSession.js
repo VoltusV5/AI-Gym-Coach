@@ -1,6 +1,4 @@
 import { defineStore } from 'pinia'
-import { getMockPlanGenerateResponse } from '@/mocks/workoutSession.mock'
-import { workoutMocksEnabled } from '@/config/workoutMocks'
 import api from '@/api/api'
 
 const STORAGE_KEY = 'sportik_workout_session'
@@ -130,7 +128,7 @@ export const useWorkoutSessionStore = defineStore('workoutSession', {
           source: this.source
         }
         localStorage.setItem(STORAGE_KEY, JSON.stringify(payload))
-      } catch (_) {
+      } catch {
 
       }
     },
@@ -151,7 +149,7 @@ export const useWorkoutSessionStore = defineStore('workoutSession', {
           )
           this.source = data.source || 'restored'
         }
-      } catch (_) {
+      } catch {
 
       }
     },
@@ -165,7 +163,7 @@ export const useWorkoutSessionStore = defineStore('workoutSession', {
       this.source = 'none'
       try {
         localStorage.removeItem(STORAGE_KEY)
-      } catch (_) {
+      } catch {
 
       }
     },
