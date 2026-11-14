@@ -125,7 +125,7 @@ watch(themeOn, (val) => {
 const notificationsOn = ref(false)
 
 function openProfilePage() {
-  router.push('/settings/profile')
+  router.push('/profile')
 }
 
 const achievements = ref([])

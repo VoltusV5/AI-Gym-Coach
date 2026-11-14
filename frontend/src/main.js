@@ -33,7 +33,7 @@ async function bootstrap() {
 
   const auth = useAuthStore(pinia)
   onSessionExpired((token) => auth.expire(token))
-  await auth.initialize()
+  await auth.ensureInitialized()
   window.addEventListener('storage', async (event) => {
     if (event.key !== 'auth_token') return
     auth.sessionAttempt += 1

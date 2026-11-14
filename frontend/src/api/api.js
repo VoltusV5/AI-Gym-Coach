@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const api = axios.create({ baseURL: import.meta.env.VITE_API_URL?.trim() || '', timeout: 30000 })
+const api = axios.create({ baseURL: import.meta.env.VITE_API_URL?.trim() || '', timeout: 30000, paramsSerializer: { indexes: null } })
 let activeToken = null
 let revision = 0
 let expired = () => undefined
@@ -46,6 +46,10 @@ export function errorMessage(error) {
   if (error?.response?.status === 409) return 'Данные изменились. Обновите их и проверьте свои правки перед сохранением.'
   if (error?.response?.status === 401) return 'Сессия истекла. Войдите снова; запрос не был повторён.'
   if (error?.response?.status === 403) return 'Действие недоступно для вашей учётной записи.'
+  const status = Number(error?.response?.status)
+  if (status === 400 && data?.error?.message === 'Invalid request') return 'Проверьте заполненные поля и выбранные значения.'
+  if (status === 404) return 'Объект не найден или больше недоступен.'
+  if (status === 503 || status === 504) return 'Сервис временно недоступен. Повторите попытку позже.'
   if (typeof data?.error?.message === 'string') return data.error.message
   if (typeof data?.message === 'string') return data.message
   return error?.response ? 'Не удалось выполнить действие. Проверьте данные и повторите.' : 'Нет связи с сервером. Проверьте соединение и повторите.'

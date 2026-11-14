@@ -4,6 +4,7 @@
       <!-- Классика смартфона: сверху полоса с Аполлоном, ниже — лист на весь экран со скруглением только сверху -->
       <div class="home-scroll">
         <div class="home-frame">
+        <nav class="home-platform-links" aria-label="Тренировочная платформа"><router-link to="/catalog">Каталог программ</router-link><router-link to="/plans">Мои планы</router-link><router-link to="/profile">Профиль</router-link></nav>
           <div v-if="workoutApolloImg" class="home-apollo-strip" aria-hidden="true">
             <img class="home-apollo-strip-img" :src="workoutApolloImg" alt="" />
           </div>
@@ -145,6 +146,8 @@ const onStart = async () => {
 </script>
 
 <style scoped>
+.home-platform-links { display: flex; justify-content: center; gap: 18px; padding: 16px; background: var(--sportik-surface); flex-wrap: wrap; }
+.home-platform-links a { color: var(--sportik-brand); }
 .home-content {
   --background: var(--sportik-bg);
 }

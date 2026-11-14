@@ -1,3 +1,4 @@
+import { clearWorkoutDrafts } from '@/utils/workoutDraft'
 import { defineStore } from 'pinia'
 import api, { setAuthHeader, errorMessage } from '@/api/api'
 import { useWorkoutPlanStore } from '@/stores/workoutPlan'
@@ -6,6 +7,8 @@ import { saveToken, getToken, removeToken } from '@/utils/auth'
 import { useNotesStore } from '@/stores/notes'
 import { useNutritionStore } from '@/stores/nutrition'
 import { isTrainingDaysComplete } from '@/utils/trainingDays'
+let initialization = null
+
 function profileNotYetCreated(err) {
   const status = Number(err?.response?.status)
   const data = err?.response?.data
@@ -56,6 +59,7 @@ export const useAuthStore = defineStore('auth', {
       this.sessionEpoch += 1
       this.profile = null
       this.profileV2 = null
+      clearWorkoutDrafts()
       this.identity = null
       useWorkoutPlanStore().clearPlan()
       useWorkoutSessionStore().clear()
@@ -112,6 +116,12 @@ export const useAuthStore = defineStore('auth', {
       return data
     },
 
+    async ensureInitialized() {
+      if (this.initialized) return
+      if (!initialization) initialization = this.initialize().finally(() => { initialization = null })
+      await initialization
+    },
+
     async initialize() {
       this.isLoading = true
       this.error = null
@@ -146,7 +156,7 @@ export const useAuthStore = defineStore('auth', {
         const msg = errorMessage(err)
         const noResponse = err?.code === 'ERR_NETWORK' || !err?.response
         this.error = noResponse
-          ? 'Не удаётся связаться с API. Backend — порт 5050; в Docker пересоберите frontend после правок nginx (docker compose up -d --build frontend).'
+          ? 'Не удаётся подключиться к серверу. Проверьте соединение и повторите попытку.'
           : msg || 'Connection error'
       } finally {
         this.isLoading = false

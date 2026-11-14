@@ -14,7 +14,20 @@ defineEmits(['retry'])
 </script>
 
 <style scoped>
-.async-state { padding: 28px 16px; text-align: center; color: var(--sportik-text-muted); }
-.async-state--error { color: var(--sportik-danger); }
-button { border: 1px solid currentColor; border-radius: 12px; padding: 10px 18px; color: var(--sportik-brand); background: var(--sportik-surface); cursor: pointer; }
+.async-state {
+  padding: 28px 16px;
+  text-align: center;
+  color: var(--sportik-text-muted);
+}
+.async-state--error {
+  color: var(--sportik-danger);
+}
+button {
+  border: 1px solid currentColor;
+  border-radius: 12px;
+  padding: 10px 18px;
+  color: var(--sportik-brand);
+  background: var(--sportik-surface);
+  cursor: pointer;
+}
 </style>
