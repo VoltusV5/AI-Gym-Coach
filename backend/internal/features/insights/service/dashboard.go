@@ -44,7 +44,9 @@ func buildDashboard(snapshot repository.DashboardSnapshot, now time.Time, inacti
 	add := func(kind string, priority int, status string, data any, path, label string) {
 		out.Blocks = append(out.Blocks, Block{ID: kind, Type: kind, Priority: priority, Status: status, Data: data, Action: map[string]string{"route": path, "label": label}})
 	}
-	if snapshot.ActivePlan == nil {
+	if snapshot.Unavailable["today_workout"] {
+		add("today_workout", 100, "unavailable", nil, "/plans", "Мои планы")
+	} else if snapshot.ActivePlan == nil {
 		add("today_workout", 100, "empty", map[string]string{"message": "Заполните профиль и создайте свой план."}, "/profile", "Настроить профиль")
 	} else {
 		out.State = "rest_day"
@@ -75,12 +77,18 @@ func buildDashboard(snapshot repository.DashboardSnapshot, now time.Time, inacti
 			out.Blocks[0].Data = map[string]any{"plan_id": plan.ID, "title": plan.Title, "message": "Вернитесь к привычному ритму: начните с посильной тренировки."}
 		}
 	}
-	if latest != nil && !latest.FinishedAt.Before(today) && latest.FinishedAt.Before(end) {
+	if !snapshot.Unavailable["today_workout"] && latest != nil && !latest.FinishedAt.Before(today) && latest.FinishedAt.Before(end) {
 		out.State = "just_completed"
 		add("recent_progress", 120, "ready", map[string]any{"session_id": latest.ID, "metrics": domain.Measure(latest.Input)}, "/progress", "Посмотреть результат")
 	}
 	progress := domain.Aggregate(snapshot.Data, "28d", today.AddDate(0, 0, -27), end, now, loc)
-	add("recent_progress", 70, "ready", progress, "/progress", "Ваш прогресс")
+	progressStatus := "ready"
+	var progressData any = progress
+	if snapshot.Unavailable["recent_progress"] {
+		progressStatus = "unavailable"
+		progressData = nil
+	}
+	add("recent_progress", 70, progressStatus, progressData, "/progress", "Ваш прогресс")
 	if out.State == "just_completed" {
 		out.Blocks[len(out.Blocks)-1].ID = "progress_28d"
 	}
@@ -96,7 +104,9 @@ func buildDashboard(snapshot repository.DashboardSnapshot, now time.Time, inacti
 		add("achievement", 50, "ready", map[string]any{"workout_count": progress.WorkoutCount, "message": "Каждая завершённая тренировка — шаг вперёд."}, "/progress", "История занятий")
 	}
 	followedStatus := "ready"
-	if len(snapshot.Followed) == 0 {
+	if snapshot.Unavailable["followed_trainers"] {
+		followedStatus = "unavailable"
+	} else if len(snapshot.Followed) == 0 {
 		followedStatus = "empty"
 	}
 	add("followed_trainers", 30, followedStatus, map[string]any{"items": snapshot.Followed}, "/trainers", "Мои тренеры")

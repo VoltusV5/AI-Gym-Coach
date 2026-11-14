@@ -33,16 +33,26 @@ export function usePage(endpoint, params = () => ({})) {
   const request = useRequest()
   const items = ref([])
   const nextCursor = ref(null)
+  let appliedParams = {}
+  let appliedEndpoint
   async function load(append = false) {
     if (append && (request.loading.value || !nextCursor.value)) return
+    const queryParams = append ? appliedParams : JSON.parse(JSON.stringify(params()))
+    const requestEndpoint = append
+      ? appliedEndpoint
+      : typeof endpoint === 'function'
+        ? endpoint()
+        : endpoint
     const value = await request.run(async () => {
-      const { data } = await api.get(typeof endpoint === 'function' ? endpoint() : endpoint, {
-        params: { ...params(), limit: 20, cursor: append ? nextCursor.value : undefined },
+      const { data } = await api.get(requestEndpoint, {
+        params: { ...queryParams, limit: 20, cursor: append ? nextCursor.value : undefined },
       })
       if (!Array.isArray(data?.items)) throw new Error('Некорректный ответ списка')
       return data
     })
     if (!value) return
+    appliedParams = queryParams
+    appliedEndpoint = requestEndpoint
     const existing = new Set(append ? items.value.map((item) => item.id) : [])
     items.value = [
       ...(append ? items.value : []),

@@ -1284,7 +1284,7 @@
     ],
     "gate": null,
     "body_expression": null,
-    "test": "check('Фильтры соблюдены',()=>{includesItem(data.items,R('free_program_id'));data.items.forEach(x=>{eq(x.goal,'muscle_gain');eq(x.level,'beginner');eq(x.duration_weeks,4);eq(x.trainer.id,Number(R('trainer_id')));});});",
+    "test": "check('Фильтры соблюдены',()=>{includesItem(data.items,R('free_program_id'));data.items.forEach(x=>{eq(x.goal,'muscle_gain');eq(x.level,'beginner');eq(x.duration_weeks,4);eq(x.sessions_per_week,3);eq(x.trainer.id,Number(R('trainer_id')));});});",
     "pre": "",
     "ids": {},
     "idem": null,

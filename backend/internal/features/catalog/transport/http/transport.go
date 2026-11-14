@@ -61,7 +61,7 @@ func parseFilter(r *http.Request) (catalog_postgres_repository.Filter, error) {
 		filter.Equipment = []string{}
 	}
 	for key, dest := range map[string]*int{
-		"limit": &filter.Limit, "duration_weeks": &filter.DurationWeeks, "trainer_id": &filter.TrainerID,
+		"sessions_per_week": &filter.SessionsPerWeek, "limit": &filter.Limit, "duration_weeks": &filter.DurationWeeks, "trainer_id": &filter.TrainerID,
 	} {
 		if q.Has(key) {
 			n, err := strconv.Atoi(q.Get(key))

@@ -7,49 +7,49 @@
         :style="{ backgroundImage: `url(${workoutBgUrl})` }"
         aria-hidden="true"
       ></div>
-        <div v-if="errorMsg" class="error-content">
-          <div class="error-icon-wrapper">
-            <ion-icon :icon="alertCircleOutline" color="danger"></ion-icon>
-          </div>
-          <h3>Ошибка генерации</h3>
-          <p>{{ errorMsg }}</p>
-          <ion-button expand="block" mode="ios" class="sportik-footer-btn" @click="retry">
-            Попробовать ещё раз
-          </ion-button>
-          <ion-button fill="clear" color="medium" @click="router.replace('/profile')">
-            Открыть тренировочный профиль
-          </ion-button>
+      <div v-if="errorMsg" class="error-content">
+        <div class="error-icon-wrapper">
+          <ion-icon :icon="alertCircleOutline" color="danger"></ion-icon>
+        </div>
+        <h3>Ошибка генерации</h3>
+        <p>{{ errorMsg }}</p>
+        <ion-button expand="block" mode="ios" class="sportik-footer-btn" @click="retry">
+          Попробовать ещё раз
+        </ion-button>
+        <ion-button fill="clear" color="medium" @click="router.replace('/profile')">
+          Открыть тренировочный профиль
+        </ion-button>
+      </div>
+
+      <div v-else class="generating-container">
+        <!-- Анимация загрузки -->
+        <div class="animation-wrapper">
+          <ion-spinner name="crescent" color="primary" class="main-spinner"></ion-spinner>
+          <div class="pulse-ring"></div>
         </div>
 
-        <div v-else class="generating-container">
-          <!-- Анимация загрузки -->
-          <div class="animation-wrapper">
-            <ion-spinner name="crescent" color="primary" class="main-spinner"></ion-spinner>
-            <div class="pulse-ring"></div>
-          </div>
-
-          <div class="text-content">
-            <transition name="fade" mode="out-in">
-              <h2 :key="currentQuoteIndex">{{ quotes[currentQuoteIndex] }}</h2>
-            </transition>
-            <p>Это займёт всего несколько секунд...</p>
-          </div>
-
-          <div class="progress-bar-wrapper">
-            <ion-progress-bar :value="progress"></ion-progress-bar>
-            <span class="progress-text">{{ Math.round(progress * 100) }}%</span>
-          </div>
-
-          <div class="footer-hint">
-            <p>Учитываем ваши цели и уровень... Осталось совсем немного!</p>
-          </div>
+        <div class="text-content">
+          <transition name="fade" mode="out-in">
+            <h2 :key="currentQuoteIndex">{{ quotes[currentQuoteIndex] }}</h2>
+          </transition>
+          <p>Это займёт всего несколько секунд...</p>
         </div>
+
+        <div class="progress-bar-wrapper">
+          <ion-progress-bar :value="progress"></ion-progress-bar>
+          <span class="progress-text">{{ Math.round(progress * 100) }}%</span>
+        </div>
+
+        <div class="footer-hint">
+          <p>Учитываем ваши цели и уровень... Осталось совсем немного!</p>
+        </div>
+      </div>
     </ion-content>
   </ion-page>
 </template>
 
 <script setup>
-import { onIonViewWillLeave } from '@ionic/vue'
+import { onIonViewWillEnter, onIonViewWillLeave } from '@ionic/vue'
 import { ref, onMounted, onUnmounted } from 'vue'
 import { IonPage, IonContent, IonSpinner, IonProgressBar, IonIcon, IonButton } from '@ionic/vue'
 import { alertCircleOutline } from 'ionicons/icons'
@@ -64,8 +64,16 @@ let generationKey = crypto.randomUUID()
 let generationVersion = null
 let generating = false
 let alive = true
-const controller = new AbortController()
-onIonViewWillLeave(() => { alive = false; controller.abort() })
+let controller
+onIonViewWillEnter(() => {
+  alive = true
+  startGeneration()
+})
+onIonViewWillLeave(() => {
+  alive = false
+  controller?.abort()
+  generating = false
+})
 const router = useRouter()
 
 const workoutBgUrl = getWorkoutBackgroundImageUrl()
@@ -78,7 +86,7 @@ const quotes = [
   'Подбираем оптимальные упражнения...',
   'Генерируем ваш идеальный план тренировок...',
   'Рассчитываем нагрузку для лучшего результата...',
-  'Почти готово!'
+  'Почти готово!',
 ]
 
 let progressInterval
@@ -87,35 +95,57 @@ let quoteInterval
 const startGeneration = async () => {
   if (generating) return
   generating = true
+  const attempt = new AbortController()
+  controller = attempt
   errorMsg.value = null
   progress.value = 0
 
   try {
     const profile = await authStore.fetchProfileV2()
-    if (!alive) return
-    if (!profile.session_duration_min || !profile.level || !profile.goal || !profile.training_days?.length || !profile.age || !profile.height_cm || !profile.weight_kg) {
+    if (!alive || controller !== attempt) return
+    if (
+      !profile.session_duration_min ||
+      !profile.level ||
+      !profile.goal ||
+      !profile.training_days?.length ||
+      !profile.age ||
+      !profile.height_cm ||
+      !profile.weight_kg
+    ) {
       await router.replace('/profile')
       return
     }
-    if (generationVersion !== profile.version) { generationVersion = profile.version; generationKey = crypto.randomUUID() }
-    const { data } = await api.post('/api/v2/plans/generate', { profile_version: profile.version }, { headers: { 'Idempotency-Key': generationKey }, timeout: 90000, signal: controller.signal })
-    if (!alive) return
+    if (generationVersion !== profile.version) {
+      generationVersion = profile.version
+      generationKey = crypto.randomUUID()
+    }
+    const { data } = await api.post(
+      '/api/v2/plans/generate',
+      { profile_version: profile.version },
+      { headers: { 'Idempotency-Key': generationKey }, timeout: 90000, signal: attempt.signal },
+    )
+    if (!alive || controller !== attempt) return
     progress.value = 1
     await router.replace(`/plans/${data.plan_id}`)
   } catch (err) {
-    if (!alive) return
+    if (!alive || controller !== attempt) return
     console.error('Failed to generate plan:', err)
     const status = err?.response?.status
     if (status === 502 || status === 504) {
-      errorMsg.value = 'Сервис генерации временно недоступен (502/504). Пожалуйста, попробуйте позже.'
+      errorMsg.value =
+        'Сервис генерации временно недоступен (502/504). Пожалуйста, попробуйте позже.'
     } else if (status === 500) {
       errorMsg.value = 'Ошибка на сервере при создании плана. Мы уже работаем над исправлением.'
     } else if (err?.code === 'ERR_NETWORK') {
       errorMsg.value = 'Проблема с сетью. Проверьте соединение с интернетом.'
     } else {
-      errorMsg.value = err?.response?.data?.error?.message || 'Не удалось создать план. Проверьте профиль, оборудование и тренировочные дни.'
+      errorMsg.value =
+        err?.response?.data?.error?.message ||
+        'Не удалось создать план. Проверьте профиль, оборудование и тренировочные дни.'
     }
-  } finally { generating = false }
+  } finally {
+    if (controller === attempt) generating = false
+  }
 }
 
 const retry = () => {
@@ -131,8 +161,6 @@ onMounted(async () => {
   quoteInterval = setInterval(() => {
     currentQuoteIndex.value = (currentQuoteIndex.value + 1) % quotes.length
   }, 2500)
-
-  await startGeneration()
 })
 
 onUnmounted(() => {
@@ -190,8 +218,14 @@ onUnmounted(() => {
 }
 
 @keyframes pulse {
-  0% { transform: scale(0.5); opacity: 0.5; }
-  100% { transform: scale(1.5); opacity: 0; }
+  0% {
+    transform: scale(0.5);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
 }
 
 .text-content h2 {
@@ -228,14 +262,14 @@ onUnmounted(() => {
   text-align: center;
 }
 
-
-.fade-enter-active, .fade-leave-active {
+.fade-enter-active,
+.fade-leave-active {
   transition: opacity 0.5s ease;
 }
-.fade-enter-from, .fade-leave-to {
+.fade-enter-from,
+.fade-leave-to {
   opacity: 0;
 }
-
 
 .error-content {
   display: flex;
@@ -271,9 +305,18 @@ onUnmounted(() => {
 }
 
 @keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-8px); }
-  50% { transform: translateX(8px); }
-  75% { transform: translateX(-4px); }
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-8px);
+  }
+  50% {
+    transform: translateX(8px);
+  }
+  75% {
+    transform: translateX(-4px);
+  }
 }
 </style>

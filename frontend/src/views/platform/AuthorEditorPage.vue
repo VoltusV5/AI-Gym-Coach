@@ -98,6 +98,7 @@
   </platform-layout>
 </template>
 <script setup>
+import { referenceItems } from '@/api/referenceLists'
 import { useViewLoad } from '@/composables/useViewLoad'
 import { ref, computed } from 'vue'
 import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router'
@@ -148,10 +149,8 @@ function minor(value) {
 }
 async function fetchProgram() {
   await load.run(async () => {
-    equipment.value = (await api.get('/api/v2/equipment', { params: { limit: 100 } })).data.items
-    categories.value = (
-      await api.get('/api/v2/catalog/categories', { params: { limit: 100 } })
-    ).data.items
+    equipment.value = await referenceItems('/api/v2/equipment')
+    categories.value = await referenceItems('/api/v2/catalog/categories')
     if (!isNew.value) {
       const { data } = await api.get(`/api/v2/trainer/programs/${route.params.id}`)
       form.value = { ...clone(data.draft), version: data.version }

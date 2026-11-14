@@ -26,6 +26,14 @@
             placeholder="Любая"
         /></label>
         <label
+          >Занятий в неделю<input
+            v-model="filter.sessions_per_week"
+            type="number"
+            min="1"
+            max="7"
+            placeholder="Любая частота"
+        /></label>
+        <label
           >Стоимость<select v-model="filter.price_type">
             <option value="">Любая</option>
             <option value="free">Бесплатные</option>
@@ -76,17 +84,24 @@
   </platform-layout>
 </template>
 <script setup>
+import { referenceItems } from '@/api/referenceLists'
 import { useViewLoad } from '@/composables/useViewLoad'
 import { reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import api from '@/api/api'
 import PlatformLayout from '@/components/platform/PlatformLayout.vue'
 import AsyncState from '@/components/platform/AsyncState.vue'
 import ProgramCard from '@/components/platform/ProgramCard.vue'
 import { usePage, useRequest } from '@/composables/useAsync'
 import { goalNames, levelNames } from '@/utils/platform'
 const route = useRoute()
-const defaults = { goal: '', level: '', duration_weeks: '', price_type: '', sort: 'newest' }
+const defaults = {
+  goal: '',
+  level: '',
+  duration_weeks: '',
+  sessions_per_week: '',
+  price_type: '',
+  sort: 'newest',
+}
 const filter = reactive({ ...defaults }),
   selectedEquipment = ref([]),
   equipmentFilter = ref(false)
@@ -107,8 +122,7 @@ async function reset() {
 useViewLoad(() => {
   page.load()
   equipment.run(async () => {
-    const { data } = await api.get('/api/v2/equipment', { params: { limit: 100 } })
-    return data.items
+    return referenceItems('/api/v2/equipment')
   })
 })
 </script>

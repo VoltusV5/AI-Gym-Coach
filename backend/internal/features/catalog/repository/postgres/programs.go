@@ -50,6 +50,7 @@ func (r *Repository) ListPrograms(ctx context.Context, filter Filter) ([]Program
 		AND ($6 = '' OR ($6 = 'free' AND v.price_minor = 0) OR ($6 = 'paid' AND v.price_minor > 0))
 		AND (NOT $7 OR NOT EXISTS (SELECT 1 FROM sportapp.program_version_equipment ve
 			WHERE ve.version_id = v.id AND NOT (ve.equipment_id = ANY($8::text[]))))
+		AND ($11::integer = 0 OR v.sessions_per_week = $11)
 		ORDER BY ` + order + ` LIMIT $9`
 	var cursor any
 	if filter.After != "" {
@@ -57,7 +58,7 @@ func (r *Repository) ListPrograms(ctx context.Context, filter Filter) ([]Program
 	}
 	rows, err := r.pool.Query(ctx, query, cursor, filter.Goal, filter.Level,
 		filter.DurationWeeks, filter.TrainerID, filter.PriceType, filter.EquipmentSet, filter.Equipment, filter.Limit+1,
-		sortValue)
+		sortValue, filter.SessionsPerWeek)
 	if err != nil {
 		return nil, fmt.Errorf("list programs: %w", err)
 	}

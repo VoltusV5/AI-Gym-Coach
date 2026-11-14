@@ -549,6 +549,20 @@ func TestSprintIntegration(t *testing.T) {
 		require.NoError(t, pool.QueryRow(ctx, `SELECT COUNT(*) FROM sportapp.plan_generations WHERE user_id=101`).Scan(&count))
 		require.Equal(t, 2, count)
 	})
+	t.Run("generation rejects exercises unsafe for the current profile", func(t *testing.T) {
+		_, err := pool.Exec(ctx, `UPDATE sportapp.profile SET injuries_notes=TRUE WHERE user_id=101; UPDATE sportapp.exercises SET safe_for_injuries=FALSE WHERE id=1`)
+		require.NoError(t, err)
+		defer func() {
+			_, err := pool.Exec(ctx, `UPDATE sportapp.profile SET injuries_notes=FALSE WHERE user_id=101`)
+			require.NoError(t, err)
+		}()
+		var before, after int
+		require.NoError(t, pool.QueryRow(ctx, `SELECT COUNT(*) FROM sportapp.plan_generations WHERE user_id=101`).Scan(&before))
+		check("POST", "/plans/generate", 101, map[string]int{"profile_version": 4}, "unsafe-exercise", 422)
+		require.NoError(t, pool.QueryRow(ctx, `SELECT COUNT(*) FROM sportapp.plan_generations WHERE user_id=101`).Scan(&after))
+		require.Equal(t, before, after)
+	})
+
 	t.Run("favorites registration duplicate owner and visibility", func(t *testing.T) {
 		path := "/me/favorites/" + program.ID
 		check("PUT", path, 0, nil, "", 401)
@@ -568,6 +582,13 @@ func TestSprintIntegration(t *testing.T) {
 		check("DELETE", path, 101, nil, "", 204)
 		check("PUT", "/me/favorites/"+uuid.NewString(), 101, nil, "", 404)
 		check("GET", "/catalog/programs?equipment=", 101, nil, "", 200)
+		w = check("GET", "/catalog/programs?sessions_per_week=1", 101, nil, "", 200)
+		require.Contains(t, w.Body.String(), program.ID)
+		w = check("GET", "/catalog/programs?sessions_per_week=7", 101, nil, "", 200)
+		require.NotContains(t, w.Body.String(), program.ID)
+		check("GET", "/catalog/programs?sessions_per_week=8", 101, nil, "", 400)
+		check("GET", "/catalog/programs?sessions_per_week=0", 101, nil, "", 400)
+
 	})
 
 	t.Run("stub purchase ledger refunds payouts and signatures", func(t *testing.T) {
@@ -708,7 +729,7 @@ func TestSprintIntegration(t *testing.T) {
 		w := check("GET", "/programs/"+program.ID+"/review-eligibility", 101, nil, "", 200)
 		require.Contains(t, w.Body.String(), `"eligible":false`)
 		var reviewVersion string
-		require.NoError(t, pool.QueryRow(ctx, `SELECT published_version_id::text FROM sportapp.programs WHERE id=$1`, program.ID).Scan(&reviewVersion))
+		require.NoError(t, pool.QueryRow(ctx, `SELECT id::text FROM sportapp.program_versions WHERE program_id=$1 ORDER BY created_at,id LIMIT 1`, program.ID).Scan(&reviewVersion))
 		_, err := pool.Exec(ctx, `UPDATE sportapp.workout_sessions SET source_program_version_id=$1 WHERE user_id=101`, reviewVersion)
 		require.NoError(t, err)
 		for i := 0; i < 2; i++ {
@@ -721,6 +742,7 @@ func TestSprintIntegration(t *testing.T) {
 		w = check("POST", "/programs/"+program.ID+"/reviews", 101, map[string]any{"overall": 5, "structure": 4, "text": "Fixture review"}, "", 201)
 		var review social_postgres_repository.Review
 		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &review))
+		require.Equal(t, reviewVersion, review.ProgramVersionID)
 		check("POST", "/programs/"+program.ID+"/reviews", 101, map[string]any{"overall": 4}, "", 409)
 		check("PATCH", "/reviews/"+review.ID, 102, map[string]any{"overall": 1}, "", 404)
 		check("PATCH", "/admin/reviews/"+review.ID+"/moderation", 101, map[string]string{"status": "hidden", "reason": "self"}, "", 403)
@@ -780,6 +802,11 @@ func TestSprintIntegration(t *testing.T) {
 		check("POST", "/events", 101, map[string]any{"events": []social_postgres_repository.Event{event}}, "", 400)
 		check("DELETE", "/reviews/"+review.ID, 102, nil, "", 404)
 		check("DELETE", "/reviews/"+review.ID, 101, nil, "", 204)
+		w = check("POST", "/programs/"+program.ID+"/reviews", 101, map[string]any{"overall": 4}, "", 201)
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &review))
+		require.Equal(t, reviewVersion, review.ProgramVersionID)
+		check("DELETE", "/reviews/"+review.ID, 101, nil, "", 204)
+
 		_, err = pool.Exec(ctx, `DELETE FROM sportapp.workout_sessions WHERE user_id=101 AND client_session_id<>$1`, workout.ClientSessionID)
 		require.NoError(t, err)
 	})
@@ -978,6 +1005,29 @@ func TestSprintIntegration(t *testing.T) {
 		check("GET", "/recommendations/programs?limit=101", 101, nil, "", 400)
 		check("GET", "/dashboard", 101, nil, "", 200)
 		check("GET", "/dashboard", 103, nil, "", 200)
+	})
+
+	t.Run("dashboard isolates failed progress and followed blocks", func(t *testing.T) {
+		for _, fixture := range []struct{ table, block string }{{"workout_sessions", "recent_progress"}, {"trainer_follows", "followed_trainers"}} {
+			t.Run(fixture.block, func(t *testing.T) {
+				_, err := pool.Exec(ctx, `ALTER TABLE sportapp.`+fixture.table+` RENAME TO dashboard_unavailable_fixture`)
+				require.NoError(t, err)
+				defer func() {
+					_, err := pool.Exec(ctx, `ALTER TABLE sportapp.dashboard_unavailable_fixture RENAME TO `+fixture.table)
+					require.NoError(t, err)
+				}()
+				w := check("GET", "/dashboard", 101, nil, "", 200)
+				var dashboard insights_service.Dashboard
+				require.NoError(t, json.Unmarshal(w.Body.Bytes(), &dashboard))
+				statuses := map[string]string{}
+				for _, block := range dashboard.Blocks {
+					statuses[block.ID] = block.Status
+				}
+				require.Equal(t, "unavailable", statuses[fixture.block])
+				require.Equal(t, "ready", statuses["ai_message"])
+				require.NotEqual(t, "unavailable", statuses["today_workout"])
+			})
+		}
 	})
 
 	t.Run("startup seeds preserve administrative edits", func(t *testing.T) {

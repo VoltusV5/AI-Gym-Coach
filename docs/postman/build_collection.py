@@ -273,7 +273,7 @@ patch(8,'Изменить новый черновик','/api/v2/trainer/programs
 get(8,'Черновик не меняет опубликованный оригинал','/api/v2/catalog/programs/{program_id}',ids={'program_id':'free_program_id'},test="check('Публичная версия и название прежние',()=>{eq(data.published_version_id,R('free_version_id'));eq(data.title,J('free_card').title);});")
 
 # 09: filtering, favorites and entitlement.
-get(9,'Каталог по автору, цели, уровню и длительности','/api/v2/catalog/programs',query={'trainer_id':'{{state_trainer_id}}','goal':'muscle_gain','level':'beginner','duration_weeks':4,'limit':100},test="check('Фильтры соблюдены',()=>{includesItem(data.items,R('free_program_id'));data.items.forEach(x=>{eq(x.goal,'muscle_gain');eq(x.level,'beginner');eq(x.duration_weeks,4);eq(x.trainer.id,Number(R('trainer_id')));});});")
+get(9,'Каталог по автору, цели, уровню и длительности','/api/v2/catalog/programs',query={'trainer_id':'{{state_trainer_id}}','goal':'muscle_gain','level':'beginner','duration_weeks':4,'sessions_per_week':3,'limit':100},test="check('Фильтры соблюдены',()=>{includesItem(data.items,R('free_program_id'));data.items.forEach(x=>{eq(x.goal,'muscle_gain');eq(x.level,'beginner');eq(x.duration_weeks,4);eq(x.sessions_per_week,3);eq(x.trainer.id,Number(R('trainer_id')));});});")
 put(9,'Добавить в избранное','/api/v2/me/favorites/{program_id}',ids={'program_id':'free_program_id'})
 put(9,'Повтор добавления в избранное','/api/v2/me/favorites/{program_id}',ids={'program_id':'free_program_id'})
 get(9,'В избранном одна запись','/api/v2/me/favorites',query={'limit':100},test="check('Избранное не дублируется',()=>eq(data.items.filter(x=>x.id===R('free_program_id')).length,1));")

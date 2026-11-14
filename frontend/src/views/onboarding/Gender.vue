@@ -4,6 +4,7 @@
     :progress="22"
     :disabled="!gender"
     :loading="isSubmitting"
+    :error="submitError"
     @next="submit"
   >
     <div class="gender-tiles">
@@ -31,6 +32,7 @@
 
 <script setup>
 defineOptions({ name: 'GenderPage' })
+import { errorMessage } from '@/api/api'
 import { ref } from 'vue'
 import OnboardingLayout from '@/components/layout/OnboardingLayout.vue'
 import { useAuthStore } from '@/stores/auth'
@@ -48,16 +50,19 @@ const router = useRouter()
 
 const gender = ref(normalizeGenderFromProfile(authStore.profile?.gender))
 const isSubmitting = ref(false)
+const submitError = ref('')
 
 const submit = async () => {
   if (!gender.value) return
 
+  if (isSubmitting.value) return
+  submitError.value = ''
   isSubmitting.value = true
   try {
     await authStore.updateProfile({ gender: gender.value })
     router.push('/age')
   } catch (error) {
-    console.error('Submit error:', error)
+    submitError.value = errorMessage(error)
   } finally {
     isSubmitting.value = false
   }

@@ -84,18 +84,19 @@ type Entitlement struct {
 }
 
 type Filter struct {
-	AfterCreatedAt time.Time
-	AfterPrice     int64
-	Limit          int
-	After          string
-	Query          string
-	MuscleGroup    string
-	Equipment      []string
-	EquipmentSet   bool
-	Goal           string
-	Level          string
-	DurationWeeks  int
-	TrainerID      int
-	PriceType      string
-	Sort           string
+	AfterCreatedAt  time.Time
+	AfterPrice      int64
+	Limit           int
+	After           string
+	Query           string
+	MuscleGroup     string
+	Equipment       []string
+	EquipmentSet    bool
+	Goal            string
+	Level           string
+	SessionsPerWeek int
+	DurationWeeks   int
+	TrainerID       int
+	PriceType       string
+	Sort            string
 }

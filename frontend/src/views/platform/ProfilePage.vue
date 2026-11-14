@@ -154,6 +154,7 @@
   </platform-layout>
 </template>
 <script setup>
+import { referenceItems } from '@/api/referenceLists'
 import { useViewLoad } from '@/composables/useViewLoad'
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
@@ -176,9 +177,9 @@ async function fetchProfile() {
   const result = await load.run(async () => {
     const [profile, gear] = await Promise.all([
       auth.fetchProfileV2(),
-      api.get('/api/v2/equipment', { params: { limit: 100 } }),
+      referenceItems('/api/v2/equipment'),
     ])
-    return { profile, equipment: gear.data.items }
+    return { profile, equipment: gear }
   })
   if (!result) return
   form.value = clone(result.profile)

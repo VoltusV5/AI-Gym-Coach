@@ -304,3 +304,21 @@ test('moderation shows the review behind a complaint', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Отзыв, на который пожаловались' })).toBeVisible()
   await expect(page.getByText('Проверяемый текст отзыва', { exact: true })).toBeVisible()
 })
+
+test('questionnaire displays failed saves and permits a retry', async ({ page }) => {
+  await setup(page)
+  let failed = true
+  await page.route('**/api/v1/profile', (route) => {
+    if (route.request().method() === 'GET') return route.fallback()
+    if (failed) return route.fulfill({ status: 500, json: { error: { message: 'Save failed' } } })
+    return route.fulfill({ json: { ...profile, goal: 'Набрать мышцы' } })
+  })
+  await page.goto('/goal-selection')
+  await page.getByText('Набрать мышцы', { exact: true }).click()
+  await page.getByRole('button', { name: 'Далее', exact: true }).click()
+  await expect(page.getByRole('alert')).toBeVisible()
+  await expect(page).toHaveURL(/\/goal-selection$/)
+  failed = false
+  await page.getByRole('button', { name: 'Далее', exact: true }).click()
+  await expect(page).toHaveURL(/\/fitness-level$/)
+})

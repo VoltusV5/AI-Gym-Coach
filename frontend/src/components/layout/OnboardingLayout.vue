@@ -19,6 +19,7 @@
           <p v-if="stepHint" class="sportik-step-hint">{{ stepHint }}</p>
           <h1 v-if="question" class="sportik-question">{{ question }}</h1>
           <slot></slot>
+          <p v-if="error" role="alert" class="sportik-form-error">{{ error }}</p>
 
           <!-- Декор сразу под контентом шага, крупнее и плотнее -->
           <div
@@ -79,6 +80,7 @@ const bottomExclamUrl = getOnboardingExclamationIllustrationUrl()
 const emit = defineEmits(['next'])
 
 const props = defineProps({
+  error: { type: String, default: '' },
   question: {
     type: String,
     default: ''

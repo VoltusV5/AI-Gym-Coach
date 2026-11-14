@@ -6625,6 +6625,15 @@
           "required": false
           "schema":
             "type": "integer"
+        -
+          "in": "query"
+          "name": "sessions_per_week"
+          "required": false
+          "description": "Число тренировок в неделю."
+          "schema":
+            "type": "integer"
+            "minimum": 1
+            "maximum": 7
       "security": []
       "x-service": "go"
       "x-feature": "F01"

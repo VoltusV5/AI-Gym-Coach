@@ -20,7 +20,9 @@ async function navigate(page, action) {
 }
 test.beforeEach(async ({ page }) => {
   test.skip(!fixture, 'Run from the isolated Go integration harness')
-  await page.addInitScript((token) => localStorage.setItem('auth_token', token), fixture.token)
+  await page.addInitScript((token) => {
+    if (!localStorage.getItem('auth_token')) localStorage.setItem('auth_token', token)
+  }, fixture.token)
 })
 test('dashboard and compatible programs use actual server data', async ({ page }) => {
   await page.goto('/home')
@@ -192,4 +194,98 @@ test('public snapshot is saved, copied and revoked through the library', async (
       .filter({ hasText: title })
       .getByText('Ссылка отозвана или срок её действия закончился.'),
   ).toBeVisible()
+})
+
+test('questionnaire, generation and edited AI plan persist together', async ({ page }) => {
+  await page.goto('/profile')
+  await page.getByLabel('Возраст', { exact: true }).fill('26')
+  await page.getByLabel('Рост, см', { exact: true }).fill('175')
+  await page.getByLabel('Вес, кг', { exact: true }).fill('75.5')
+  await page.getByRole('combobox', { name: 'Цель', exact: true }).selectOption('muscle_gain')
+  await page.getByRole('combobox', { name: 'Уровень', exact: true }).selectOption('beginner')
+  await page.getByLabel('Продолжительность занятия, мин.').fill('60')
+  await page.getByLabel('Есть ограничения по здоровью').uncheck()
+  for (const input of await page
+    .locator('fieldset')
+    .filter({ has: page.locator('legend', { hasText: 'Тренировочные дни' }) })
+    .last()
+    .locator('input[type=checkbox]')
+    .all()) {
+    await input.uncheck()
+  }
+  await page.getByLabel('Пн', { exact: true }).check()
+  await page.getByLabel('Ср', { exact: true }).check()
+  const equipment = page
+    .locator('section')
+    .filter({ has: page.getByRole('heading', { name: 'Оборудование', exact: true }) })
+  for (const input of await equipment.locator('input[type=checkbox]').all()) await input.check()
+  await page.getByRole('button', { name: 'Сохранить профиль', exact: true }).click()
+  await expect(page.getByRole('status')).toContainText('Профиль сохранён')
+  await page.goto('/training-days')
+  await page.getByRole('button', { name: 'Завершить', exact: true }).click()
+  await expect(page).toHaveURL(/\/plans\/[0-9a-f-]{36}/)
+  await settled(page)
+  const title = `AI после анкеты ${test.info().project.name}`
+  await page.getByLabel('Название плана').fill(title)
+  await page.getByLabel('Название дня').first().fill('Мой первый AI-день')
+  await page.getByRole('button', { name: 'Сохранить план', exact: true }).click()
+  await expect(page.getByRole('status')).toContainText('Сохранено')
+  await page.reload()
+  await expect(page.getByLabel('Название плана')).toHaveValue(title)
+  await expect(page.getByLabel('Название дня').first()).toHaveValue('Мой первый AI-день')
+})
+
+test('reviews unlock after three real workouts and can be removed by their author', async ({
+  page,
+}) => {
+  test.setTimeout(90000)
+  await page.goto('/login')
+  await settled(page)
+  await page.getByRole('button', { name: 'Выйти', exact: true }).click()
+  await settled(page)
+  await page.getByRole('button', { name: 'Создать аккаунт', exact: true }).click()
+  await page
+    .getByLabel('Электронная почта')
+    .fill(`review-${test.info().project.name}-${Date.now()}@example.test`)
+  await page.getByLabel('Пароль', { exact: true }).fill('SyntheticFixturePass2026')
+  await page.getByRole('button', { name: 'Зарегистрироваться', exact: true }).click()
+  await expect(page).toHaveURL(/\/home$/)
+  await page.goto('/catalog')
+  await page.getByRole('link', { name: 'Version two', exact: true }).click()
+  await expect(page).toHaveURL(/\/programs\/[0-9a-f-]{36}$/)
+  await settled(page)
+  const programPath = new URL(page.url()).pathname
+  await page.getByRole('link', { name: 'Оценки и опыт участников' }).click()
+  await expect(page.getByText('Отзыв станет доступен после')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Опубликовать отзыв', exact: true })).toHaveCount(0)
+  await page.goto(programPath)
+  await page.getByRole('button', { name: 'Получить бесплатно', exact: true }).click()
+  await page.getByRole('button', { name: 'Создать свою версию', exact: true }).click()
+  await expect(page).toHaveURL(/\/plans\/[0-9a-f-]{36}/)
+  const planPath = new URL(page.url()).pathname
+  await page.getByRole('button', { name: 'Сделать активным' }).click()
+  await expect(page.getByRole('button', { name: 'План активен' })).toBeVisible()
+  await page.getByRole('link', { name: 'Начать тренировку' }).click()
+  await expect(page).toHaveURL(/\/training\/[0-9a-f-]{36}$/)
+  const trainingPath = new URL(page.url()).pathname
+  for (let index = 0; index < 3; index++) {
+    if (index) await page.goto(trainingPath)
+    await settled(page)
+    await page.getByRole('button', { name: 'Day A', exact: true }).click()
+    await page.getByRole('button', { name: 'Завершить и сохранить тренировку' }).click()
+    await expect(page.getByRole('heading', { name: 'Тренировка сохранена' })).toBeVisible()
+  }
+  await page.goto(`${programPath}/reviews`)
+  await page.getByLabel('Общая оценка').selectOption('4')
+  const text = `Проверено тремя занятиями ${test.info().project.name}`
+  await page.getByLabel('Ваш опыт').fill(text)
+  await page.getByRole('button', { name: 'Опубликовать отзыв', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Сохранить отзыв', exact: true })).toBeVisible()
+  await page.reload()
+  await expect(page.getByLabel('Ваш опыт')).toHaveValue(text)
+  page.once('dialog', (dialog) => dialog.accept())
+  await page.getByRole('button', { name: 'Удалить свой отзыв', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Опубликовать отзыв', exact: true })).toBeVisible()
+  await page.goto(planPath)
+  await expect(page.getByLabel('Название плана')).toHaveValue('Version two — моя версия')
 })

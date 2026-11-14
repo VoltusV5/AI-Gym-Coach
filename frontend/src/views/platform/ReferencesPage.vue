@@ -80,9 +80,9 @@
   </platform-layout>
 </template>
 <script setup>
+import { referenceItems } from '@/api/referenceLists'
 import { computed, ref } from 'vue'
 import { useRoute, onBeforeRouteLeave } from 'vue-router'
-import api from '@/api/api'
 import { clone } from '@/utils/platform'
 import { usePage, useRequest, useAction } from '@/composables/useAsync'
 import { useViewLoad } from '@/composables/useViewLoad'
@@ -164,7 +164,7 @@ useViewLoad(() => {
   page.load()
   if (exercise.value)
     equipment.run(
-      async () => (await api.get('/api/v2/equipment', { params: { limit: 100 } })).data.items,
+      async () => await referenceItems('/api/v2/equipment'),
     )
 })
 </script>

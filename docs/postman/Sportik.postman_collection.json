@@ -10247,7 +10247,7 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/v2/catalog/programs?trainer_id={{state_trainer_id}}&goal=muscle_gain&level=beginner&duration_weeks=4&limit=100",
+              "raw": "{{base_url}}/api/v2/catalog/programs?trainer_id={{state_trainer_id}}&goal=muscle_gain&level=beginner&duration_weeks=4&sessions_per_week=3&limit=100",
               "host": [
                 "{{base_url}}"
               ],
@@ -10273,6 +10273,10 @@
                 {
                   "key": "duration_weeks",
                   "value": "4"
+                },
+                {
+                  "key": "sessions_per_week",
+                  "value": "3"
                 },
                 {
                   "key": "limit",
@@ -10365,7 +10369,7 @@
                   "const submitted=pm.request.body && pm.request.body.mode==='raw' ? JSON.parse(pm.variables.replaceIn(pm.request.body.raw)) : null;",
                   "",
                   "if([200].includes(pm.response.code)){",
-                  "check('Фильтры соблюдены',()=>{includesItem(data.items,R('free_program_id'));data.items.forEach(x=>{eq(x.goal,'muscle_gain');eq(x.level,'beginner');eq(x.duration_weeks,4);eq(x.trainer.id,Number(R('trainer_id')));});});",
+                  "check('Фильтры соблюдены',()=>{includesItem(data.items,R('free_program_id'));data.items.forEach(x=>{eq(x.goal,'muscle_gain');eq(x.level,'beginner');eq(x.duration_weeks,4);eq(x.sessions_per_week,3);eq(x.trainer.id,Number(R('trainer_id')));});});",
                   "}",
                   "})();"
                 ]

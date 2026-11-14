@@ -47,7 +47,7 @@ func prepareFilter(filter catalog_postgres_repository.Filter, raw, kind string) 
 	if filter.Limit == 0 {
 		filter.Limit = 20
 	}
-	if filter.Limit < 1 || filter.Limit > 100 || filter.DurationWeeks < 0 || filter.DurationWeeks > math.MaxInt32 || filter.TrainerID < 0 || filter.TrainerID > math.MaxInt32 {
+	if filter.Limit < 1 || filter.Limit > 100 || filter.SessionsPerWeek < 0 || filter.SessionsPerWeek > 7 || filter.DurationWeeks < 0 || filter.DurationWeeks > math.MaxInt32 || filter.TrainerID < 0 || filter.TrainerID > math.MaxInt32 {
 		return filter, "", fmt.Errorf("invalid filter range: %w", core_errors.ErrInvalidArgument)
 	}
 	if !slices.Contains([]string{"", "newest", "price_asc", "price_desc"}, filter.Sort) ||
