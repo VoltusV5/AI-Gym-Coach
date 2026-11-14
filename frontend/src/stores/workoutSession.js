@@ -1,9 +1,15 @@
 import { defineStore } from 'pinia'
-import { getMockPlanGenerateResponse } from '@/mocks/workoutSession.mock'
-import { workoutMocksEnabled } from '@/config/workoutMocks'
+import { useAuthStore } from '@/stores/auth'
 import api from '@/api/api'
 
 const STORAGE_KEY = 'sportik_workout_session'
+
+/** Scope browser caches to the active authenticated or anonymous account. */
+function storageKey() {
+  const id = useAuthStore().accountId
+  return id ? `${STORAGE_KEY}:${id}` : null
+}
+
 
 const ALT_DESC = ''
 
@@ -129,15 +135,17 @@ export const useWorkoutSessionStore = defineStore('workoutSession', {
           currentIndex: this.currentIndex,
           source: this.source
         }
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(payload))
-      } catch (_) {
-
+        const key = storageKey()
+        if (key) localStorage.setItem(key, JSON.stringify(payload))
+      } catch {
+        // Local cache is optional when browser storage is unavailable.
       }
     },
 
     hydrate() {
       try {
-        const raw = localStorage.getItem(STORAGE_KEY)
+        const key = storageKey()
+        const raw = key && localStorage.getItem(key)
         if (!raw) return
         const data = JSON.parse(raw)
         if (data?.slots?.length) {
@@ -151,8 +159,8 @@ export const useWorkoutSessionStore = defineStore('workoutSession', {
           )
           this.source = data.source || 'restored'
         }
-      } catch (_) {
-
+      } catch {
+        // Local cache is optional when browser storage is unavailable.
       }
     },
 
@@ -164,9 +172,10 @@ export const useWorkoutSessionStore = defineStore('workoutSession', {
       this.currentIndex = 0
       this.source = 'none'
       try {
-        localStorage.removeItem(STORAGE_KEY)
-      } catch (_) {
-
+        const key = storageKey()
+        if (key) localStorage.removeItem(key)
+      } catch {
+        // Local cache is optional when browser storage is unavailable.
       }
     },
 

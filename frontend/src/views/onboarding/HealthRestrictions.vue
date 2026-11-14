@@ -4,6 +4,8 @@
     :progress="50"
     :disabled="choice === null"
     :loading="isSubmitting"
+    :error="submitError"
+    :status="submitStatus"
     next-label="Далее"
     @next="submit"
   >
@@ -34,6 +36,7 @@
 <script setup>
 import { ref } from 'vue'
 import OnboardingLayout from '@/components/layout/OnboardingLayout.vue'
+import { apiStatus, errorText } from '@/api/v2'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
 
@@ -45,16 +48,22 @@ const choice = ref(
   typeof raw === 'boolean' ? raw : null
 )
 const isSubmitting = ref(false)
+const submitError = ref('')
+const submitStatus = ref(0)
 
+/** Save this questionnaire step once and leave the input intact on errors. */
 const submit = async () => {
-  if (choice.value === null) return
+  if (isSubmitting.value || choice.value === null) return
 
   isSubmitting.value = true
+  submitError.value = ''
+  submitStatus.value = 0
   try {
     await authStore.updateProfile({ injuries_notes: choice.value })
     router.push('/goal-selection')
   } catch (error) {
-    console.error('Submit error:', error)
+    submitStatus.value = apiStatus(error)
+    submitError.value = errorText(error)
   } finally {
     isSubmitting.value = false
   }

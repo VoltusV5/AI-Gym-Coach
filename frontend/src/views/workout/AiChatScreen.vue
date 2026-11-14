@@ -111,8 +111,7 @@ async function fetchHistory() {
       }
     }
     scrollToBottom()
-  } catch (err) {
-    console.error('Failed to fetch chat history', err)
+  } catch {
     error.value = 'Не удалось загрузить историю сообщений'
   }
 }
@@ -158,8 +157,7 @@ async function sendMessage() {
 
     shouldAnimateLastResponse = true
     await fetchHistory()
-  } catch (err) {
-    console.error('AI chat processing failed', err)
+  } catch {
     error.value = 'Ошибка при получении ответа от AI тренера'
   } finally {
     isLoading.value = false
@@ -178,7 +176,7 @@ function renderMarkdown(text) {
   html = html.replace(/\*(.*?)\*/g, '<em>$1</em>')
   html = html.replace(/^### (.*$)/gim, '<h3 class="md-header">$1</h3>')
   html = html.replace(/^## (.*$)/gim, '<h2 class="md-header">$1</h2>')
-  html = html.replace(/^[•\-] (.*$)/gim, '<li class="md-list-item">$1</li>')
+  html = html.replace(/^[•-] (.*$)/gim, '<li class="md-list-item">$1</li>')
   html = html.replace(/\n/g, '<br>')
 
   return html

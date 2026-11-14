@@ -1,6 +1,14 @@
 import { defineStore } from 'pinia'
+import { useAuthStore } from '@/stores/auth'
 
 const STORAGE_KEY = 'sportik_workout_plan'
+
+/** Scope browser caches to the active authenticated or anonymous account. */
+function storageKey() {
+  const id = useAuthStore().accountId
+  return id ? `${STORAGE_KEY}:${id}` : null
+}
+
 
 
 export const useWorkoutPlanStore = defineStore('workoutPlan', {
@@ -54,17 +62,19 @@ export const useWorkoutPlanStore = defineStore('workoutPlan', {
     setPlanFromApi(data) {
       this.plan = data
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
-      } catch (_) {
-
+        const key = storageKey()
+        if (key) localStorage.setItem(key, JSON.stringify(data))
+      } catch {
+        // Local cache is optional when browser storage is unavailable.
       }
     },
 
     hydrateFromStorage() {
       try {
-        const raw = localStorage.getItem(STORAGE_KEY)
+        const key = storageKey()
+        const raw = key && localStorage.getItem(key)
         if (raw) this.plan = JSON.parse(raw)
-      } catch (_) {
+      } catch {
         this.plan = null
       }
     },
@@ -72,9 +82,10 @@ export const useWorkoutPlanStore = defineStore('workoutPlan', {
     clearPlan() {
       this.plan = null
       try {
-        localStorage.removeItem(STORAGE_KEY)
-      } catch (_) {
-
+        const key = storageKey()
+        if (key) localStorage.removeItem(key)
+      } catch {
+        // Local cache is optional when browser storage is unavailable.
       }
     }
   }

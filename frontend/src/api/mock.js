@@ -17,10 +17,16 @@ function createEmptyMockProfile() {
   }
 }
 let mockProfile = createEmptyMockProfile()
+let mockNoteId = 100
+
+/** Build a browser-only mock credential with the same claim names as the Go token. */
+function mockToken(isAnonymous) {
+  return `mock.${btoa(JSON.stringify({ sub: isAnonymous ? '1' : '2', is_anonymous: isAnonymous }))}.test`
+}
 
 mock.onPost('/api/v1/auth/guest').reply(() => {
   mockProfile = createEmptyMockProfile()
-  return [200, { token: `mock-jwt-${Date.now()}` }]
+  return [200, { token: mockToken(true) }]
 })
 
 mock.onGet('/api/v1/profile').reply((config) => {
@@ -38,9 +44,8 @@ mock.onPost('/api/v1/profile').reply((config) => {
   try {
     const data = JSON.parse(config.data)
     mockProfile = { ...mockProfile, ...data }
-    console.log('Mock Profile updated:', mockProfile)
     return [200, { ...mockProfile }]
-  } catch (err) {
+  } catch {
     return [400, { message: 'Invalid JSON' }]
   }
 })
@@ -60,21 +65,15 @@ mock.onPost('/api/v1/workouts/complete').reply((config) => {
   if (!config.headers.Authorization) {
     return [401, { message: 'Unauthorized' }]
   }
-  try {
-    const body = config.data ? JSON.parse(config.data) : {}
-    console.log('[mock] workouts/complete', body)
-  } catch (_) {
-
-  }
   return [200, { ok: true, saved_id: `mock-${Date.now()}`, new_achievements: [], session_highlights: [] }]
 })
 
 mock.onPost('/api/v1/auth/register').reply((config) => {
   try {
     const body = config.data ? JSON.parse(config.data) : {}
-    const token = `mock-jwt-${Date.now()}`
+    const token = mockToken(false)
     return [200, { token, user: { id: 1, email: body.email || '', name: body.name || '' } }]
-  } catch (_) {
+  } catch {
     return [400, { message: 'Invalid JSON' }]
   }
 })
@@ -82,9 +81,9 @@ mock.onPost('/api/v1/auth/register').reply((config) => {
 mock.onPost('/api/v1/auth/login').reply((config) => {
   try {
     const body = config.data ? JSON.parse(config.data) : {}
-    const token = `mock-jwt-${Date.now()}`
+    const token = mockToken(false)
     return [200, { token, user: { id: 1, email: body.email || '', name: 'Mock User' } }]
-  } catch (_) {
+  } catch {
     return [400, { message: 'Invalid JSON' }]
   }
 })
@@ -113,7 +112,8 @@ mock.onGet('/api/v1/notes').reply((config) => {
   const items = [...mockNotes].sort(
     (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
   )
-  return [200, { items }]
+  const { limit = 20, offset = 0 } = config.params ?? {}
+  return [200, { items: items.slice(offset, offset + limit), total: items.length, limit, offset }]
 })
 
 mock.onPost('/api/v1/notes').reply((config) => {
@@ -122,7 +122,7 @@ mock.onPost('/api/v1/notes').reply((config) => {
     const body = config.data ? JSON.parse(config.data) : {}
     const now = new Date().toISOString()
     const note = {
-      id: `mock-note-${Date.now()}`,
+      id: ++mockNoteId,
       title: String(body.title ?? ''),
       body: String(body.body ?? ''),
       created_at: now,
@@ -131,7 +131,7 @@ mock.onPost('/api/v1/notes').reply((config) => {
     }
     mockNotes.unshift(note)
     return [200, note]
-  } catch (_) {
+  } catch {
     return [400, { message: 'Invalid JSON' }]
   }
 })
@@ -150,7 +150,7 @@ mock.onPatch(/\/api\/v1\/notes\/[^/]+$/).reply((config) => {
       updated_at: new Date().toISOString()
     }
     return [200, mockNotes[idx]]
-  } catch (_) {
+  } catch {
     return [400, { message: 'Invalid JSON' }]
   }
 })
@@ -197,7 +197,7 @@ mock.onPost('/api/v1/nutrition/entries').reply((config) => {
     }
     mockNutritionEntries.unshift(item)
     return [200, item]
-  } catch (_) {
+  } catch {
     return [400, { message: 'Invalid JSON' }]
   }
 })

@@ -4,6 +4,8 @@
     :progress="88"
     :disabled="!hasSelectedDays"
     :loading="isSubmitting"
+    :error="submitError"
+    :status="submitStatus"
     next-label="Завершить"
     @next="submit"
   >
@@ -26,6 +28,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import OnboardingLayout from '@/components/layout/OnboardingLayout.vue'
+import { apiStatus, errorText } from '@/api/v2'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
 import { trainingDaysToSelection, selectionToTrainingDaysArray } from '@/utils/trainingDays'
@@ -46,6 +49,8 @@ const days = [
 const selectedDays = ref(trainingDaysToSelection(authStore.profile?.training_days_map))
 
 const isSubmitting = ref(false)
+const submitError = ref('')
+const submitStatus = ref(0)
 
 const hasSelectedDays = computed(() => Object.values(selectedDays.value).some(Boolean))
 
@@ -56,16 +61,21 @@ const toggleDay = (id) => {
   }
 }
 
+/** Save this questionnaire step once and leave the input intact on errors. */
 const submit = async () => {
-  if (!hasSelectedDays.value) return
+  if (isSubmitting.value || !hasSelectedDays.value) return
 
   isSubmitting.value = true
+  submitError.value = ''
+  submitStatus.value = 0
   try {
     const arr = selectionToTrainingDaysArray(selectedDays.value)
     await authStore.updateProfile({ training_days_map: arr })
-    router.replace('/plan-generating')
+    authStore.setEquipmentStep(true)
+    router.replace('/equipment')
   } catch (error) {
-    console.error('Submit error:', error)
+    submitStatus.value = apiStatus(error)
+    submitError.value = errorText(error)
   } finally {
     isSubmitting.value = false
   }

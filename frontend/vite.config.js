@@ -41,7 +41,7 @@ export default defineConfig({
     },
     vue(),
 
-    vueDevTools(),
+    process.env.VITE_DEVTOOLS === 'true' && vueDevTools(),
 
     Components({
       dirs: ['src/components'],

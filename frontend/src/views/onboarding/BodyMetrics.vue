@@ -4,6 +4,8 @@
     :progress="12"
     :disabled="!canSubmit"
     :loading="isSubmitting"
+    :error="submitError"
+    :status="submitStatus"
     @next="submit"
   >
     <p class="hint">Сначала рост, затем вес — так удобнее сверяться с макетом.</p>
@@ -50,6 +52,7 @@
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import OnboardingLayout from '@/components/layout/OnboardingLayout.vue'
+import { apiStatus, errorText } from '@/api/v2'
 import { useAuthStore } from '@/stores/auth'
 
 const authStore = useAuthStore()
@@ -63,16 +66,21 @@ function initialStr(n) {
 const heightStr = ref(initialStr(authStore.profile?.height_cm))
 const weightStr = ref(initialStr(authStore.profile?.weight_kg))
 const isSubmitting = ref(false)
+const submitError = ref('')
+const submitStatus = ref(0)
 const canSubmit = computed(() => {
   const hn = Number(String(heightStr.value).replace(',', '.'))
   const wn = Number(String(weightStr.value).replace(',', '.'))
   return Number.isFinite(hn) && Number.isFinite(wn) && hn > 0 && wn > 0
 })
 
+/** Save this questionnaire step once and leave the input intact on errors. */
 const submit = async () => {
   if (!canSubmit.value || isSubmitting.value) return
 
   isSubmitting.value = true
+  submitError.value = ''
+  submitStatus.value = 0
   try {
     const height_cm = Math.round(Number(String(heightStr.value).replace(',', '.')))
     const weight_kg = Math.round(Number(String(weightStr.value).replace(',', '.')))
@@ -84,10 +92,8 @@ const submit = async () => {
       await router.push('/gender')
     }
   } catch (error) {
-    console.error('Submit error:', error)
-    const status = error?.response?.status
-    const msg = error?.response?.data?.message || error?.message || 'неизвестная ошибка'
-    alert('Не удалось сохранить рост/вес: ' + (status ? `${status} ` : '') + msg)
+    submitStatus.value = apiStatus(error)
+    submitError.value = errorText(error)
   } finally {
     isSubmitting.value = false
   }

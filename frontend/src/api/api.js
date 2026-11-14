@@ -1,39 +1,45 @@
-import axios from 'axios'
+import axios, { CanceledError } from 'axios'
 
-function resolveApiBaseURL() {
-  const raw = import.meta.env.VITE_API_URL?.trim()
+const baseURL = (import.meta.env?.VITE_API_URL ?? '').trim().replace(/\/$/, '')
+const api = axios.create({ baseURL, timeout: 15000 })
 
-  if (raw) {
-    console.log('[API] Using VITE_API_URL:', raw)
-    return raw
-  }
-
-  if (import.meta.env.DEV) {
-    console.log('[API] DEV mode → relative URL (uses Vite proxy)')
-    return ''
-  }
-  console.log('[API] Production → same-origin (empty baseURL)')
-  return ''
+/**
+ * Check whether a request still belongs to the current authenticated session.
+ * Anonymous responses and the authentication endpoints can complete without a bearer.
+ */
+export function currentRequest(config) {
+  const credential = config?.headers?.get?.('Authorization') ?? config?.headers?.Authorization
+  return !credential || config.url?.startsWith('/api/v1/auth/') ||
+    credential === api.defaults.headers.common.Authorization
 }
 
-const api = axios.create({
-  baseURL: resolveApiBaseURL()
-})
+api.interceptors.response.use(
+  (response) => {
+    if (!currentRequest(response.config)) throw new CanceledError('Session changed')
+    return response
+  },
+  (error) => {
+    if (!currentRequest(error.config)) throw new CanceledError('Session changed')
+    throw error
+  },
+)
 
-
+/**
+ * Set the default bearer credential for subsequent API calls.
+ * @param {string|null} token
+ */
 export function setAuthHeader(token) {
-  if (token) {
-    api.defaults.headers.common['Authorization'] = `Bearer ${token}`
-  } else {
-    delete api.defaults.headers.common['Authorization']
-  }
+  if (token) api.defaults.headers.common.Authorization = `Bearer ${token}`
+  else delete api.defaults.headers.common.Authorization
 }
 
-
+/**
+ * Resolve a backend asset path with the same origin as the API.
+ * @param {string|null} path
+ * @returns {string}
+ */
 export function staticUrl(path) {
-  if (!path) return ''
-  const base = import.meta.env.VITE_API_URL?.trim() || ''
-  return base + path
+  return path ? baseURL + path : ''
 }
 
 export default api

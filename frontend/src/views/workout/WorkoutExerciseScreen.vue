@@ -97,6 +97,7 @@
             </ion-button>
           </div>
 
+          <RequestState :error="submitError" :status="submitStatus" />
           <ion-button
             expand="block"
             class="finish-workout-btn"
@@ -124,46 +125,51 @@ import { useRoute, useRouter } from 'vue-router'
 import {
   IonHeader,
   IonToolbar,
-  IonTitle,
   IonButtons,
   IonBackButton,
   IonButton,
   IonInput,
   IonIcon,
-  toastController
 } from '@ionic/vue'
 import { arrowBack, arrowForward, swapHorizontalOutline } from 'ionicons/icons'
 import WorkoutChrome from '@/components/workout/WorkoutChrome.vue'
 import { useWorkoutSessionStore } from '@/stores/workoutSession'
 import { staticUrl } from '@/api/api'
+import { apiStatus, errorText } from '@/api/v2'
+import RequestState from '@/components/ui/RequestState.vue'
+import { useAuthStore } from '@/stores/auth'
+import { writeTab } from '@/utils/workoutV2'
 
 const route = useRoute()
 const router = useRouter()
 const session = useWorkoutSessionStore()
 const isSubmitting = ref(false)
+const submitError = ref('')
+const submitStatus = ref(0)
+const auth = useAuthStore()
 
 
 const chromeTabKey = computed(() => (route.query.context === 'home' ? 'main' : 'workout'))
-const sessionBackHref = computed(() => (route.query.context === 'home' ? '/home' : '/workout-tools'))
 
+/** Submit the legacy session once and save the result in the current tab. */
 async function finishWorkout() {
   if (isSubmitting.value) return
   if (!session.isReadyForComplete) {
-    alert('Пожалуйста, заполните хотя бы один подход в любом упражнении.')
+    submitError.value = 'Заполните хотя бы один подход.'
     return
   }
 
   isSubmitting.value = true
+  submitError.value = ''
+  submitStatus.value = 0
   try {
+    const account = auth.accountId
     const result = await session.submitCompleteWorkout()
-    router.replace({
-      name: 'WorkoutSuccess',
-      query: { result: JSON.stringify(result) }
-    })
+    writeTab(`sportik-result-v1:${account}`, result)
+    await router.replace({ name: 'WorkoutSuccess' })
   } catch (error) {
-    console.error('Failed to finish workout:', error)
-    const msg = error?.response?.data?.message || error?.message || 'неизвестная ошибка'
-    alert('Не удалось завершить тренировку: ' + msg)
+    submitStatus.value = apiStatus(error)
+    submitError.value = errorText(error)
   } finally {
     isSubmitting.value = false
   }
