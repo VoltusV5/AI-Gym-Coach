@@ -2,7 +2,7 @@
 
 [Проект](01_PROJECT.md) · [API](02_API.md) · [Экраны](03_FRONTEND.md) · [ML](05_ML.md)
 
-Актуальная физическая схема: миграции `000001–000019`, PostgreSQL, схема `sportapp`. Источник истины — SQL в `backend/migrations`, а не концептуальные имена ниже. Разделы1–2 сохраняют описание исходного v1; разделы3–7 содержат исходную проектную модель и правила расчётов.
+Актуальная физическая схема: миграции `000001–000019`, PostgreSQL, схема `sportapp`. Источник истины — SQL в `backend/migrations`, а не концептуальные имена ниже. Разделы 1–2 сохраняют описание исходного v1; разделы 3–7 содержат исходную проектную модель и правила расчётов.
 
 ## Реализованные расширения v2
 
@@ -46,7 +46,7 @@
 | nutrition_water_logs | id PK; user_id FK; logged_on; amount_ml; UNIQUE(user_id,logged_on) | Вода за день |
 | nutrition_weight_logs | id PK; user_id FK; logged_on; weight_kg float; UNIQUE(user_id,logged_on) | История веса, переиспользуемая для прогресса |
 
-В исходной миграции profile.weight_kg был integer; миграция8 перевела его на дробное хранение. nutrition_weight_logs также хранит дробное значение. injuries_notes boolean не описывает конкретные противопоказания. nutrition_catalog и nutrition_dishes — разные таблицы.
+В исходной миграции profile.weight_kg был integer; миграция 8 перевела его на дробное хранение. nutrition_weight_logs также хранит дробное значение. injuries_notes boolean не описывает конкретные противопоказания. nutrition_catalog и nutrition_dishes — разные таблицы.
 
 ## 2. ER существующей схемы
 

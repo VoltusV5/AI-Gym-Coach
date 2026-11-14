@@ -164,7 +164,7 @@
       201
     ],
     "gate": null,
-    "body_expression": "{name:'Postman '+R('run_id'),muscle_group:'chest',equipment_ids:[],is_active:true}",
+    "body_expression": "{name:'Postman '+R('run_id'),muscle_group:'chest',equipment_ids:[],is_active:true,reason:'Postman reference fixture'}",
     "test": "check('Сохраняем exercise_id',()=>{present(data.id);save('exercise_id',data.id);});",
     "pre": "",
     "ids": {},
@@ -194,7 +194,7 @@
       200
     ],
     "gate": null,
-    "body_expression": "{name:'Postman updated '+R('run_id'),equipment_ids:[],is_active:true}",
+    "body_expression": "{name:'Postman updated '+R('run_id'),equipment_ids:[],is_active:true,reason:'Postman reference fixture'}",
     "test": "check('Имя упражнения обновлено',()=>eq(data.name,submitted.name));",
     "pre": "",
     "ids": {},
@@ -239,7 +239,7 @@
       201
     ],
     "gate": null,
-    "body_expression": "{slug:'pm-'+R('run_id'),name:'Postman category',position:0,is_active:true}",
+    "body_expression": "{slug:'pm-'+R('run_id'),name:'Postman category',position:0,is_active:true,reason:'Postman category fixture'}",
     "test": "check('Сохраняем category_id',()=>{present(data.id);save('category_id',data.id);});",
     "pre": "",
     "ids": {},
@@ -269,7 +269,7 @@
       200
     ],
     "gate": null,
-    "body_expression": "{slug:'pm-'+R('run_id'),name:'Postman updated',position:0,is_active:true}",
+    "body_expression": "{slug:'pm-'+R('run_id'),name:'Postman updated',position:0,is_active:true,reason:'Postman category fixture'}",
     "test": "check('Имя категории обновлено',()=>eq(data.name,submitted.name));",
     "pre": "",
     "ids": {},
@@ -1593,6 +1593,51 @@
     "role": "user"
   },
   {
+    "stage": 10,
+    "name": "12 · Подтвердить покупку встроенной заглушкой",
+    "operation": "v2_post_payments_sandbox_order_id",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": "{action:'pay'}",
+    "test": "check('Покупка подтверждена',()=>eq(data.status,'paid'));",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 10,
+    "name": "13 · Повтор подтверждения не дублирует покупку",
+    "operation": "v2_post_payments_sandbox_order_id",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": "{action:'pay'}",
+    "test": "check('Состояние стабильно',()=>eq(data.status,'paid'));",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  },
+  {
+    "stage": 10,
+    "name": "14 · Возврат встроенной заглушкой",
+    "operation": "v2_post_payments_sandbox_order_id",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": "{action:'refund'}",
+    "test": "check('Возврат подтверждён',()=>eq(data.status,'refunded'));",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "user"
+  },
+  {
     "stage": 11,
     "name": "01 · Создать личную копию бесплатной программы",
     "operation": "v2_post_programs_program_id_fork",
@@ -1735,7 +1780,7 @@
     ],
     "gate": null,
     "body_expression": null,
-    "test": "",
+    "test": "check('Сохраняем library_item_id',()=>{present(data.library_item_id);save('library_item_id',data.library_item_id);});",
     "pre": "",
     "ids": {
       "token": "share_token"
@@ -1745,7 +1790,39 @@
   },
   {
     "stage": 11,
-    "name": "10 · Получатель создаёт свою копию",
+    "name": "10 · Библиотека сохранённых ссылок",
+    "operation": "v2_get_me_saved_shares",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "",
+    "pre": "",
+    "ids": {},
+    "idem": null,
+    "role": "stranger"
+  },
+  {
+    "stage": 11,
+    "name": "11 · Открыть сохранённый снимок без повторной передачи токена",
+    "operation": "v2_get_me_saved_share",
+    "expected": [
+      200
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "",
+    "pre": "",
+    "ids": {
+      "item_id": "library_item_id"
+    },
+    "idem": null,
+    "role": "stranger"
+  },
+  {
+    "stage": 11,
+    "name": "12 · Получатель создаёт свою копию",
     "operation": "v2_post_shares_token_fork",
     "expected": [
       201
@@ -1762,7 +1839,7 @@
   },
   {
     "stage": 11,
-    "name": "11 · Копия принадлежит получателю",
+    "name": "13 · Копия принадлежит получателю",
     "operation": "v2_get_me_plans_plan_id",
     "expected": [
       200
@@ -1779,7 +1856,7 @@
   },
   {
     "stage": 11,
-    "name": "12 · Отозвать публичную ссылку",
+    "name": "14 · Отозвать публичную ссылку",
     "operation": "v2_delete_shares_share_id",
     "expected": [
       204
@@ -1794,7 +1871,7 @@
   },
   {
     "stage": 11,
-    "name": "13 · Отозванная ссылка недоступна",
+    "name": "15 · Отозванная ссылка недоступна",
     "operation": "v2_get_shares_token",
     "expected": [
       404
@@ -1808,6 +1885,40 @@
     },
     "idem": null,
     "role": null
+  },
+  {
+    "stage": 11,
+    "name": "16 · Сохранённая отозванная ссылка недоступна",
+    "operation": "v2_get_me_saved_share",
+    "expected": [
+      404
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "",
+    "pre": "",
+    "ids": {
+      "item_id": "library_item_id"
+    },
+    "idem": null,
+    "role": "stranger"
+  },
+  {
+    "stage": 11,
+    "name": "17 · Удалить отозванную ссылку из библиотеки",
+    "operation": "v2_delete_me_saved_share",
+    "expected": [
+      204
+    ],
+    "gate": null,
+    "body_expression": null,
+    "test": "",
+    "pre": "",
+    "ids": {
+      "item_id": "library_item_id"
+    },
+    "idem": null,
+    "role": "stranger"
   },
   {
     "stage": 12,
@@ -2212,7 +2323,7 @@
     "gate": null,
     "body_expression": "J('event_body')",
     "test": "",
-    "pre": "save('event_body',{events:[{event_id:guid(),type:'view',program_id:R('free_program_id'),occurred_at:new Date().toISOString(),context:{source:'postman'}}]});",
+    "pre": "save('event_body',{events:[{event_id:guid(),type:'view',program_id:R('free_program_id'),occurred_at:new Date().toISOString(),context:{surface:'postman'}}]});",
     "ids": {},
     "idem": null,
     "role": "user"
@@ -2317,7 +2428,7 @@
     "gate": "enable_provider_tests",
     "body_expression": "J('provider_body')",
     "test": "",
-    "pre": "const raw=pm.environment.get('provider_webhook_body');if(!raw)throw Error('Нужны provider_webhook_body и provider_signature');if(!pm.environment.get('provider_signature'))throw Error('Нужна подпись провайдера');pm.request.headers.upsert({key:pm.environment.get('provider_signature_header')||'X-Signature',value:pm.environment.get('provider_signature')});save('provider_body',JSON.parse(raw));",
+    "pre": "const raw=pm.environment.get('provider_webhook_body');if(!raw)throw Error('Нужны provider_webhook_body и provider_signature');if(!pm.environment.get('provider_signature'))throw Error('Нужна подпись провайдера');pm.request.headers.upsert({key:pm.environment.get('provider_signature_header')||'X-Payment-Signature',value:pm.environment.get('provider_signature')});save('provider_body',JSON.parse(raw));",
     "ids": {},
     "idem": null,
     "role": null
