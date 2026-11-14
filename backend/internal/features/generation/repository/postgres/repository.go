@@ -95,7 +95,7 @@ func (r *Repository) Save(ctx context.Context, user int, key, hash string, profi
 		}
 		var valid bool
 		if err := tx.QueryRow(ctx, `SELECT NOT EXISTS(SELECT 1 FROM unnest($2::integer[]) x(id) WHERE
-   NOT EXISTS(SELECT 1 FROM sportapp.exercises e WHERE e.id=x.id AND e.is_active)
+   NOT EXISTS(SELECT 1 FROM sportapp.exercises e WHERE e.id=x.id AND e.is_active AND (NOT COALESCE((SELECT injuries_notes FROM sportapp.profile WHERE user_id=$1),FALSE) OR COALESCE(e.safe_for_injuries,FALSE)))
    OR EXISTS(SELECT 1 FROM sportapp.profile_excluded_exercises ex WHERE ex.user_id=$1 AND ex.exercise_id=x.id)
    OR EXISTS(SELECT 1 FROM sportapp.exercise_equipment eq WHERE eq.exercise_id=x.id AND NOT EXISTS(SELECT 1 FROM sportapp.profile_equipment pe WHERE pe.user_id=$1 AND pe.equipment_id=eq.equipment_id)))`, user, ids).Scan(&valid); err != nil {
 			return err

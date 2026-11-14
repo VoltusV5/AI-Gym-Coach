@@ -2,6 +2,8 @@ package plans_postgres_repository
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 
 	core_errors "sport_app/internal/core/errors"
@@ -89,7 +91,32 @@ func replaceContents(ctx context.Context, tx core_postgres_pool.Tx, planID strin
 
 func (r *Repository) CreatePlan(ctx context.Context, userID int, input Input) (Plan, error) {
 	return r.write(ctx, userID, func(ctx context.Context, tx core_postgres_pool.Tx) (Plan, error) {
-		return CreatePlanInTx(ctx, tx, userID, input, "manual")
+		if input.IdempotencyKey != "" {
+			var hash string
+			var raw []byte
+			err := tx.QueryRow(ctx, `SELECT request_hash,response FROM sportapp.operation_results WHERE user_id=$1 AND operation='plan_create' AND key=$2`, userID, input.IdempotencyKey).Scan(&hash, &raw)
+			if err == nil {
+				if hash != input.RequestHash {
+					return Plan{}, core_errors.ErrConflict
+				}
+				var plan Plan
+				err = json.Unmarshal(raw, &plan)
+				return plan, err
+			}
+			if !errors.Is(err, core_postgres_pool.ErrNoRows) {
+				return Plan{}, err
+			}
+		}
+		plan, err := CreatePlanInTx(ctx, tx, userID, input, "manual")
+		if err != nil || input.IdempotencyKey == "" {
+			return plan, err
+		}
+		raw, err := json.Marshal(plan)
+		if err != nil {
+			return Plan{}, err
+		}
+		_, err = tx.Exec(ctx, `INSERT INTO sportapp.operation_results(user_id,operation,key,request_hash,response) VALUES($1,'plan_create',$2,$3,$4)`, userID, input.IdempotencyKey, input.RequestHash, raw)
+		return plan, err
 	})
 }
 
@@ -174,8 +201,14 @@ func (r *Repository) ArchivePlan(ctx context.Context, userID int, planID string)
 }
 
 func CreatePlanInTx(ctx context.Context, tx core_postgres_pool.Tx, userID int, input Input, source string) (Plan, error) {
+	return createPlanInTx(ctx, tx, userID, input, source, nil)
+}
+func CreateForkInTx(ctx context.Context, tx core_postgres_pool.Tx, userID int, input Input, source *string) (Plan, error) {
+	return createPlanInTx(ctx, tx, userID, input, "fork", source)
+}
+func createPlanInTx(ctx context.Context, tx core_postgres_pool.Tx, userID int, input Input, source string, sourceVersion *string) (Plan, error) {
 	id := uuid.NewString()
-	if _, err := tx.Exec(ctx, `INSERT INTO sportapp.training_plans (id, owner_id, title, source_type) VALUES ($1,$2,$3,$4)`, id, userID, input.Title, source); err != nil {
+	if _, err := tx.Exec(ctx, `INSERT INTO sportapp.training_plans (id, owner_id, title, source_type,source_program_version_id) VALUES ($1,$2,$3,$4,$5)`, id, userID, input.Title, source, sourceVersion); err != nil {
 		return Plan{}, fmt.Errorf("create plan: %w", err)
 	}
 	if err := replaceContents(ctx, tx, id, input); err != nil {

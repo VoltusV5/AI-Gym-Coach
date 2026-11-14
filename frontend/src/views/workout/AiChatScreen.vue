@@ -178,7 +178,7 @@ function renderMarkdown(text) {
   html = html.replace(/\*(.*?)\*/g, '<em>$1</em>')
   html = html.replace(/^### (.*$)/gim, '<h3 class="md-header">$1</h3>')
   html = html.replace(/^## (.*$)/gim, '<h2 class="md-header">$1</h2>')
-  html = html.replace(/^[•\-] (.*$)/gim, '<li class="md-list-item">$1</li>')
+  html = html.replace(/^[•-] (.*$)/gim, '<li class="md-list-item">$1</li>')
   html = html.replace(/\n/g, '<br>')
 
   return html

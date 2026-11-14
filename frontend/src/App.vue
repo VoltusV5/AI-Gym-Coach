@@ -8,24 +8,19 @@
       </div>
     </div>
 
-    <div v-else-if="authStore.error" class="loader-container error-container ion-padding">
-      <div class="loader-card sportik-glass-card">
-        <ion-icon :icon="alertCircleOutline" color="danger" style="font-size: 56px;"></ion-icon>
-        <h2>Ошибка подключения</h2>
+    <template v-else>
+      <div v-if="authStore.error" class="session-message" role="alert">
         <p>{{ authStore.error }}</p>
-        <ion-button class="sportik-footer-btn" expand="block" mode="ios" @click="authStore.initialize()">
-          Повторить
-        </ion-button>
+        <router-link to="/login">Войти</router-link>
+        <button type="button" @click="authStore.initialize()">Повторить подключение</button>
       </div>
-    </div>
-
-    <ion-router-outlet v-else />
+      <ion-router-outlet :key="authStore.sessionEpoch" />
+    </template>
   </ion-app>
 </template>
 
 <script setup>
-import { IonApp, IonSpinner, IonIcon, IonButton, IonRouterOutlet } from '@ionic/vue'
-import { alertCircleOutline } from 'ionicons/icons'
+import { IonApp, IonSpinner, IonRouterOutlet } from '@ionic/vue'
 import { onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter, useRoute } from 'vue-router'
@@ -45,6 +40,10 @@ onMounted(() => {
 </script>
 
 <style>
+.session-message { padding: 12px 18px; background: var(--sportik-surface-soft); color: var(--sportik-danger); z-index: 10; position: relative; }
+.session-message p { margin: 0 0 6px; }
+.session-message a { margin-right: 16px; }
+
 .loader-container {
   display: flex;
   flex-direction: column;

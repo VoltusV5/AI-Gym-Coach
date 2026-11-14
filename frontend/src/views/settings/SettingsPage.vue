@@ -70,7 +70,7 @@ defineOptions({ name: 'SettingsPage' })
 import { computed, ref, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { IonButton, IonToggle, IonIcon, IonSpinner, toastController, alertController } from '@ionic/vue'
-import { moonOutline, sunnyOutline, notificationsOutline, notificationsOffOutline, PersonCircleOutline } from 'ionicons/icons'
+import { moonOutline, sunnyOutline, notificationsOutline, notificationsOffOutline } from 'ionicons/icons'
 import WorkoutChrome from '@/components/workout/WorkoutChrome.vue'
 import { useAuthStore } from '@/stores/auth'
 import api from '@/api/api'
@@ -125,7 +125,7 @@ watch(themeOn, (val) => {
 const notificationsOn = ref(false)
 
 function openProfilePage() {
-  router.push('/settings/profile')
+  router.push('/profile')
 }
 
 const achievements = ref([])

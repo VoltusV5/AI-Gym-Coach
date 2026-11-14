@@ -18,6 +18,7 @@ type Draft struct {
 	Days             []plans_postgres_repository.Day `json:"days"`
 }
 type Program struct {
+	ModerationReason   *string `json:"moderation_reason"`
 	ID                 string  `json:"id"`
 	Version            int64   `json:"version"`
 	PublishedVersionID *string `json:"published_version_id"`

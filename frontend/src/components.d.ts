@@ -12,12 +12,20 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     AppTabBar: typeof import('./components/navigation/AppTabBar.vue')['default']
+    AsyncState: typeof import('./components/platform/AsyncState.vue')['default']
     BaseButton: typeof import('./components/ui/BaseButton.vue')['default']
     NutritionChrome: typeof import('./components/nutrition/NutritionChrome.vue')['default']
     OnboardingLayout: typeof import('./components/layout/OnboardingLayout.vue')['default']
+    PlatformLayout: typeof import('./components/platform/PlatformLayout.vue')['default']
     ProfileAuthPanel: typeof import('./components/settings/ProfileAuthPanel.vue')['default']
+    ProgramCard: typeof import('./components/platform/ProgramCard.vue')['default']
+    RecommendationList: typeof import('./components/platform/RecommendationList.vue')['default']
+    ReportForm: typeof import('./components/platform/ReportForm.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    ScheduleEditor: typeof import('./components/platform/ScheduleEditor.vue')['default']
+    ShareControls: typeof import('./components/platform/ShareControls.vue')['default']
+    TrainingDaysEditor: typeof import('./components/platform/TrainingDaysEditor.vue')['default']
     WorkoutChrome: typeof import('./components/workout/WorkoutChrome.vue')['default']
   }
 }

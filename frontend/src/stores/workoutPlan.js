@@ -55,7 +55,7 @@ export const useWorkoutPlanStore = defineStore('workoutPlan', {
       this.plan = data
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
-      } catch (_) {
+      } catch {
 
       }
     },
@@ -64,7 +64,7 @@ export const useWorkoutPlanStore = defineStore('workoutPlan', {
       try {
         const raw = localStorage.getItem(STORAGE_KEY)
         if (raw) this.plan = JSON.parse(raw)
-      } catch (_) {
+      } catch {
         this.plan = null
       }
     },
@@ -73,7 +73,7 @@ export const useWorkoutPlanStore = defineStore('workoutPlan', {
       this.plan = null
       try {
         localStorage.removeItem(STORAGE_KEY)
-      } catch (_) {
+      } catch {
 
       }
     }

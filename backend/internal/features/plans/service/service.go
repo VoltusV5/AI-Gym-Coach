@@ -2,7 +2,9 @@ package plans_service
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"math"
@@ -176,6 +178,14 @@ func (s *Service) CreatePlan(ctx context.Context, rawID string, input plans_post
 	id, err := userID(rawID)
 	if err != nil {
 		return plans_postgres_repository.Plan{}, err
+	}
+	if input.IdempotencyKey != "" {
+		if !validTitle(input.IdempotencyKey) {
+			return plans_postgres_repository.Plan{}, fmt.Errorf("invalid idempotency key: %w", core_errors.ErrInvalidArgument)
+		}
+		raw, _ := json.Marshal(input)
+		digest := sha256.Sum256(raw)
+		input.RequestHash = hex.EncodeToString(digest[:])
 	}
 	input, err = PrepareInput(input, false)
 	if err != nil {

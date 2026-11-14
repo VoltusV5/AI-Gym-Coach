@@ -4,6 +4,7 @@
     :progress="12"
     :disabled="!canSubmit"
     :loading="isSubmitting"
+    :error="submitError"
     @next="submit"
   >
     <p class="hint">Сначала рост, затем вес — так удобнее сверяться с макетом.</p>
@@ -47,6 +48,7 @@
 </template>
 
 <script setup>
+import { errorMessage } from '@/api/api'
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import OnboardingLayout from '@/components/layout/OnboardingLayout.vue'
@@ -63,6 +65,7 @@ function initialStr(n) {
 const heightStr = ref(initialStr(authStore.profile?.height_cm))
 const weightStr = ref(initialStr(authStore.profile?.weight_kg))
 const isSubmitting = ref(false)
+const submitError = ref('')
 const canSubmit = computed(() => {
   const hn = Number(String(heightStr.value).replace(',', '.'))
   const wn = Number(String(weightStr.value).replace(',', '.'))
@@ -72,6 +75,8 @@ const canSubmit = computed(() => {
 const submit = async () => {
   if (!canSubmit.value || isSubmitting.value) return
 
+  if (isSubmitting.value) return
+  submitError.value = ''
   isSubmitting.value = true
   try {
     const height_cm = Math.round(Number(String(heightStr.value).replace(',', '.')))
@@ -84,10 +89,7 @@ const submit = async () => {
       await router.push('/gender')
     }
   } catch (error) {
-    console.error('Submit error:', error)
-    const status = error?.response?.status
-    const msg = error?.response?.data?.message || error?.message || 'неизвестная ошибка'
-    alert('Не удалось сохранить рост/вес: ' + (status ? `${status} ` : '') + msg)
+    submitError.value = errorMessage(error)
   } finally {
     isSubmitting.value = false
   }

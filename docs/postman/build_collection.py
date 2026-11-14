@@ -187,14 +187,14 @@ get(1,'Заблокированный токен отвергается','/api/v
 patch(1,'Разблокировать постороннего пользователя','/api/v2/admin/users/{user_id}',role='admin',ids={'user_id':'stranger_id'},body="{blocked:false,reason:'Postman unblock'}",test="check('blocked=false',()=>eq(data.blocked,false));")
 
 # 02: own reference records avoid relying on production fixtures or magic IDs.
-post(2,'Создать упражнение без оборудования','/api/v2/admin/exercises',role='admin',body="{name:'Postman '+R('run_id'),muscle_group:'chest',equipment_ids:[],is_active:true}",test=store('exercise_id'))
+post(2,'Создать упражнение без оборудования','/api/v2/admin/exercises',role='admin',body="{name:'Postman '+R('run_id'),muscle_group:'chest',equipment_ids:[],is_active:true,reason:'Postman reference fixture'}",test=store('exercise_id'))
 get(2,'Справочник упражнений администратора','/api/v2/admin/exercises',role='admin')
-patch(2,'Изменить созданное упражнение','/api/v2/admin/exercises/{exercise_id}',role='admin',body="{name:'Postman updated '+R('run_id'),equipment_ids:[],is_active:true}",test="check('Имя упражнения обновлено',()=>eq(data.name,submitted.name));")
+patch(2,'Изменить созданное упражнение','/api/v2/admin/exercises/{exercise_id}',role='admin',body="{name:'Postman updated '+R('run_id'),equipment_ids:[],is_active:true,reason:'Postman reference fixture'}",test="check('Имя упражнения обновлено',()=>eq(data.name,submitted.name));")
 get(2,'Поиск созданного упражнения','/api/v2/exercises',query={'query':'{{state_run_id}}','limit':100},test="check('Поиск возвращает созданное упражнение',()=>includesItem(data.items,R('exercise_id')));")
 get(2,'Оборудование','/api/v2/equipment')
-post(2,'Создать категорию','/api/v2/admin/categories',role='admin',body="{slug:'pm-'+R('run_id'),name:'Postman category',position:0,is_active:true}",test=store('category_id'))
+post(2,'Создать категорию','/api/v2/admin/categories',role='admin',body="{slug:'pm-'+R('run_id'),name:'Postman category',position:0,is_active:true,reason:'Postman category fixture'}",test=store('category_id'))
 get(2,'Категории администратора','/api/v2/admin/categories',role='admin')
-patch(2,'Переименовать категорию','/api/v2/admin/categories/{category_id}',role='admin',body="{slug:'pm-'+R('run_id'),name:'Postman updated',position:0,is_active:true}",test="check('Имя категории обновлено',()=>eq(data.name,submitted.name));")
+patch(2,'Переименовать категорию','/api/v2/admin/categories/{category_id}',role='admin',body="{slug:'pm-'+R('run_id'),name:'Postman updated',position:0,is_active:true,reason:'Postman category fixture'}",test="check('Имя категории обновлено',()=>eq(data.name,submitted.name));")
 get(2,'Категории каталога','/api/v2/catalog/categories')
 get(2,'Недопустимая пагинация','/api/v2/exercises',query={'limit':0},codes=[400,422])
 
@@ -273,7 +273,7 @@ patch(8,'Изменить новый черновик','/api/v2/trainer/programs
 get(8,'Черновик не меняет опубликованный оригинал','/api/v2/catalog/programs/{program_id}',ids={'program_id':'free_program_id'},test="check('Публичная версия и название прежние',()=>{eq(data.published_version_id,R('free_version_id'));eq(data.title,J('free_card').title);});")
 
 # 09: filtering, favorites and entitlement.
-get(9,'Каталог по автору, цели, уровню и длительности','/api/v2/catalog/programs',query={'trainer_id':'{{state_trainer_id}}','goal':'muscle_gain','level':'beginner','duration_weeks':4,'limit':100},test="check('Фильтры соблюдены',()=>{includesItem(data.items,R('free_program_id'));data.items.forEach(x=>{eq(x.goal,'muscle_gain');eq(x.level,'beginner');eq(x.duration_weeks,4);eq(x.trainer.id,Number(R('trainer_id')));});});")
+get(9,'Каталог по автору, цели, уровню и длительности','/api/v2/catalog/programs',query={'trainer_id':'{{state_trainer_id}}','goal':'muscle_gain','level':'beginner','duration_weeks':4,'sessions_per_week':3,'limit':100},test="check('Фильтры соблюдены',()=>{includesItem(data.items,R('free_program_id'));data.items.forEach(x=>{eq(x.goal,'muscle_gain');eq(x.level,'beginner');eq(x.duration_weeks,4);eq(x.sessions_per_week,3);eq(x.trainer.id,Number(R('trainer_id')));});});")
 put(9,'Добавить в избранное','/api/v2/me/favorites/{program_id}',ids={'program_id':'free_program_id'})
 put(9,'Повтор добавления в избранное','/api/v2/me/favorites/{program_id}',ids={'program_id':'free_program_id'})
 get(9,'В избранном одна запись','/api/v2/me/favorites',query={'limit':100},test="check('Избранное не дублируется',()=>eq(data.items.filter(x=>x.id===R('free_program_id')).length,1));")
@@ -296,6 +296,10 @@ get(10,'Реестр выплат','/api/v2/admin/payouts',role='admin')
 get(10,'Выплаты тренеру','/api/v2/trainer/payouts',role='trainer')
 post(10,'Pending заказ не даёт права копировать программу','/api/v2/programs/{program_id}/fork',ids={'program_id':'paid_program_id'},pre="save('pending_fork_key',guid());",idem='pending_fork_key',body="{source_version_id:R('paid_version_id'),title:'unpaid copy'}",codes=[403,404])
 
+post(10,'Подтвердить покупку встроенной заглушкой','/api/v2/payments/sandbox/{order_id}',body="{action:'pay'}",test="check('Покупка подтверждена',()=>eq(data.status,'paid'));")
+post(10,'Повтор подтверждения не дублирует покупку','/api/v2/payments/sandbox/{order_id}',body="{action:'pay'}",test="check('Состояние стабильно',()=>eq(data.status,'paid'));")
+post(10,'Возврат встроенной заглушкой','/api/v2/payments/sandbox/{order_id}',body="{action:'refund'}",test="check('Возврат подтверждён',()=>eq(data.status,'refunded'));")
+
 # 11: clone independence, source lineage, public sharing and revocation.
 post(11,'Создать личную копию бесплатной программы','/api/v2/programs/{program_id}/fork',ids={'program_id':'free_program_id'},pre="save('fork_key',guid());",idem='fork_key',body="{source_version_id:R('free_version_id'),title:'Postman fork'}",test=store('fork_id','plan_id')+snapshot('fork_result')+"check('Происхождение сохранено',()=>eq(data.source_program_version_id,R('free_version_id')));")
 post(11,'Повтор Fork возвращает ту же копию','/api/v2/programs/{program_id}/fork',ids={'program_id':'free_program_id'},idem='fork_key',body="{source_version_id:R('free_version_id'),title:'Postman fork'}",test="check('Не создана вторая копия',()=>eq(data,J('fork_result')));")
@@ -303,13 +307,17 @@ get(11,'Прочитать копию','/api/v2/me/plans/{plan_id}',ids={'plan_i
 patch(11,'Изменить упражнения в копии','/api/v2/me/plans/{plan_id}',ids={'plan_id':'fork_id'},pre="const b=J('fork');b.days[0].exercises[0].sets=4;save('fork_edit',b);",body="{version:J('fork').version,title:'Postman remixed',days:J('fork_edit').days,schedule:J('fork').schedule}",test=snapshot('fork'))
 get(11,'Правки копии сохранены','/api/v2/me/plans/{plan_id}',ids={'plan_id':'fork_id'},test="check('Копия изменена',()=>{eq(data.title,'Postman remixed');eq(data.days[0].exercises[0].sets,4);});"+snapshot('fork'))
 get(11,'Оригинал не изменился','/api/v2/catalog/programs/{program_id}',ids={'program_id':'free_program_id'},test="check('Исходные название, дни и версия',()=>{eq(data.title,J('free_access_card').title);eq(data.days,J('free_access_card').days);eq(data.published_version_id,R('free_version_id'));});")
-post(11,'Создать публичную ссылку на собственный план','/api/v2/shares',pre="save('share_key',guid());",idem='share_key',body="{target_type:'plan',target_id:R('plan_id'),expires_at:null}",test=store('share_id')+"check('Извлечь токен ссылки',()=>{const url=data.url;present(url);const token=url.split('?')[0].replace(/\/$/,'').split('/').pop();present(token);save('share_token',decodeURIComponent(token));});")
+post(11,'Создать публичную ссылку на собственный план','/api/v2/shares',pre="save('share_key',guid());",idem='share_key',body="{target_type:'plan',target_id:R('plan_id'),expires_at:null}",test=store('share_id')+"check('Извлечь токен ссылки',()=>{const url=data.url;present(url);const token=url.split('?')[0].replace(/\\/$/,'').split('/').pop();present(token);save('share_token',decodeURIComponent(token));});")
 get(11,'Открыть ссылку без авторизации','/api/v2/shares/{token}',role=None,ids={'token':'share_token'},test="check('Снимок плана доступен',()=>{eq(data.title,J('plan').title);pm.expect(data.days.length).to.be.above(0);});check('Публичный ответ без токена и email',()=>{pm.expect(data).not.to.have.property('email');pm.expect(data).not.to.have.property('token');});")
-post(11,'Получатель сохраняет ссылку','/api/v2/shares/{token}/save',role='stranger',ids={'token':'share_token'})
+post(11,'Получатель сохраняет ссылку','/api/v2/shares/{token}/save',role='stranger',ids={'token':'share_token'},test=store('library_item_id','library_item_id'))
+get(11,'Библиотека сохранённых ссылок','/api/v2/me/saved-shares',role='stranger')
+get(11,'Открыть сохранённый снимок без повторной передачи токена','/api/v2/me/saved-shares/{item_id}',role='stranger',ids={'item_id':'library_item_id'})
 post(11,'Получатель создаёт свою копию','/api/v2/shares/{token}/fork',role='stranger',ids={'token':'share_token'},pre="save('share_fork_key',guid());",idem='share_fork_key',test=store('recipient_plan_id','plan_id'))
 get(11,'Копия принадлежит получателю','/api/v2/me/plans/{plan_id}',role='stranger',ids={'plan_id':'recipient_plan_id'},test="check('Это отдельный план',()=>pm.expect(data.id).not.to.eql(R('plan_id')));")
 delete(11,'Отозвать публичную ссылку','/api/v2/shares/{share_id}')
 get(11,'Отозванная ссылка недоступна','/api/v2/shares/{token}',role=None,ids={'token':'share_token'},codes=[404])
+get(11,'Сохранённая отозванная ссылка недоступна','/api/v2/me/saved-shares/{item_id}',role='stranger',ids={'item_id':'library_item_id'},codes=[404])
+delete(11,'Удалить отозванную ссылку из библиотеки','/api/v2/me/saved-shares/{item_id}',role='stranger',ids={'item_id':'library_item_id'})
 
 # 12: manual workouts do not qualify; only three distinct sessions of the fork do.
 get(12,'До использования программы отзыв недоступен','/api/v2/programs/{program_id}/review-eligibility',ids={'program_id':'free_program_id'},test="check('Ручная тренировка не считается использованием программы',()=>{eq(data.eligible,false);eq(data.completed_workouts,0);eq(data.required_workouts,3);});")
@@ -338,7 +346,7 @@ delete(13,'Отписаться от тренера','/api/v2/trainers/{trainer_
 get(13,'Отписка сохранена','/api/v2/me/trainers',query={'limit':100},test="check('Автор отсутствует',()=>eq(data.items.some(x=>x.id===Number(R('trainer_id'))),false));")
 
 # 14–15: no checks that assume a particular ML score, list length or dashboard state.
-post(14,'Отправить событие просмотра','/api/v2/events',pre="save('event_body',{events:[{event_id:guid(),type:'view',program_id:R('free_program_id'),occurred_at:new Date().toISOString(),context:{source:'postman'}}]});",body="J('event_body')")
+post(14,'Отправить событие просмотра','/api/v2/events',pre="save('event_body',{events:[{event_id:guid(),type:'view',program_id:R('free_program_id'),occurred_at:new Date().toISOString(),context:{surface:'postman'}}]});",body="J('event_body')")
 post(14,'Повтор события с тем же event_id','/api/v2/events',body="J('event_body')")
 get(14,'Персональные рекомендации','/api/v2/recommendations/programs',query={'limit':10},test="check('Список и версия модели присутствуют',()=>{pm.expect(data.items).to.be.an('array');present(data.model_version);pm.expect(data.fallback).to.be.a('boolean');});check('Каждая рекомендация объяснена',()=>data.items.forEach(x=>{present(x.program_id);pm.expect(x.reason_codes).to.be.an('array');pm.expect(x.reason_codes.length).to.be.above(0);present(x.explanation);}));")
 get(15,'Персональный дашборд','/api/v2/dashboard',test="check('Состояние и блоки дашборда',()=>{present(data.state);pm.expect(data.blocks).to.be.an('array');present(data.generated_at);data.blocks.forEach(b=>{present(b.id);present(b.type);pm.expect(b.priority).to.be.a('number');});});")
@@ -348,8 +356,8 @@ get(15,'Аналитика администратора запрещена об�
 
 # 16: explicit gaps, no guessed provider signature or fabricated seeded money.
 post(16,'Подписанный webhook выбранного провайдера','/api/v2/payments/webhook',role=None,gate='enable_provider_tests',
-     pre="const raw=pm.environment.get('provider_webhook_body');if(!raw)throw Error('Нужны provider_webhook_body и provider_signature');if(!pm.environment.get('provider_signature'))throw Error('Нужна подпись провайдера');pm.request.headers.upsert({key:pm.environment.get('provider_signature_header')||'X-Signature',value:pm.environment.get('provider_signature')});save('provider_body',JSON.parse(raw));",
-     body="J('provider_body')",description='Формат подписи не согласован. Перед запуском адаптировать запрос к выбранному провайдеру; использовать только sandbox. Это шаблон, не готовая проверка расчётов и возвратов.')
+     pre="const raw=pm.environment.get('provider_webhook_body');if(!raw)throw Error('Нужны provider_webhook_body и provider_signature');if(!pm.environment.get('provider_signature'))throw Error('Нужна подпись провайдера');pm.request.headers.upsert({key:pm.environment.get('provider_signature_header')||'X-Payment-Signature',value:pm.environment.get('provider_signature')});save('provider_body',JSON.parse(raw));",
+     body="J('provider_body')",description='Для встроенного sandbox подпись — hex HMAC-SHA256 точных байтов JSON на тестовом PAYMENTS_WEBHOOK_SECRET. Внешний провайдер не подключён. Секрет и подписанное тело задаются только в локальном окружении тестового прогона.')
 post(16,'Создать выплату из тестового подтверждённого баланса','/api/v2/admin/payouts',role='admin',gate='enable_payout_tests',pre="if(!pm.environment.get('payout_trainer_id')||!pm.environment.get('payout_amount_minor'))throw Error('Нужны payout_trainer_id и payout_amount_minor, тестовый доступный баланс');save('payout_key',guid());",idem='payout_key',body="{trainer_id:Number(pm.environment.get('payout_trainer_id')),amount_minor:Number(pm.environment.get('payout_amount_minor')),currency:'RUB'}",test=store('payout_id'))
 patch(16,'Сверить созданную тестовую выплату','/api/v2/admin/payouts/{payout_id}',role='admin',gate='enable_payout_tests',body="{action:'reconcile',reason:'Postman sandbox reconciliation'}")
 patch(16,'Пометить доставленное уведомление прочитанным','/api/v2/notifications/{notification_id}',gate='enable_notification_tests',pre="const id=pm.environment.get('notification_id');if(!id)throw Error('Нужен notification_id для пользователя этого прогона');save('notification_id',id);",body="{read:true}",test="check('Есть время прочтения',()=>present(data.read_at));")
@@ -377,7 +385,7 @@ def main():
     report={'contract_sha256':hashlib.sha256((HERE.parent/'api/openapi.json').read_bytes()).hexdigest(),
             'requests':len(CASES),'automated_requests':sum(not c['gate'] for c in CASES),'negative_requests':sum(min(c['expected'])>=400 for c in CASES),
             'planned_operations':len(planned),'automated_planned_operations':len(planned & automated),'fixture_only_operations':sorted(planned-automated),
-            'backend_execution':'NOT_RUN: semester endpoints are planned; offline validation is not acceptance of backend'}
+            'backend_execution':'RECORDED_SEPARATELY: generation does not execute backend; real isolated execution is recorded in docs/IMPLEMENTATION_REPORT.md'}
     (HERE/'coverage.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
     print(json.dumps(report,ensure_ascii=False))
 

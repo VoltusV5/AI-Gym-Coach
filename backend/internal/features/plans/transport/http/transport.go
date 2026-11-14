@@ -193,6 +193,7 @@ func (h *PlansHTTPHandler) save(w http.ResponseWriter, r *http.Request, update b
 		plan, err = h.service.UpdatePlan(r.Context(), id, r.PathValue("plan_id"), input)
 		status = http.StatusOK
 	} else {
+		input.IdempotencyKey = r.Header.Get("Idempotency-Key")
 		plan, err = h.service.CreatePlan(r.Context(), id, input)
 	}
 	if err != nil {

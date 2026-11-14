@@ -96,7 +96,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { IonPage, IonContent, IonIcon, IonButton, IonSpinner } from '@ionic/vue'
+import { IonPage, IonContent, IonIcon, IonButton } from '@ionic/vue'
 import { checkmarkCircleOutline, arrowForwardOutline } from 'ionicons/icons'
 
 const route = useRoute()
@@ -106,7 +106,7 @@ const buildId = __SPORTIK_BUILD_ID__
 const resultData = computed(() => {
   try {
     return JSON.parse(route.query.result || '{}')
-  } catch (e) {
+  } catch {
     return {}
   }
 })

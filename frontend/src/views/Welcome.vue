@@ -64,14 +64,6 @@ const startOnboarding = () => {
   router.push({ name })
 }
 
-const newTestSession = async () => {
-  try {
-    await authStore.restartSessionForTesting()
-    await router.replace('/')
-  } catch (e) {
-    console.error(e)
-  }
-}
 </script>
 
 <style scoped>

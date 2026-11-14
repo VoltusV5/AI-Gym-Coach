@@ -1,33 +1,36 @@
-import { SecureStorage } from '@aparajita/capacitor-secure-storage';
+import { Capacitor } from '@capacitor/core'
+import { SecureStorage } from '@aparajita/capacitor-secure-storage'
 
-const TOKEN_KEY = 'auth_token';
+const TOKEN_KEY = 'auth_token'
+let writes = Promise.resolve()
 
-
-export async function saveToken(token) {
-  try {
-    await SecureStorage.set({ key: TOKEN_KEY, value: token });
-  } catch (error) {
-    console.error('Error saving token:', error);
-    localStorage.setItem(TOKEN_KEY, token);
-  }
+function enqueue(write) {
+  const result = writes.then(write)
+  writes = result.catch(() => undefined)
+  return result
 }
 
+export function saveToken(token) {
+  return enqueue(async () => {
+    if (Capacitor.isNativePlatform()) {
+      await SecureStorage.set(TOKEN_KEY, token)
+      localStorage.removeItem(TOKEN_KEY)
+    } else {
+      localStorage.setItem(TOKEN_KEY, token)
+    }
+  })
+}
 
 export async function getToken() {
-  try {
-    const { value } = await SecureStorage.get({ key: TOKEN_KEY });
-    return value;
-  } catch (error) {
-    return localStorage.getItem(TOKEN_KEY) || null;
-  }
+  await writes
+  if (!Capacitor.isNativePlatform()) return localStorage.getItem(TOKEN_KEY)
+  const value = await SecureStorage.get(TOKEN_KEY)
+  return typeof value === 'string' ? value : null
 }
 
-
-export async function removeToken() {
-  localStorage.removeItem(TOKEN_KEY);
-  try {
-    await SecureStorage.remove({ key: TOKEN_KEY });
-  } catch (error) {
-    console.warn('Error removing token from secure storage:', error);
-  }
+export function removeToken() {
+  return enqueue(async () => {
+    localStorage.removeItem(TOKEN_KEY)
+    if (Capacitor.isNativePlatform()) await SecureStorage.remove(TOKEN_KEY)
+  })
 }

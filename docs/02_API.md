@@ -5,7 +5,7 @@ Swagger — интерактивная документация API. Полны�
 ## Как использовать
 
 - **Онлайн:** откройте [Swagger Editor](https://editor.swagger.io/), выберите **File → Import file** и загрузите `docs/api/openapi.yml`.
-- **Локально:** из корня проекта `AI-Gym-Coach` выполните `python docs/api/serve.py` и откройте [Swagger проекта](http://localhost:8088/api/). В «Новый семестр» доступны API для **Backend / Frontend** и **ML**; эти методы пока не реализованы.
+- **Локально:** из корня проекта `AI-Gym-Coach` выполните `python docs/api/serve.py` и откройте [Swagger проекта](http://localhost:8088/api/). В «Go API · сейчас» находятся действующие v1/v2. В «Новый семестр» остались два планируемых ML-метода ranking/explain; Go использует проверяемый fallback до их подключения.
 
 Дополнительно:
 

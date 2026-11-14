@@ -40,7 +40,7 @@ mock.onPost('/api/v1/profile').reply((config) => {
     mockProfile = { ...mockProfile, ...data }
     console.log('Mock Profile updated:', mockProfile)
     return [200, { ...mockProfile }]
-  } catch (err) {
+  } catch {
     return [400, { message: 'Invalid JSON' }]
   }
 })
@@ -63,7 +63,7 @@ mock.onPost('/api/v1/workouts/complete').reply((config) => {
   try {
     const body = config.data ? JSON.parse(config.data) : {}
     console.log('[mock] workouts/complete', body)
-  } catch (_) {
+  } catch {
 
   }
   return [200, { ok: true, saved_id: `mock-${Date.now()}`, new_achievements: [], session_highlights: [] }]
@@ -74,7 +74,7 @@ mock.onPost('/api/v1/auth/register').reply((config) => {
     const body = config.data ? JSON.parse(config.data) : {}
     const token = `mock-jwt-${Date.now()}`
     return [200, { token, user: { id: 1, email: body.email || '', name: body.name || '' } }]
-  } catch (_) {
+  } catch {
     return [400, { message: 'Invalid JSON' }]
   }
 })
@@ -84,7 +84,7 @@ mock.onPost('/api/v1/auth/login').reply((config) => {
     const body = config.data ? JSON.parse(config.data) : {}
     const token = `mock-jwt-${Date.now()}`
     return [200, { token, user: { id: 1, email: body.email || '', name: 'Mock User' } }]
-  } catch (_) {
+  } catch {
     return [400, { message: 'Invalid JSON' }]
   }
 })
@@ -131,7 +131,7 @@ mock.onPost('/api/v1/notes').reply((config) => {
     }
     mockNotes.unshift(note)
     return [200, note]
-  } catch (_) {
+  } catch {
     return [400, { message: 'Invalid JSON' }]
   }
 })
@@ -150,7 +150,7 @@ mock.onPatch(/\/api\/v1\/notes\/[^/]+$/).reply((config) => {
       updated_at: new Date().toISOString()
     }
     return [200, mockNotes[idx]]
-  } catch (_) {
+  } catch {
     return [400, { message: 'Invalid JSON' }]
   }
 })
@@ -197,7 +197,7 @@ mock.onPost('/api/v1/nutrition/entries').reply((config) => {
     }
     mockNutritionEntries.unshift(item)
     return [200, item]
-  } catch (_) {
+  } catch {
     return [400, { message: 'Invalid JSON' }]
   }
 })

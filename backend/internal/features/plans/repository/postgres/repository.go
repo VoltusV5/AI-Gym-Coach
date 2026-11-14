@@ -24,6 +24,7 @@ func NewRepository(pool core_postgres_pool.TransactionalPool) *Repository {
 const planJSON = `jsonb_build_object(
 	'id', p.id, 'version', p.version, 'title', p.title, 'source_type', p.source_type,
 	'source_program_version_id', p.source_program_version_id, 'is_active', p.is_active,
+ 'source_program',(SELECT jsonb_build_object('id',v.program_id,'title',v.title,'trainer_id',t.user_id,'trainer_name',t.display_name) FROM sportapp.program_versions v JOIN sportapp.programs src ON src.id=v.program_id JOIN sportapp.trainer_profiles t ON t.user_id=src.trainer_id WHERE v.id=p.source_program_version_id),
 	'days', COALESCE((SELECT jsonb_agg(jsonb_build_object(
 		'id', d.id, 'title', d.title, 'position', d.position,
 		'exercises', COALESCE((SELECT jsonb_agg(jsonb_build_object(
@@ -140,4 +141,8 @@ func saveRevision(ctx context.Context, tx core_postgres_pool.Tx, plan Plan) erro
 		return fmt.Errorf("save plan revision: %w", err)
 	}
 	return nil
+}
+
+func ReadSnapshot(ctx context.Context, reader planReader, user int, id string) (Plan, error) {
+	return readPlan(ctx, reader, user, id)
 }

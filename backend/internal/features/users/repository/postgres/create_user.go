@@ -42,7 +42,7 @@ func (r *UsersRepository) CreateUser(
 	),
 	inserted_role AS (
 		INSERT INTO sportapp.user_roles (user_id, role)
-		SELECT id, 'user' FROM inserted_user
+		SELECT id, 'user' FROM inserted_user ON CONFLICT DO NOTHING
 	)
 	SELECT id, version, is_anonymous, email, subscription_status, created_at, updated_at
 	FROM inserted_user;

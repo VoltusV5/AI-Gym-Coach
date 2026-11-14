@@ -25,7 +25,8 @@
     <ion-footer class="ion-no-border note-page-footer">
       <div class="note-bottom-sheet ion-padding">
         <p class="note-date">{{ t.created }}: {{ createdAtLabel }}</p>
-        <ion-button class="sportik-footer-btn" expand="block" @click="saveNote">
+        <p v-if="notesStore.error" role="alert">{{ notesStore.error }}</p>
+        <ion-button class="sportik-footer-btn" expand="block" :disabled="saving" @click="saveNote">
           {{ t.save }}
         </ion-button>
       </div>
@@ -90,7 +91,12 @@ const createdAtLabel = computed(() => {
   })
 })
 
+const saving = ref(false)
+
 async function saveNote() {
+  if (saving.value) return
+  saving.value = true
+  try {
   await notesStore.saveNoteWithApi(noteId.value, title.value, body.value)
   await router.push('/notes')
   const toast = await toastController.create({
@@ -99,6 +105,7 @@ async function saveNote() {
     color: 'success'
   })
   await toast.present()
+  } catch { return } finally { saving.value = false }
 }
 </script>
 

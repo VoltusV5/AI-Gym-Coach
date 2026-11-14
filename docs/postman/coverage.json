@@ -1,15 +1,10 @@
 {
-  "contract_sha256": "a345224eab5fc42a8cae6b9c72627b2650306f50ce0a6652ccf9c623630876a0",
-  "requests": 151,
-  "automated_requests": 147,
-  "negative_requests": 21,
-  "planned_operations": 86,
-  "automated_planned_operations": 82,
-  "fixture_only_operations": [
-    "v2_patch_admin_payouts_payout_id",
-    "v2_patch_notifications_notification_id",
-    "v2_post_admin_payouts",
-    "v2_post_payments_webhook"
-  ],
-  "backend_execution": "NOT_RUN: semester endpoints are planned; offline validation is not acceptance of backend"
+  "contract_sha256": "4177233799dc622fb33434fceea74d24efceff0fc357561671a5a6cb817860a2",
+  "requests": 158,
+  "automated_requests": 154,
+  "negative_requests": 22,
+  "planned_operations": 0,
+  "automated_planned_operations": 0,
+  "fixture_only_operations": [],
+  "backend_execution": "RECORDED_SEPARATELY: generation does not execute backend; real isolated execution is recorded in docs/IMPLEMENTATION_REPORT.md"
 }

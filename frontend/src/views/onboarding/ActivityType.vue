@@ -4,6 +4,7 @@
     :progress="38"
     :disabled="!activityLevel"
     :loading="isSubmitting"
+    :error="submitError"
     @next="submit"
   >
     <div class="options-list" role="radiogroup" aria-label="Тип активности">
@@ -17,7 +18,11 @@
         :aria-checked="activityLevel === item.value"
         @click="activityLevel = item.value"
       >
-        <span class="radio-dot" :class="{ 'radio-dot--on': activityLevel === item.value }" aria-hidden="true"></span>
+        <span
+          class="radio-dot"
+          :class="{ 'radio-dot--on': activityLevel === item.value }"
+          aria-hidden="true"
+        ></span>
         <span class="option-label">{{ item.label }}</span>
       </button>
     </div>
@@ -25,6 +30,7 @@
 </template>
 
 <script setup>
+import { errorMessage } from '@/api/api'
 import { ref } from 'vue'
 import OnboardingLayout from '@/components/layout/OnboardingLayout.vue'
 import { useAuthStore } from '@/stores/auth'
@@ -35,39 +41,42 @@ const router = useRouter()
 
 const activityLevel = ref(authStore.profile?.activity_level || null)
 const isSubmitting = ref(false)
+const submitError = ref('')
 
 const activityLevels = [
   {
     value: 'Сидячий и малоподвижный',
-    label: 'Сидячий и малоподвижный'
+    label: 'Сидячий и малоподвижный',
   },
   {
     value: 'Лёгкая активность (физические нагрузки 1-3 раза в неделю)',
-    label: 'Лёгкая активность (физические нагрузки 1–3 раза в неделю)'
+    label: 'Лёгкая активность (физические нагрузки 1–3 раза в неделю)',
   },
   {
     value: 'Средняя активность (физические нагрузки 3-5 раза в неделю)',
-    label: 'Средняя активность (физические нагрузки 3–5 раза в неделю)'
+    label: 'Средняя активность (физические нагрузки 3–5 раза в неделю)',
   },
   {
     value: 'Высокая активность (физические нагрузки 6-7 раз в неделю)',
-    label: 'Высокая активность (физические нагрузки 6–7 раз в неделю)'
+    label: 'Высокая активность (физические нагрузки 6–7 раз в неделю)',
   },
   {
     value: 'Очень высокая активность (постоянно высокая физическая нагрузка)',
-    label: 'Очень высокая активность (постоянно высокая физическая нагрузка)'
-  }
+    label: 'Очень высокая активность (постоянно высокая физическая нагрузка)',
+  },
 ]
 
 const submit = async () => {
   if (!activityLevel.value) return
 
+  if (isSubmitting.value) return
+  submitError.value = ''
   isSubmitting.value = true
   try {
     await authStore.updateProfile({ activity_level: activityLevel.value })
     router.push('/health-restrictions')
   } catch (error) {
-    console.error('Submit error:', error)
+    submitError.value = errorMessage(error)
   } finally {
     isSubmitting.value = false
   }

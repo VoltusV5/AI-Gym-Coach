@@ -66,6 +66,7 @@ type ProgramDay struct {
 }
 
 type ProgramDetail struct {
+	IsFavorite bool `json:"is_favorite"`
 	ProgramCard
 	Description      string       `json:"description"`
 	Access           string       `json:"access"`
@@ -83,18 +84,19 @@ type Entitlement struct {
 }
 
 type Filter struct {
-	AfterCreatedAt time.Time
-	AfterPrice     int64
-	Limit          int
-	After          string
-	Query          string
-	MuscleGroup    string
-	Equipment      []string
-	EquipmentSet   bool
-	Goal           string
-	Level          string
-	DurationWeeks  int
-	TrainerID      int
-	PriceType      string
-	Sort           string
+	AfterCreatedAt  time.Time
+	AfterPrice      int64
+	Limit           int
+	After           string
+	Query           string
+	MuscleGroup     string
+	Equipment       []string
+	EquipmentSet    bool
+	Goal            string
+	Level           string
+	SessionsPerWeek int
+	DurationWeeks   int
+	TrainerID       int
+	PriceType       string
+	Sort            string
 }

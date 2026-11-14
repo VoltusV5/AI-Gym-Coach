@@ -168,13 +168,6 @@ const currentItems = computed(() => {
   return frequentItems.value
 })
 
-async function onSearch() {
-  if (query.value.trim().length < 2) {
-    searchItems.value = []
-    return
-  }
-  searchItems.value = await store.searchDishes(query.value, 40)
-}
 
 function openSearch() {
   router.push('/nutrition/add-meal/search')

@@ -24,7 +24,7 @@ import { MAIN_TABS } from '@/config/mainTabs'
 import { getHomeTabIconUrls } from '@/utils/localImages'
 import { noAnimation } from '@/utils/animations'
 
-const props = defineProps({
+defineProps({
   activeKey: {
     type: String,
     default: 'main'

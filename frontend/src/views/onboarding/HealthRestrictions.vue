@@ -4,6 +4,7 @@
     :progress="50"
     :disabled="choice === null"
     :loading="isSubmitting"
+    :error="submitError"
     next-label="Далее"
     @next="submit"
   >
@@ -32,6 +33,7 @@
 </template>
 
 <script setup>
+import { errorMessage } from '@/api/api'
 import { ref } from 'vue'
 import OnboardingLayout from '@/components/layout/OnboardingLayout.vue'
 import { useAuthStore } from '@/stores/auth'
@@ -41,20 +43,21 @@ const authStore = useAuthStore()
 const router = useRouter()
 
 const raw = authStore.profile?.injuries_notes
-const choice = ref(
-  typeof raw === 'boolean' ? raw : null
-)
+const choice = ref(typeof raw === 'boolean' ? raw : null)
 const isSubmitting = ref(false)
+const submitError = ref('')
 
 const submit = async () => {
   if (choice.value === null) return
 
+  if (isSubmitting.value) return
+  submitError.value = ''
   isSubmitting.value = true
   try {
     await authStore.updateProfile({ injuries_notes: choice.value })
     router.push('/goal-selection')
   } catch (error) {
-    console.error('Submit error:', error)
+    submitError.value = errorMessage(error)
   } finally {
     isSubmitting.value = false
   }

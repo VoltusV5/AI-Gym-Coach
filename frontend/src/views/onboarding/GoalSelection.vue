@@ -4,6 +4,7 @@
     :progress="62"
     :disabled="!goal"
     :loading="isSubmitting"
+    :error="submitError"
     @next="submit"
   >
     <ion-list lines="none" class="options-list">
@@ -25,6 +26,7 @@
 </template>
 
 <script setup>
+import { errorMessage } from '@/api/api'
 import { ref } from 'vue'
 import { IonList, IonRadioGroup, IonItem, IonRadio } from '@ionic/vue'
 import OnboardingLayout from '@/components/layout/OnboardingLayout.vue'
@@ -36,23 +38,26 @@ const router = useRouter()
 
 const goal = ref(authStore.profile?.goal || null)
 const isSubmitting = ref(false)
+const submitError = ref('')
 
 const goals = [
   { value: 'Сбросить вес', label: 'Скинуть вес' },
   { value: 'Сжечь жир', label: 'Сжечь жир' },
   { value: 'Набрать мышцы', label: 'Набрать мышцы' },
-  { value: 'Набрать мышцы и сжечь жир', label: 'Набрать мышцы и сжечь жир' }
+  { value: 'Набрать мышцы и сжечь жир', label: 'Набрать мышцы и сжечь жир' },
 ]
 
 const submit = async () => {
   if (!goal.value) return
 
+  if (isSubmitting.value) return
+  submitError.value = ''
   isSubmitting.value = true
   try {
     await authStore.updateProfile({ goal: goal.value })
     router.push('/fitness-level')
   } catch (error) {
-    console.error('Submit error:', error)
+    submitError.value = errorMessage(error)
   } finally {
     isSubmitting.value = false
   }
