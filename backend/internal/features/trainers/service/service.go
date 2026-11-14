@@ -33,6 +33,13 @@ func (s *Service) Profile(ctx context.Context, raw, target string) (trainers_pos
 		}
 		return s.repo.GetProfile(ctx, id, id, true)
 	}
+	if raw != "" {
+		var err error
+		id, err = v2request.UserID(raw)
+		if err != nil {
+			return trainers_postgres_repository.Profile{}, err
+		}
+	}
 	n, err := strconv.Atoi(target)
 	if err != nil || n < 1 || n > math.MaxInt32 {
 		return trainers_postgres_repository.Profile{}, v2request.Invalid()

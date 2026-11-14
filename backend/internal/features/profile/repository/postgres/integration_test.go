@@ -69,6 +69,7 @@ func TestProfileIntegration(t *testing.T) {
 		INSERT INTO sportapp.notes(user_id,title,body) VALUES (101,'fixture','must survive');`)
 	require.NoError(t, err)
 	users := users_postgres_repository.NewUsersRepository(pool)
+	apply("000019_exercise_seed_identity.up.sql")
 	require.NoError(t, users.EnsureExercisesSeeded(ctx))
 	require.NoError(t, catalog_postgres_repository.NewRepository(pool).EnsureReferenceData(ctx))
 	apply("000008_profile_v2.up.sql")

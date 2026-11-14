@@ -2,7 +2,28 @@
 
 [Проект](01_PROJECT.md) · [API](02_API.md) · [Экраны](03_FRONTEND.md) · [ML](05_ML.md)
 
-Дата: 05.10.2026. PostgreSQL, схема `sportapp`. Разделы 1–2 описывают миграции 000001–000006; остальное — предлагаемая модель для нового семестра.
+Актуальная физическая схема: миграции `000001–000019`, PostgreSQL, схема `sportapp`. Источник истины — SQL в `backend/migrations`, а не концептуальные имена ниже. Разделы1–2 сохраняют описание исходного v1; разделы3–7 содержат исходную проектную модель и правила расчётов.
+
+## Реализованные расширения v2
+
+| Миграции | Физические таблицы/изменения |
+|---|---|
+| 7–9 | Каталог, equipment/связки, trainer_profiles, programs/program_versions, entitlements, дробный профиль, training_plans/дни/упражнения/расписания/ревизии |
+| 10–11 | Заявки тренеров, publication_audit, workout_sessions, plan_generations, operation_results, сводки |
+| 12 | users.blocked/block_reason, account_audit с before/after, начальная роль зарегистрированного пользователя |
+| 13 | orders, payment_events, sales_ledger, payouts, commission_settings/commission_rates, commerce_audit |
+| 14 | program_favorites |
+| 15 | program_reviews, reports, trainer_follows, notifications, behavior_events |
+| 16 | public_shares со снимком и hash токена; saved_shares с владельцем |
+| 17 | commerce_outbox и повторяемая доставка во внутренние notifications |
+| 18 | payouts.paid_at, backfill старых paid по created_at; финансовые периоды по моменту успешной выплаты |
+| 19 | exercises.seed_key и admin_modified: повторный startup seed сохраняет имя, медиа и оборудование после правок администратора |
+
+Нормализованные записи v2 сосуществуют с legacy JSON-программой/историей. Их нельзя удалять при переключении UI. Полный откат соответствующих миграций уничтожает данные модулей и проверяется только на отдельной тестовой БД. Для финансов нужен отдельный план восстановления; down не заменяет возврат платежа.
+
+Суммы — целые копейки RUB. Sale/refund — две неизменяемые встречные записи sales_ledger; доступный остаток учитывает payouts. Встроенный провайдер — заглушка. Наличие концептуальных financial_ledger, share_links, interaction_events или ML-таблиц в старой диаграмме ниже не означает, что таблицы с такими именами созданы.
+
+[Отчёт реализации и проверки](IMPLEMENTATION_REPORT.md).
 
 ## 1. Существующие таблицы
 
@@ -25,7 +46,7 @@
 | nutrition_water_logs | id PK; user_id FK; logged_on; amount_ml; UNIQUE(user_id,logged_on) | Вода за день |
 | nutrition_weight_logs | id PK; user_id FK; logged_on; weight_kg float; UNIQUE(user_id,logged_on) | История веса, переиспользуемая для прогресса |
 
-В profile.weight_kg сейчас integer, в nutrition_weight_logs — дробное значение. injuries_notes boolean не описывает конкретные противопоказания. nutrition_catalog и nutrition_dishes — разные таблицы.
+В исходной миграции profile.weight_kg был integer; миграция8 перевела его на дробное хранение. nutrition_weight_logs также хранит дробное значение. injuries_notes boolean не описывает конкретные противопоказания. nutrition_catalog и nutrition_dishes — разные таблицы.
 
 ## 2. ER существующей схемы
 

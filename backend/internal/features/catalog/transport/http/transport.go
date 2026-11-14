@@ -57,6 +57,9 @@ func parseFilter(r *http.Request) (catalog_postgres_repository.Filter, error) {
 		PriceType: q.Get("price_type"), Sort: q.Get("sort"),
 		Equipment: q["equipment"], EquipmentSet: q.Has("equipment"),
 	}
+	if len(filter.Equipment) == 1 && filter.Equipment[0] == "" {
+		filter.Equipment = []string{}
+	}
 	for key, dest := range map[string]*int{
 		"limit": &filter.Limit, "duration_weeks": &filter.DurationWeeks, "trainer_id": &filter.TrainerID,
 	} {

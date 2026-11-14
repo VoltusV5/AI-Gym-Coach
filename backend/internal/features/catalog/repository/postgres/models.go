@@ -66,6 +66,7 @@ type ProgramDay struct {
 }
 
 type ProgramDetail struct {
+	IsFavorite bool `json:"is_favorite"`
 	ProgramCard
 	Description      string       `json:"description"`
 	Access           string       `json:"access"`

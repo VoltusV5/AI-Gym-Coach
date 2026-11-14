@@ -236,11 +236,21 @@ func (r *Repository) Data(ctx context.Context, user int) (workouts_domain.Data, 
 	if _, err := tx.Exec(ctx, `SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY`); err != nil {
 		return data, err
 	}
-	data.Workouts, err = readWorkouts(ctx, tx, user)
+	data, err = DataSnapshot(ctx, tx, user)
 	if err != nil {
 		return data, err
 	}
-	rows, err := tx.Query(ctx, `SELECT logged_on::text,weight_kg FROM sportapp.nutrition_weight_logs WHERE user_id=$1 ORDER BY logged_on`, user)
+	return data, tx.Commit(ctx)
+}
+
+func DataSnapshot(ctx context.Context, reader Reader, user int) (workouts_domain.Data, error) {
+	var data workouts_domain.Data
+	var err error
+	data.Workouts, err = readWorkouts(ctx, reader, user)
+	if err != nil {
+		return data, err
+	}
+	rows, err := reader.Query(ctx, `SELECT logged_on::text,weight_kg FROM sportapp.nutrition_weight_logs WHERE user_id=$1 ORDER BY logged_on`, user)
 	if err != nil {
 		return data, err
 	}
@@ -257,7 +267,7 @@ func (r *Repository) Data(ctx context.Context, user int) (workouts_domain.Data, 
 	if err != nil {
 		return data, err
 	}
-	rows, err = tx.Query(ctx, `SELECT r.snapshot,r.created_at FROM sportapp.plan_revisions r JOIN sportapp.training_plans p ON p.id=r.plan_id WHERE p.owner_id=$1 ORDER BY r.created_at,r.number`, user)
+	rows, err = reader.Query(ctx, `SELECT r.snapshot,r.created_at FROM sportapp.plan_revisions r JOIN sportapp.training_plans p ON p.id=r.plan_id WHERE p.owner_id=$1 ORDER BY r.created_at,r.number`, user)
 	if err != nil {
 		return data, err
 	}
@@ -279,5 +289,5 @@ func (r *Repository) Data(ctx context.Context, user int) (workouts_domain.Data, 
 	if err != nil {
 		return data, err
 	}
-	return data, tx.Commit(ctx)
+	return data, nil
 }

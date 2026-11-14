@@ -42,13 +42,14 @@ type PayoutInput struct {
 	Currency    string `json:"currency"`
 }
 type Payout struct {
-	ID               string    `json:"id"`
-	TrainerID        int       `json:"trainer_id"`
-	AmountMinor      int64     `json:"amount_minor"`
-	Currency         string    `json:"currency"`
-	Status           string    `json:"status"`
-	CreatedAt        time.Time `json:"created_at"`
-	ProviderPayoutID *string   `json:"provider_payout_id"`
+	PaidAt           *time.Time `json:"paid_at"`
+	ID               string     `json:"id"`
+	TrainerID        int        `json:"trainer_id"`
+	AmountMinor      int64      `json:"amount_minor"`
+	Currency         string     `json:"currency"`
+	Status           string     `json:"status"`
+	CreatedAt        time.Time  `json:"created_at"`
+	ProviderPayoutID *string    `json:"provider_payout_id"`
 }
 type Decision struct {
 	Action string `json:"action"`

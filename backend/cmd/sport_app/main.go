@@ -12,6 +12,19 @@ import (
 	commerce_postgres_repository "sport_app/internal/features/commerce/repository/postgres"
 	commerce_service "sport_app/internal/features/commerce/service"
 	commerce_transport_http "sport_app/internal/features/commerce/transport/http"
+	favorites_postgres_repository "sport_app/internal/features/favorites/repository/postgres"
+	favorites_service "sport_app/internal/features/favorites/service"
+	favorites_transport_http "sport_app/internal/features/favorites/transport/http"
+	insights_repository "sport_app/internal/features/insights/repository/postgres"
+	insights_service "sport_app/internal/features/insights/service"
+	insights_http "sport_app/internal/features/insights/transport/http"
+	sharing_postgres_repository "sport_app/internal/features/sharing/repository/postgres"
+	sharing_service "sport_app/internal/features/sharing/service"
+	sharing_transport_http "sport_app/internal/features/sharing/transport/http"
+	social_postgres_repository "sport_app/internal/features/social/repository/postgres"
+	social_service "sport_app/internal/features/social/service"
+	social_transport_http "sport_app/internal/features/social/transport/http"
+	"strconv"
 	"time"
 
 	core_auth "sport_app/internal/core/auth"
@@ -119,8 +132,21 @@ func main() {
 	if err := catalogRepository.EnsureReferenceData(ctx); err != nil {
 		logger.Fatal("failed to ensure reference data", zap.Error(err))
 	}
+	reviewThreshold := 3
+	if value := os.Getenv("REVIEW_REQUIRED_WORKOUTS"); value != "" {
+		n, err := strconv.Atoi(value)
+		if err != nil || n < 1 || n > 100 {
+			logger.Fatal("invalid REVIEW_REQUIRED_WORKOUTS")
+		}
+		reviewThreshold = n
+	}
 	apiVersion2Router := core_http_server.NewAPIVersionRouter(core_http_server.ApiVersion2)
-	apiVersion2Router.RegisterRoutes(commerce_transport_http.NewHandler(commerce_service.NewService(commerce_postgres_repository.NewRepository(pool), commerce_service.Config{Stub: os.Getenv("PAYMENTS_MODE") == "" || os.Getenv("PAYMENTS_MODE") == "stub", WebhookSecret: os.Getenv("PAYMENTS_WEBHOOK_SECRET")}), jwt).Routes()...)
+	apiVersion2Router.RegisterRoutes(sharing_transport_http.NewHandler(sharing_service.NewService(sharing_postgres_repository.NewRepository(pool), os.Getenv("PUBLIC_APP_URL")), jwt).Routes()...)
+	apiVersion2Router.RegisterRoutes(social_transport_http.NewHandler(social_service.NewService(social_postgres_repository.NewRepository(pool), reviewThreshold), jwt).Routes()...)
+	apiVersion2Router.RegisterRoutes(favorites_transport_http.NewHandler(favorites_service.NewService(favorites_postgres_repository.NewRepository(pool)), jwt).Routes()...)
+	commerceRepository := commerce_postgres_repository.NewRepository(pool)
+	go commerce_service.RunOutbox(ctx, commerceRepository, func(err error) { logger.Error("commerce notification delivery failed", zap.Error(err)) })
+	apiVersion2Router.RegisterRoutes(commerce_transport_http.NewHandler(commerce_service.NewService(commerceRepository, commerce_service.Config{Stub: os.Getenv("PAYMENTS_MODE") == "" || os.Getenv("PAYMENTS_MODE") == "stub", WebhookSecret: os.Getenv("PAYMENTS_WEBHOOK_SECRET")}), jwt).Routes()...)
 	apiVersion2Router.RegisterRoutes(administration_transport_http.NewHandler(administration_service.NewService(administration_postgres_repository.NewRepository(pool)), jwt).Routes()...)
 	apiVersion2Router.RegisterRoutes(catalog_transport_http.NewCatalogHTTPHandler(catalog_service.NewService(catalogRepository), jwt).Routes()...)
 	profileRepository := profile_postgres_repository.NewRepository(pool)
@@ -133,6 +159,15 @@ func main() {
 
 	apiVersion2Router.RegisterRoutes(workouts_transport_http.NewHandler(workouts_service.NewService(workouts_postgres_repository.NewRepository(pool)), jwt).Routes()...)
 
+	inactiveDays := 14
+	if value := os.Getenv("DASHBOARD_INACTIVE_DAYS"); value != "" {
+		n, err := strconv.Atoi(value)
+		if err != nil || n < 1 || n > 365 {
+			logger.Fatal("invalid DASHBOARD_INACTIVE_DAYS")
+		}
+		inactiveDays = n
+	}
+	apiVersion2Router.RegisterRoutes(insights_http.NewHandler(insights_service.NewService(insights_repository.NewRepository(pool), mlclient.NewV2Client(mlCfg), inactiveDays), jwt).Routes()...)
 	apiVersion2Router.RegisterRoutes(generation_transport_http.NewHandler(generation_service.NewService(generation_postgres_repository.NewRepository(pool), mlclient.NewV2Client(mlCfg)), jwt).Routes()...)
 
 	registerV1 := func(method, path string, handler http.Handler) {

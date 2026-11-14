@@ -194,6 +194,15 @@ func (r *Repository) Confirm(ctx context.Context, e Event, hash, requestID strin
 				}
 			}
 			if status == "paid" || status == "refunded" {
+				title, message := "Покупка подтверждена", "Программа доступна в вашем аккаунте."
+				if status == "refunded" {
+					title, message = "Возврат подтверждён", "Доступ к исходной программе отозван."
+				}
+				if _, err := tx.Exec(ctx, `INSERT INTO sportapp.commerce_outbox(event_key,user_id,type,title,message,target_route) VALUES($1,$2,$3,$4,$5,$6) ON CONFLICT DO NOTHING`, "order:"+o.ID+":"+status, o.UserID, "order_"+status, title, message, "/checkout/"+o.ID); err != nil {
+					return err
+				}
+			}
+			if status == "paid" || status == "refunded" {
 				kind, sign := "sale", int64(1)
 				if status == "refunded" {
 					kind, sign = "refund", -1
@@ -240,11 +249,11 @@ func (r *Repository) SetCommission(ctx context.Context, actor int, c Commission,
 	return out, err
 }
 
-const payoutColumns = `id::text,trainer_id,amount_minor,currency,status,created_at,provider_payout_id`
+const payoutColumns = `id::text,trainer_id,amount_minor,currency,status,created_at,provider_payout_id,paid_at`
 
 func scanPayout(row core_postgres_pool.Row) (Payout, error) {
 	var p Payout
-	err := row.Scan(&p.ID, &p.TrainerID, &p.AmountMinor, &p.Currency, &p.Status, &p.CreatedAt, &p.ProviderPayoutID)
+	err := row.Scan(&p.ID, &p.TrainerID, &p.AmountMinor, &p.Currency, &p.Status, &p.CreatedAt, &p.ProviderPayoutID, &p.PaidAt)
 	return p, missing(err)
 }
 func (r *Repository) Payouts(ctx context.Context, actor int, admin bool, f v2request.PageFilter) (Page[Payout], error) {
@@ -293,7 +302,7 @@ func (r *Repository) CreatePayout(ctx context.Context, actor int, in PayoutInput
 			return core_errors.ErrUnprocessable
 		}
 		id := uuid.NewString()
-		out, err = scanPayout(tx.QueryRow(ctx, `INSERT INTO sportapp.payouts(id,trainer_id,amount_minor,currency,status,provider_payout_id) VALUES($1,$2,$3,$4,'paid',$5) RETURNING `+payoutColumns, id, in.TrainerID, in.AmountMinor, in.Currency, "stub-payout-"+id))
+		out, err = scanPayout(tx.QueryRow(ctx, `INSERT INTO sportapp.payouts(id,trainer_id,amount_minor,currency,status,provider_payout_id,paid_at) VALUES($1,$2,$3,$4,'paid',$5,NOW()) RETURNING `+payoutColumns, id, in.TrainerID, in.AmountMinor, in.Currency, "stub-payout-"+id))
 		if err != nil {
 			return err
 		}
@@ -332,7 +341,7 @@ func (r *Repository) DecidePayout(ctx context.Context, actor int, id string, in 
 			}
 			status = "paid"
 		}
-		out, err = scanPayout(tx.QueryRow(ctx, `UPDATE sportapp.payouts SET status=$2,reason=$3,provider_payout_id=CASE WHEN $2='paid' THEN 'stub-payout-' || id::text ELSE provider_payout_id END WHERE id=$1 RETURNING `+payoutColumns, id, status, in.Reason))
+		out, err = scanPayout(tx.QueryRow(ctx, `UPDATE sportapp.payouts SET status=$2,reason=$3,paid_at=CASE WHEN $2='paid' THEN COALESCE(paid_at,NOW()) ELSE NULL END,provider_payout_id=CASE WHEN $2='paid' THEN 'stub-payout-' || id::text ELSE provider_payout_id END WHERE id=$1 RETURNING `+payoutColumns, id, status, in.Reason))
 		if err != nil {
 			return err
 		}

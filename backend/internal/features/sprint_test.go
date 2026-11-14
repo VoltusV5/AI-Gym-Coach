@@ -10,8 +10,15 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
+	"os/exec"
 	"path/filepath"
+	insights_repository "sport_app/internal/features/insights/repository/postgres"
+	insights_service "sport_app/internal/features/insights/service"
+	insights_http "sport_app/internal/features/insights/transport/http"
+	users_service "sport_app/internal/features/users/service"
+	users_http "sport_app/internal/features/users/transport/http"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -31,6 +38,9 @@ import (
 	commerce_postgres_repository "sport_app/internal/features/commerce/repository/postgres"
 	commerce_service "sport_app/internal/features/commerce/service"
 	commerce_transport_http "sport_app/internal/features/commerce/transport/http"
+	favorites_postgres_repository "sport_app/internal/features/favorites/repository/postgres"
+	favorites_service "sport_app/internal/features/favorites/service"
+	favorites_transport_http "sport_app/internal/features/favorites/transport/http"
 	generation_postgres_repository "sport_app/internal/features/generation/repository/postgres"
 	generation_service "sport_app/internal/features/generation/service"
 	generation_transport_http "sport_app/internal/features/generation/transport/http"
@@ -44,6 +54,12 @@ import (
 	publications_postgres_repository "sport_app/internal/features/publications/repository/postgres"
 	publications_service "sport_app/internal/features/publications/service"
 	publications_transport_http "sport_app/internal/features/publications/transport/http"
+	sharing_postgres_repository "sport_app/internal/features/sharing/repository/postgres"
+	sharing_service "sport_app/internal/features/sharing/service"
+	sharing_transport_http "sport_app/internal/features/sharing/transport/http"
+	social_postgres_repository "sport_app/internal/features/social/repository/postgres"
+	social_service "sport_app/internal/features/social/service"
+	social_transport_http "sport_app/internal/features/social/transport/http"
 	trainers_postgres_repository "sport_app/internal/features/trainers/repository/postgres"
 	trainers_service "sport_app/internal/features/trainers/service"
 	trainers_transport_http "sport_app/internal/features/trainers/transport/http"
@@ -91,6 +107,11 @@ func TestSprintIntegration(t *testing.T) {
  INSERT INTO sportapp.notes(user_id,title,body) VALUES(101,'sprint fixture','preserve');
  INSERT INTO sportapp.user_programs(user_id,is_active,plan_template,plan_exercises) VALUES(101,TRUE,'{"legacy":true}','{"plan":[]}');`)
 	require.NoError(t, err)
+	_, err = pool.Exec(ctx, `INSERT INTO sportapp.exercises(exercises_name,muscular_group,muscular_subgroup,working_weights,safe_for_injuries) VALUES('Жим ногами лёжа','Ноги','квадрицепс',35,FALSE)`)
+	require.NoError(t, err)
+	apply("000019_*.up.sql")
+	apply("000019_*.down.sql")
+	apply("000019_*.up.sql")
 	require.NoError(t, users_postgres_repository.NewUsersRepository(pool).EnsureExercisesSeeded(ctx))
 	catalogRepo := catalog_postgres_repository.NewRepository(pool)
 	require.NoError(t, catalogRepo.EnsureReferenceData(ctx))
@@ -106,6 +127,21 @@ func TestSprintIntegration(t *testing.T) {
 	apply("000013_*.up.sql")
 	apply("000013_*.down.sql")
 	apply("000013_*.up.sql")
+	apply("000014_*.up.sql")
+	apply("000014_*.down.sql")
+	apply("000014_*.up.sql")
+	apply("000015_*.up.sql")
+	apply("000015_*.down.sql")
+	apply("000015_*.up.sql")
+	apply("000016_*.up.sql")
+	apply("000016_*.down.sql")
+	apply("000016_*.up.sql")
+	apply("000017_*.up.sql")
+	apply("000017_*.down.sql")
+	apply("000017_*.up.sql")
+	apply("000018_*.up.sql")
+	apply("000018_*.down.sql")
+	apply("000018_*.up.sql")
 	var mlMode atomic.Int32
 	var mlCalls atomic.Int32
 	ml := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -115,7 +151,9 @@ func TestSprintIntegration(t *testing.T) {
 		var request mlclient.GenerateInput
 		require.NoError(t, json.NewDecoder(r.Body).Decode(&request))
 		require.Equal(t, "profile-v2", request.FeatureSchemaVersion)
-		require.Equal(t, 75.5, *request.Profile.WeightKg)
+		if os.Getenv("SPORTIK_POSTMAN_TESTS") != "1" || *request.Profile.WeightKg != 80.5 {
+			require.Equal(t, 75.5, *request.Profile.WeightKg)
+		}
 		if mlMode.Load() == 1 {
 			w.WriteHeader(503)
 			return
@@ -130,6 +168,26 @@ func TestSprintIntegration(t *testing.T) {
 			require.NoError(t, err)
 		}
 		exercise := 1
+		if os.Getenv("SPORTIK_POSTMAN_TESTS") == "1" && *request.Profile.WeightKg == 80.5 && len(request.Exercises) > 0 {
+			for _, candidate := range request.Exercises {
+				compatible := true
+				for _, required := range candidate.EquipmentIDs {
+					present := false
+					for _, available := range request.Profile.EquipmentIDs {
+						if available == required {
+							present = true
+						}
+					}
+					if !present {
+						compatible = false
+					}
+				}
+				if compatible {
+					exercise = candidate.ExerciseID
+					break
+				}
+			}
+		}
 		if mlMode.Load() == 2 {
 			exercise = 2
 		}
@@ -144,6 +202,10 @@ func TestSprintIntegration(t *testing.T) {
 	router := core_http_server.NewAPIVersionRouter(core_http_server.ApiVersion2)
 	planSvc := plans_service.NewService(plans_postgres_repository.NewRepository(pool))
 	workoutRepo := workouts_postgres_repository.NewRepository(pool)
+	router.RegisterRoutes(insights_http.NewHandler(insights_service.NewService(insights_repository.NewRepository(pool), nil, 14), jwt).Routes()...)
+	router.RegisterRoutes(sharing_transport_http.NewHandler(sharing_service.NewService(sharing_postgres_repository.NewRepository(pool), "http://localhost:5173"), jwt).Routes()...)
+	router.RegisterRoutes(social_transport_http.NewHandler(social_service.NewService(social_postgres_repository.NewRepository(pool), 3), jwt).Routes()...)
+	router.RegisterRoutes(favorites_transport_http.NewHandler(favorites_service.NewService(favorites_postgres_repository.NewRepository(pool)), jwt).Routes()...)
 	router.RegisterRoutes(commerce_transport_http.NewHandler(commerce_service.NewService(commerce_postgres_repository.NewRepository(pool), commerce_service.Config{Stub: true, WebhookSecret: "sprint-stub-signing-secret"}), jwt).Routes()...)
 	router.RegisterRoutes(administration_transport_http.NewHandler(administration_service.NewService(administration_postgres_repository.NewRepository(pool)), jwt).Routes()...)
 	router.RegisterRoutes(catalog_transport_http.NewCatalogHTTPHandler(catalog_service.NewService(catalogRepo), jwt).Routes()...)
@@ -188,7 +250,12 @@ func TestSprintIntegration(t *testing.T) {
 		return w
 	}
 	t.Run("account roles blocks and audit", func(t *testing.T) {
-		_, err := pool.Exec(ctx, `INSERT INTO sportapp.users(id,is_anonymous,created_at,email) VALUES(104,FALSE,NOW(),'fixture104@example.com')`)
+		created, err := users_postgres_repository.NewUsersRepository(pool).CreateUser(ctx, "registration-fixture@example.com", "synthetic-hash")
+		require.NoError(t, err)
+		var initialRoles int
+		require.NoError(t, pool.QueryRow(ctx, `SELECT COUNT(*) FROM sportapp.user_roles WHERE user_id=$1 AND role='user'`, created.ID).Scan(&initialRoles))
+		require.Equal(t, 1, initialRoles)
+		_, err = pool.Exec(ctx, `INSERT INTO sportapp.users(id,is_anonymous,created_at,email) VALUES(104,FALSE,NOW(),'fixture104@example.com')`)
 		require.NoError(t, err)
 		tokens[104], err = jwt.CreateToken("104", false)
 		require.NoError(t, err)
@@ -482,6 +549,27 @@ func TestSprintIntegration(t *testing.T) {
 		require.NoError(t, pool.QueryRow(ctx, `SELECT COUNT(*) FROM sportapp.plan_generations WHERE user_id=101`).Scan(&count))
 		require.Equal(t, 2, count)
 	})
+	t.Run("favorites registration duplicate owner and visibility", func(t *testing.T) {
+		path := "/me/favorites/" + program.ID
+		check("PUT", path, 0, nil, "", 401)
+		check("PUT", path, 103, nil, "", 403)
+		check("PUT", path, 101, nil, "", 200)
+		check("PUT", path, 101, nil, "", 200)
+		w := check("GET", "/me/favorites", 101, nil, "", 200)
+		require.Contains(t, w.Body.String(), program.ID)
+		w = check("GET", "/catalog/programs/"+program.ID, 101, nil, "", 200)
+		require.Contains(t, w.Body.String(), `"is_favorite":true`)
+		w = check("GET", "/me/favorites", 102, nil, "", 200)
+		require.NotContains(t, w.Body.String(), program.ID)
+		check("DELETE", path, 102, nil, "", 204)
+		w = check("GET", "/me/favorites", 101, nil, "", 200)
+		require.Contains(t, w.Body.String(), program.ID)
+		check("DELETE", path, 101, nil, "", 204)
+		check("DELETE", path, 101, nil, "", 204)
+		check("PUT", "/me/favorites/"+uuid.NewString(), 101, nil, "", 404)
+		check("GET", "/catalog/programs?equipment=", 101, nil, "", 200)
+	})
+
 	t.Run("stub purchase ledger refunds payouts and signatures", func(t *testing.T) {
 		paidID, versionID := uuid.NewString(), uuid.NewString()
 		_, err := pool.Exec(ctx, `INSERT INTO sportapp.programs(id,trainer_id,status) VALUES($1,201,'active');`, paidID)
@@ -561,6 +649,14 @@ func TestSprintIntegration(t *testing.T) {
 		require.Contains(t, repeat.Body.String(), p.ID)
 		check("PATCH", "/admin/payouts/"+p.ID, 301, map[string]string{"action": "retry", "reason": "duplicate"}, "", 409)
 		check("PATCH", "/admin/payouts/"+p.ID, 301, map[string]string{"action": "reconcile", "reason": "test check"}, "", 200)
+		oldPayout := uuid.NewString()
+		_, err = pool.Exec(ctx, `INSERT INTO sportapp.payouts(id,trainer_id,amount_minor,currency,status,created_at) VALUES($1,201,100,'RUB','failed',NOW()-INTERVAL '1 year')`, oldPayout)
+		require.NoError(t, err)
+		check("PATCH", "/admin/payouts/"+oldPayout, 301, map[string]string{"action": "retry", "reason": "settlement period fixture"}, "", 200)
+		report := check("GET", "/trainer/analytics?from="+url.QueryEscape(time.Now().Add(-time.Hour).Format(time.RFC3339))+"&to="+url.QueryEscape(time.Now().Add(time.Minute).Format(time.RFC3339)), 201, nil, "", 200)
+		var settled map[string]any
+		require.NoError(t, json.Unmarshal(report.Body.Bytes(), &settled))
+		require.Equal(t, float64(30100), settled["paid_out_minor"])
 		event.EventID = "refund-event"
 		event.Type = "refund_succeeded"
 		require.Equal(t, 200, webhook(event, true).Code)
@@ -580,7 +676,7 @@ func TestSprintIntegration(t *testing.T) {
 		check("PATCH", "/admin/payouts/"+failedID, 301, map[string]string{"action": "cancel", "reason": "cancel fixture"}, "", 200)
 		var count int
 		require.NoError(t, pool.QueryRow(ctx, `SELECT COUNT(*) FROM sportapp.payouts WHERE trainer_id=201 AND status='paid'`).Scan(&count))
-		require.Equal(t, 1, count)
+		require.Equal(t, 2, count)
 		check("POST", "/payments/sandbox/"+order.ID, 101, map[string]string{"action": "pay"}, "", 409)
 		w = check("GET", "/admin/settings/commission", 301, nil, "", 200)
 		var c commerce_postgres_repository.Commission
@@ -590,14 +686,398 @@ func TestSprintIntegration(t *testing.T) {
 		check("PATCH", "/admin/settings/commission", 101, c, "", 403)
 		check("PATCH", "/admin/settings/commission", 301, c, "", 200)
 		check("PATCH", "/admin/settings/commission", 301, c, "", 409)
+		apply("000018_*.down.sql")
+		apply("000017_*.down.sql")
 		apply("000013_*.down.sql")
 		apply("000013_*.up.sql")
+		apply("000017_*.up.sql")
+		apply("000018_*.up.sql")
 		require.NoError(t, pool.QueryRow(ctx, `SELECT COUNT(*) FROM sportapp.operation_results WHERE operation IN ('order','payout')`).Scan(&count))
 		require.Zero(t, count)
 		w = check("POST", "/orders", 101, input, "same-order", 201)
 		var recreated commerce_postgres_repository.Order
 		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &recreated))
 		require.NotEqual(t, order.ID, recreated.ID)
+		w = check("POST", "/payments/sandbox/"+recreated.ID, 101, map[string]string{"action": "fail"}, "", 200)
+		require.Contains(t, w.Body.String(), `"status":"failed"`)
+		check("POST", "/payments/sandbox/"+recreated.ID, 101, map[string]string{"action": "pay"}, "", 409)
+	})
+
+	t.Run("social eligibility moderation follow notification and events", func(t *testing.T) {
+		check("POST", "/programs/"+program.ID+"/reviews", 101, map[string]any{"overall": 5, "text": "Early"}, "", 422)
+		w := check("GET", "/programs/"+program.ID+"/review-eligibility", 101, nil, "", 200)
+		require.Contains(t, w.Body.String(), `"eligible":false`)
+		var reviewVersion string
+		require.NoError(t, pool.QueryRow(ctx, `SELECT published_version_id::text FROM sportapp.programs WHERE id=$1`, program.ID).Scan(&reviewVersion))
+		_, err := pool.Exec(ctx, `UPDATE sportapp.workout_sessions SET source_program_version_id=$1 WHERE user_id=101`, reviewVersion)
+		require.NoError(t, err)
+		for i := 0; i < 2; i++ {
+			_, err = pool.Exec(ctx, `INSERT INTO sportapp.workout_sessions(id,user_id,client_session_id,plan_id,revision_id,source_program_version_id,started_at,finished_at,request_hash,payload,result) SELECT $1,user_id,$2,plan_id,revision_id,source_program_version_id,started_at,finished_at,request_hash,payload,result FROM sportapp.workout_sessions WHERE user_id=101 ORDER BY id LIMIT 1`, uuid.NewString(), uuid.NewString())
+			require.NoError(t, err)
+		}
+		w = check("GET", "/programs/"+program.ID+"/review-eligibility", 101, nil, "", 200)
+		require.Contains(t, w.Body.String(), `"eligible":true`)
+		check("POST", "/programs/"+program.ID+"/reviews", 101, map[string]any{"overall": 6}, "", 400)
+		w = check("POST", "/programs/"+program.ID+"/reviews", 101, map[string]any{"overall": 5, "structure": 4, "text": "Fixture review"}, "", 201)
+		var review social_postgres_repository.Review
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &review))
+		check("POST", "/programs/"+program.ID+"/reviews", 101, map[string]any{"overall": 4}, "", 409)
+		check("PATCH", "/reviews/"+review.ID, 102, map[string]any{"overall": 1}, "", 404)
+		check("PATCH", "/admin/reviews/"+review.ID+"/moderation", 101, map[string]string{"status": "hidden", "reason": "self"}, "", 403)
+		check("PATCH", "/admin/reviews/"+review.ID+"/moderation", 301, map[string]string{"status": "hidden", "reason": "fixture moderation"}, "", 200)
+		w = check("GET", "/programs/"+program.ID+"/reviews", 0, nil, "", 200)
+		require.NotContains(t, w.Body.String(), "Fixture review")
+		require.Contains(t, w.Body.String(), `"count":0`)
+		w = check("PATCH", "/reviews/"+review.ID, 101, map[string]any{"overall": 4, "text": "Revised review"}, "", 200)
+		require.Contains(t, w.Body.String(), `"status":"in_review"`)
+		check("PATCH", "/admin/reviews/"+review.ID+"/moderation", 301, map[string]string{"status": "published", "reason": "revision checked"}, "", 200)
+		w = check("GET", "/programs/"+program.ID+"/reviews", 0, nil, "", 200)
+		require.Contains(t, w.Body.String(), `"average":4`)
+		w = check("POST", "/reports", 102, map[string]string{"target_type": "review", "target_id": review.ID, "reason": "Fixture complaint"}, "", 201)
+		var report social_postgres_repository.Report
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &report))
+		check("GET", "/admin/reports", 102, nil, "", 403)
+		w = check("GET", "/admin/reports", 301, nil, "", 200)
+		require.Contains(t, w.Body.String(), `"target_review"`)
+		require.Contains(t, w.Body.String(), "Revised review")
+		check("PATCH", "/admin/reports/"+report.ID, 301, map[string]string{"status": "resolved", "reason": "Checked fixture"}, "", 200)
+		check("PATCH", "/admin/reports/"+report.ID, 301, map[string]string{"status": "dismissed", "reason": "Already closed"}, "", 409)
+		check("PUT", "/trainers/201/follow", 103, nil, "", 403)
+		check("PUT", "/trainers/201/follow", 101, nil, "", 200)
+		check("PUT", "/trainers/201/follow", 101, nil, "", 200)
+		w = check("GET", "/me/trainers", 101, nil, "", 200)
+		require.Contains(t, w.Body.String(), "Fixture trainer")
+		w = check("GET", "/me/trainers", 102, nil, "", 200)
+		require.NotContains(t, w.Body.String(), "Fixture trainer")
+		_, err = pool.Exec(ctx, `DELETE FROM sportapp.user_roles WHERE user_id=201 AND role='trainer'`)
+		require.NoError(t, err)
+		w = check("GET", "/me/trainers", 101, nil, "", 200)
+		require.NotContains(t, w.Body.String(), "Fixture trainer")
+		_, err = pool.Exec(ctx, `INSERT INTO sportapp.user_roles(user_id,role) VALUES(201,'trainer')`)
+		require.NoError(t, err)
+
+		version := check("POST", "/trainer/programs/"+program.ID+"/versions", 201, nil, "", 201)
+		var draft publications_postgres_repository.Program
+		require.NoError(t, json.Unmarshal(version.Body.Bytes(), &draft))
+		check("POST", "/trainer/programs/"+program.ID+"/publish", 201, map[string]int64{"version": draft.Version}, "", 202)
+		check("PATCH", "/admin/programs/"+program.ID+"/moderation", 301, map[string]string{"status": "approved", "reason": "notify followers"}, "", 200)
+		w = check("GET", "/notifications", 101, nil, "", 200)
+		var notifications social_postgres_repository.NotificationPage
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &notifications))
+		require.NotEmpty(t, notifications.Items)
+		id := notifications.Items[0].ID
+		check("PATCH", "/notifications/"+id, 102, map[string]bool{"read": true}, "", 404)
+		check("PATCH", "/notifications/"+id, 101, map[string]bool{"read": true}, "", 200)
+		check("PATCH", "/notifications/"+id, 101, map[string]bool{"read": true}, "", 200)
+		check("DELETE", "/trainers/201/follow", 101, nil, "", 204)
+		check("DELETE", "/trainers/201/follow", 101, nil, "", 204)
+		event := social_postgres_repository.Event{ID: uuid.NewString(), Type: "view", ProgramID: program.ID, OccurredAt: time.Now().UTC(), Context: map[string]string{"surface": "catalog"}}
+		body := map[string]any{"events": []social_postgres_repository.Event{event}}
+		check("POST", "/events", 101, body, "", 202)
+		w = check("POST", "/events", 101, body, "", 202)
+		require.Contains(t, w.Body.String(), `"duplicate_count":1`)
+		event.Type = "purchase"
+		check("POST", "/events", 101, map[string]any{"events": []social_postgres_repository.Event{event}}, "", 400)
+		check("DELETE", "/reviews/"+review.ID, 102, nil, "", 404)
+		check("DELETE", "/reviews/"+review.ID, 101, nil, "", 204)
+		_, err = pool.Exec(ctx, `DELETE FROM sportapp.workout_sessions WHERE user_id=101 AND client_session_id<>$1`, workout.ClientSessionID)
+		require.NoError(t, err)
+	})
+
+	t.Run("fork provenance snapshots revocation and paid license", func(t *testing.T) {
+		var version string
+		require.NoError(t, pool.QueryRow(ctx, `SELECT published_version_id::text FROM sportapp.programs WHERE id=$1`, program.ID).Scan(&version))
+		in := sharing_postgres_repository.ForkInput{SourceVersionID: version, Title: "Fork fixture"}
+		check("POST", "/programs/"+program.ID+"/fork", 102, in, "forbidden-fork", 403)
+		w := check("POST", "/programs/"+program.ID+"/fork", 101, in, "fork-once", 201)
+		var fork sharing_postgres_repository.ForkResult
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &fork))
+		require.Equal(t, &version, fork.SourceVersionID)
+		repeat := check("POST", "/programs/"+program.ID+"/fork", 101, in, "fork-once", 201)
+		require.Contains(t, repeat.Body.String(), fork.PlanID)
+		in.Title = "Different"
+		check("POST", "/programs/"+program.ID+"/fork", 101, in, "fork-once", 409)
+		copied, err := planSvc.GetPlan(ctx, "101", fork.PlanID)
+		require.NoError(t, err)
+		require.Equal(t, &version, copied.SourceProgramVersionID)
+		var sourceDay string
+		require.NoError(t, pool.QueryRow(ctx, `SELECT id::text FROM sportapp.program_days WHERE program_version_id=$1 ORDER BY position LIMIT 1`, version).Scan(&sourceDay))
+		require.NotEqual(t, sourceDay, copied.Days[0].ID)
+		create := plans_postgres_repository.Input{Title: "Shared fixture", Days: []plans_postgres_repository.Day{{ID: uuid.NewString(), Title: "First day", Position: 0, Exercises: []plans_postgres_repository.Prescription{{ExerciseID: 1, Position: 0, Sets: 3, RepsMin: 8, RepsMax: 12, RestSec: 90}}}, {ID: uuid.NewString(), Title: "Second day", Position: 1, Exercises: []plans_postgres_repository.Prescription{}}}, Schedule: plans_postgres_repository.Schedule{TimeZone: "Europe/Moscow", StartDate: "2026-11-01", Entries: []plans_postgres_repository.ScheduleEntry{}}}
+		own, err := planSvc.CreatePlan(ctx, "101", create)
+		require.NoError(t, err)
+		check("POST", "/shares", 102, map[string]any{"target_type": "plan", "target_id": own.ID, "expires_at": nil}, "", 404)
+		w = check("POST", "/shares", 101, map[string]any{"target_type": "plan", "target_id": own.ID, "expires_at": nil}, "", 201)
+		var share sharing_postgres_repository.ShareResult
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &share))
+		u, err := url.Parse(share.URL)
+		require.NoError(t, err)
+		token := strings.TrimPrefix(u.Path, "/share/")
+		require.Len(t, token, 43)
+		w = check("GET", "/shares/"+token, 0, nil, "", 200)
+		require.Contains(t, w.Body.String(), "First day")
+		require.NotContains(t, w.Body.String(), "Europe/Moscow")
+		require.NotContains(t, w.Body.String(), "profile")
+		var public sharing_postgres_repository.PublicShare
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &public))
+		require.Len(t, public.Days, 2)
+		guestShare := check("GET", "/shares/"+token, 103, nil, "", 200)
+		require.Contains(t, guestShare.Body.String(), `"can_fork":false`)
+
+		change := plans_postgres_repository.Input{Version: own.Version, Title: "Changed source", Days: create.Days, Schedule: create.Schedule}
+		change.Days[0].Title = "Changed first day"
+		_, err = planSvc.UpdatePlan(ctx, "101", own.ID, change)
+		require.NoError(t, err)
+		w = check("GET", "/shares/"+token, 0, nil, "", 200)
+		require.Contains(t, w.Body.String(), "First day")
+		require.NotContains(t, w.Body.String(), "Changed first day")
+		saved := check("POST", "/shares/"+token+"/save", 102, nil, "", 201)
+		repeated := check("POST", "/shares/"+token+"/save", 102, nil, "", 201)
+		require.Equal(t, saved.Body.String(), repeated.Body.String())
+		check("POST", "/shares/"+token+"/fork", 102, nil, "shared-fork", 201)
+		var savedItem map[string]string
+		require.NoError(t, json.Unmarshal(saved.Body.Bytes(), &savedItem))
+		itemID := savedItem["library_item_id"]
+		check("GET", "/me/saved-shares/"+itemID, 101, nil, "", 404)
+		check("GET", "/me/saved-shares/"+itemID, 102, nil, "", 200)
+		w = check("GET", "/me/saved-shares", 102, nil, "", 200)
+		require.Contains(t, w.Body.String(), itemID)
+		check("DELETE", "/shares/"+share.ID, 102, nil, "", 404)
+		check("DELETE", "/shares/"+share.ID, 101, nil, "", 204)
+		check("GET", "/me/saved-shares/"+itemID, 102, nil, "", 404)
+		check("POST", "/me/saved-shares/"+itemID+"/fork", 102, nil, "new-revoked-library-fork", 404)
+		check("DELETE", "/me/saved-shares/"+itemID, 101, nil, "", 404)
+		check("DELETE", "/me/saved-shares/"+itemID, 102, nil, "", 204)
+		check("GET", "/shares/"+token, 0, nil, "", 404)
+		check("POST", "/shares/"+token+"/fork", 102, nil, "shared-fork", 201)
+		check("POST", "/shares/"+token+"/fork", 102, nil, "new-after-revoke", 404)
+		dayShare := check("POST", "/shares", 101, map[string]string{"target_type": "plan_day", "target_id": own.Days[1].ID}, "", 201)
+		require.NoError(t, json.Unmarshal(dayShare.Body.Bytes(), &share))
+		u, err = url.Parse(share.URL)
+		require.NoError(t, err)
+		token = strings.TrimPrefix(u.Path, "/share/")
+		w = check("GET", "/shares/"+token, 0, nil, "", 200)
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &public))
+		require.Len(t, public.Days, 1)
+		require.Equal(t, "Second day", public.Days[0].Title)
+		_, err = pool.Exec(ctx, `UPDATE sportapp.public_shares SET expires_at=NOW()-INTERVAL '1 second' WHERE id=$1`, share.ID)
+		require.NoError(t, err)
+		check("GET", "/shares/"+token, 0, nil, "", 404)
+		paid, paidVersion, paidDay := uuid.NewString(), uuid.NewString(), uuid.NewString()
+		_, err = pool.Exec(ctx, `INSERT INTO sportapp.programs(id,trainer_id,status) VALUES($1,201,'active')`, paid)
+		require.NoError(t, err)
+		_, err = pool.Exec(ctx, `INSERT INTO sportapp.program_versions(id,program_id,number,title,description,goal,level,duration_weeks,sessions_per_week,price_minor,currency,status,allow_public_remix) VALUES($1,$2,1,'Licensed fixture','Private structure','muscle_gain','beginner',4,1,10000,'RUB','published',FALSE)`, paidVersion, paid)
+		require.NoError(t, err)
+		_, err = pool.Exec(ctx, `UPDATE sportapp.programs SET published_version_id=$1 WHERE id=$2`, paidVersion, paid)
+		require.NoError(t, err)
+		_, err = pool.Exec(ctx, `INSERT INTO sportapp.program_days(id,program_version_id,title,position) VALUES($1,$2,'Licensed day',0)`, paidDay, paidVersion)
+		require.NoError(t, err)
+		_, err = pool.Exec(ctx, `INSERT INTO sportapp.program_exercises(id,program_day_id,exercise_id,position,sets,reps_min,reps_max,rest_sec) VALUES($1,$2,1,0,3,8,12,90)`, uuid.NewString(), paidDay)
+		require.NoError(t, err)
+		w = check("POST", "/orders", 101, commerce_postgres_repository.OrderInput{ProgramID: paid, ProgramVersionID: paidVersion}, "license-order", 201)
+		var order commerce_postgres_repository.Order
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &order))
+		check("POST", "/payments/sandbox/"+order.ID, 101, map[string]string{"action": "pay"}, "", 200)
+		w = check("POST", "/programs/"+paid+"/fork", 101, sharing_postgres_repository.ForkInput{SourceVersionID: paidVersion, Title: "Private licensed fork"}, "licensed-fork", 201)
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &fork))
+		w = check("POST", "/shares", 101, map[string]string{"target_type": "plan", "target_id": fork.PlanID}, "", 201)
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &share))
+		require.Equal(t, "preview", share.Visibility)
+		u, err = url.Parse(share.URL)
+		require.NoError(t, err)
+		token = strings.TrimPrefix(u.Path, "/share/")
+		for _, actor := range []int{0, 101, 102} {
+			w = check("GET", "/shares/"+token, actor, nil, "", 200)
+			require.NotContains(t, w.Body.String(), "Licensed day")
+			require.Contains(t, w.Body.String(), `"requires_access":true`)
+		}
+		check("POST", "/shares/"+token+"/fork", 101, nil, "denied-licensed-share", 403)
+		check("POST", "/shares/"+token+"/save", 102, nil, "", 201)
+		w = check("GET", "/catalog/programs/"+paid, 102, nil, "", 200)
+		require.Contains(t, w.Body.String(), `"access":"preview"`)
+		check("POST", "/payments/sandbox/"+order.ID, 101, map[string]string{"action": "refund"}, "", 200)
+		dispatcher := commerce_postgres_repository.NewRepository(pool)
+		require.NoError(t, dispatcher.DispatchNotifications(ctx))
+		require.NoError(t, dispatcher.DispatchNotifications(ctx))
+		var notifications int
+		require.NoError(t, pool.QueryRow(ctx, `SELECT COUNT(*) FROM sportapp.notifications WHERE user_id=101 AND event_key LIKE $1`, "order:"+order.ID+":%").Scan(&notifications))
+		require.Equal(t, 2, notifications)
+
+		check("POST", "/shares", 101, map[string]string{"target_type": "plan", "target_id": fork.PlanID}, "", 403)
+		check("GET", "/me/plans/"+fork.PlanID, 101, nil, "", 200)
+	})
+
+	t.Run("manual creation retries preserve identity and reject changed payload", func(t *testing.T) {
+		in := plans_postgres_repository.Input{Title: "Idempotent manual fixture", Days: []plans_postgres_repository.Day{{Title: "Server identity", Position: 0, Exercises: []plans_postgres_repository.Prescription{}}}, Schedule: plans_postgres_repository.Schedule{TimeZone: "Europe/Moscow", StartDate: "2026-11-14", Entries: []plans_postgres_repository.ScheduleEntry{}}}
+		responses := make(chan *httptest.ResponseRecorder, 2)
+		for i := 0; i < 2; i++ {
+			go func() { responses <- call("POST", "/me/plans", 102, in, "manual-retry") }()
+		}
+		first, second := <-responses, <-responses
+		require.Equal(t, 201, first.Code, first.Body.String())
+		require.Equal(t, 201, second.Code, second.Body.String())
+		require.JSONEq(t, first.Body.String(), second.Body.String())
+		var plan plans_postgres_repository.Plan
+		require.NoError(t, json.Unmarshal(first.Body.Bytes(), &plan))
+		require.NotEmpty(t, plan.Days[0].ID)
+		in.Title = "Changed request"
+		check("POST", "/me/plans", 102, in, "manual-retry", 409)
+	})
+
+	t.Run("reference nullable fields reason and analytics permissions", func(t *testing.T) {
+		input := map[string]any{"name": "Reference fixture", "muscle_group": "Ноги", "muscle_subgroup": "Квадрицепс", "equipment_ids": []string{}, "image_url": "https://example.test/image", "video_url": "https://example.test/video", "reason": "fixture create"}
+		check("POST", "/admin/exercises", 101, input, "", 403)
+		w := check("POST", "/admin/exercises", 301, input, "", 201)
+		var exercise map[string]any
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &exercise))
+		id := fmt.Sprint(exercise["id"])
+		delete(input, "reason")
+		check("PATCH", "/admin/exercises/"+id, 301, input, "", 400)
+		input["reason"] = "fixture nullable clear"
+		input["image_url"] = nil
+		input["video_url"] = nil
+		input["muscle_subgroup"] = nil
+		w = check("PATCH", "/admin/exercises/"+id, 301, input, "", 200)
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &exercise))
+		require.Nil(t, exercise["image_url"])
+		require.Nil(t, exercise["video_url"])
+		require.Nil(t, exercise["muscle_subgroup"])
+		input["image_url"] = "https://example.test/new"
+		check("PATCH", "/admin/exercises/"+id, 301, input, "", 200)
+		delete(input, "image_url")
+		w = check("PATCH", "/admin/exercises/"+id, 301, input, "", 200)
+		require.Contains(t, w.Body.String(), "https://example.test/new")
+		var reason string
+		require.NoError(t, pool.QueryRow(ctx, `SELECT reason FROM sportapp.publication_audit WHERE action=$1 ORDER BY occurred_at DESC LIMIT 1`, "exercises:"+id).Scan(&reason))
+		require.Equal(t, "fixture nullable clear", reason)
+		category := map[string]any{"name": "Fixture category", "slug": "fixture-category", "reason": "fixture category"}
+		w = check("POST", "/admin/categories", 301, category, "", 201)
+		var c map[string]any
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &c))
+		category["is_active"] = false
+		check("PATCH", "/admin/categories/"+c["id"].(string), 301, category, "", 200)
+		w = check("GET", "/catalog/categories", 0, nil, "", 200)
+		require.NotContains(t, w.Body.String(), "Fixture category")
+		check("GET", "/admin/analytics", 101, nil, "", 403)
+		check("GET", "/trainer/analytics", 101, nil, "", 403)
+		check("GET", "/admin/analytics?from=wrong", 301, nil, "", 400)
+		w = check("GET", "/trainer/analytics", 201, nil, "", 200)
+		var analytics map[string]any
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &analytics))
+		require.Equal(t, float64(10000), analytics["gross_minor"])
+		require.Equal(t, float64(10000), analytics["refund_minor"])
+		require.Equal(t, float64(0), analytics["author_earned_minor"])
+		w = check("GET", "/trainer/analytics", 202, nil, "", 200)
+		require.NotContains(t, w.Body.String(), "Licensed fixture")
+		w = check("GET", "/admin/analytics", 301, nil, "", 200)
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &analytics))
+		require.Equal(t, float64(0), analytics["net_minor"])
+		w = check("GET", "/recommendations/programs", 101, nil, "", 200)
+		require.Contains(t, w.Body.String(), `"fallback":true`)
+		require.Contains(t, w.Body.String(), `"model_version":"rules-v1"`)
+		check("GET", "/recommendations/programs?limit=101", 101, nil, "", 400)
+		check("GET", "/dashboard", 101, nil, "", 200)
+		check("GET", "/dashboard", 103, nil, "", 200)
+	})
+
+	t.Run("startup seeds preserve administrative edits", func(t *testing.T) {
+		t.Chdir("../../..")
+		var before int
+		require.NoError(t, pool.QueryRow(ctx, `SELECT COUNT(*) FROM sportapp.exercises`).Scan(&before))
+		input := map[string]any{"name": "Административное имя seed упражнения", "equipment_ids": []string{}, "image_url": "/static/images/admin-override.webp", "video_url": nil, "reason": "seed persistence fixture"}
+		check("PATCH", "/admin/exercises/1", 301, input, "", 200)
+		users := users_postgres_repository.NewUsersRepository(pool)
+		require.NoError(t, users.EnsureExercisesSeeded(ctx))
+		require.NoError(t, catalogRepo.EnsureReferenceData(ctx))
+		require.NoError(t, users.EnsureExercisesSeeded(ctx))
+		require.NoError(t, catalogRepo.EnsureReferenceData(ctx))
+		var name, image, key string
+		var video *string
+		var after, equipment int
+		require.NoError(t, pool.QueryRow(ctx, `SELECT exercises_name,image_url,video_url,seed_key FROM sportapp.exercises WHERE id=1`).Scan(&name, &image, &video, &key))
+		require.Equal(t, input["name"], name)
+		require.Equal(t, input["image_url"], image)
+		require.Nil(t, video)
+		require.Equal(t, "builtin:v1:1", key)
+		require.NoError(t, pool.QueryRow(ctx, `SELECT COUNT(*) FROM sportapp.exercises`).Scan(&after))
+		require.Equal(t, before, after)
+		require.NoError(t, pool.QueryRow(ctx, `SELECT COUNT(*) FROM sportapp.exercise_equipment WHERE exercise_id=1`).Scan(&equipment))
+		require.Zero(t, equipment)
+		input["name"] = "Жим ногами лёжа"
+		input["equipment_ids"] = []string{"machine"}
+		check("PATCH", "/admin/exercises/1", 301, input, "", 200)
+	})
+
+	t.Run("reference seed serializes administrative equipment clearing", func(t *testing.T) {
+		_, err := pool.Exec(ctx, `UPDATE sportapp.exercises SET admin_modified=FALSE WHERE id=1; INSERT INTO sportapp.exercise_equipment(exercise_id,equipment_id) VALUES(1,'machine') ON CONFLICT DO NOTHING`)
+		require.NoError(t, err)
+		tx, err := pool.Begin(ctx)
+		require.NoError(t, err)
+		defer func() { _ = tx.Rollback(context.Background()) }()
+		_, err = tx.Exec(ctx, `UPDATE sportapp.exercises SET admin_modified=TRUE WHERE id=1;DELETE FROM sportapp.exercise_equipment WHERE exercise_id=1`)
+		require.NoError(t, err)
+		finished := make(chan error, 1)
+		go func() { finished <- catalogRepo.EnsureReferenceData(ctx) }()
+		require.Eventually(t, func() bool {
+			var waiting bool
+			err := pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE datname=$1 AND wait_event_type='Lock' AND query LIKE '%jsonb_array_elements%')`, database).Scan(&waiting)
+			return err == nil && waiting
+		}, 2*time.Second, 10*time.Millisecond)
+		require.NoError(t, tx.Commit(ctx))
+		require.NoError(t, <-finished)
+		var count int
+		require.NoError(t, pool.QueryRow(ctx, `SELECT COUNT(*) FROM sportapp.exercise_equipment WHERE exercise_id=1`).Scan(&count))
+		require.Zero(t, count)
+		_, err = pool.Exec(ctx, `INSERT INTO sportapp.exercise_equipment(exercise_id,equipment_id) VALUES(1,'machine') ON CONFLICT DO NOTHING`)
+		require.NoError(t, err)
+	})
+
+	t.Run("browser journeys against real Go API", func(t *testing.T) {
+		if os.Getenv("SPORTIK_BROWSER_TESTS") != "1" && os.Getenv("SPORTIK_POSTMAN_TESTS") != "1" {
+			t.Skip("set SPORTIK_BROWSER_TESTS=1 to run desktop and mobile Playwright against this isolated database")
+		}
+		v1 := core_http_server.NewAPIVersionRouter(core_http_server.ApiVersion1)
+		v1.RegisterRoutes(users_http.NewUsersHTTPHandler(users_service.NewUsersService(users_postgres_repository.NewUsersRepository(pool), mlclient.NewClient(mlclient.Config{BaseURL: ml.URL}), jwt), jwt).Routes()...)
+		mux := http.NewServeMux()
+		mux.Handle("/api/v2/", handler)
+		mux.Handle("/api/v1/", core_http_middleware.AccountStatus(jwt, pool)(http.StripPrefix("/api/v1", v1)))
+		server := httptest.NewServer(mux)
+		defer server.Close()
+		fixtureFile, err := filepath.Abs("../../../.validation/browser-fixture.json")
+		require.NoError(t, err)
+		raw, err := json.Marshal(map[string]any{"token": tokens[102], "admin_token": tokens[301], "base_url": server.URL})
+		require.NoError(t, err)
+		require.NoError(t, os.WriteFile(fixtureFile, raw, 0600))
+		defer func() { _ = os.Remove(fixtureFile) }()
+		if os.Getenv("SPORTIK_BROWSER_TESTS") == "1" {
+			logFile, err := os.Create("../../../.validation/real-e2e.log")
+			require.NoError(t, err)
+			defer func() { _ = logFile.Close() }()
+			browserCtx, cancel := context.WithTimeout(ctx, 10*time.Minute)
+			defer cancel()
+			command := exec.CommandContext(browserCtx, "npm", "--prefix", "../../../frontend", "run", "test:e2e")
+			command.Env = append(os.Environ(), "SPORTIK_REAL_API=1", "SPORTIK_FIXTURE_FILE="+fixtureFile, "VITE_API_PROXY_TARGET="+server.URL, "PLAYWRIGHT_CHANNEL=chrome")
+			command.Stdout = logFile
+			command.Stderr = logFile
+			require.NoError(t, command.Run(), "see .validation/real-e2e.log")
+		}
+		if os.Getenv("SPORTIK_POSTMAN_TESTS") == "1" {
+			mlMode.Store(0)
+			modules, err := filepath.Abs("../../../.validation/postman-tools/node_modules")
+			require.NoError(t, err)
+			report, err := filepath.Abs("../../../.validation/postman-real-report.json")
+			require.NoError(t, err)
+			logFile, err := os.Create("../../../.validation/postman-real.log")
+			require.NoError(t, err)
+			defer func() { _ = logFile.Close() }()
+			runCtx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+			defer cancel()
+			command := exec.CommandContext(runCtx, "node", "../../../docs/postman/run_isolated.cjs", modules, fixtureFile, report)
+			command.Stdout = logFile
+			command.Stderr = logFile
+			require.NoError(t, command.Run(), "see .validation/postman-real-report.json")
+		}
+
 	})
 
 	t.Run("reconnect and rollback preserve legacy data", func(t *testing.T) {

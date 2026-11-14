@@ -53,9 +53,11 @@ func (r *Repository) Transaction(ctx context.Context, id int, role string, fn fu
 	return tx.Commit(ctx)
 }
 
-const profileJSON = `jsonb_build_object('id',t.user_id,'display_name',t.display_name,'photo_url',t.photo_ref,'bio',t.bio,
+const ProfileJSON = `jsonb_build_object('id',t.user_id,'display_name',t.display_name,'photo_url',t.photo_ref,'bio',t.bio,
  'specializations',t.specializations,'experience_years',t.experience_years,'qualifications',t.qualifications,
- 'verified',t.verified_at IS NOT NULL,'rating',NULL,'review_count',0,
+ 'verified',t.verified_at IS NOT NULL,
+ 'rating',(SELECT AVG(r.overall)::double precision FROM sportapp.program_reviews r JOIN sportapp.programs pr ON pr.id=r.program_id WHERE pr.trainer_id=t.user_id AND pr.status='active' AND r.status='published' AND r.deleted_at IS NULL),
+ 'review_count',(SELECT COUNT(*) FROM sportapp.program_reviews r JOIN sportapp.programs pr ON pr.id=r.program_id WHERE pr.trainer_id=t.user_id AND pr.status='active' AND r.status='published' AND r.deleted_at IS NULL),
  'published_programs',COALESCE((SELECT jsonb_agg(p.id ORDER BY p.id) FROM sportapp.programs p
  WHERE p.trainer_id=t.user_id AND p.status='active' AND p.published_version_id IS NOT NULL),'[]'::jsonb))`
 
@@ -68,7 +70,7 @@ func notFound(err error) error {
 func readProfile(ctx context.Context, reader Reader, id int) (Profile, error) {
 	var p Profile
 	var raw []byte
-	err := reader.QueryRow(ctx, `SELECT `+profileJSON+` FROM sportapp.trainer_profiles t
+	err := reader.QueryRow(ctx, `SELECT `+ProfileJSON+` FROM sportapp.trainer_profiles t
  JOIN sportapp.users u ON u.id=t.user_id WHERE t.user_id=$1 AND NOT u.is_anonymous
  AND EXISTS(SELECT 1 FROM sportapp.user_roles r WHERE r.user_id=t.user_id AND r.role='trainer')`, id).Scan(&raw)
 	if err != nil {
@@ -84,7 +86,14 @@ func (r *Repository) GetProfile(ctx context.Context, actor, id int, own bool) (P
 			return Profile{}, err
 		}
 	}
-	return readProfile(ctx, r.pool, id)
+	out, err := readProfile(ctx, r.pool, id)
+	if err != nil {
+		return out, err
+	}
+	if actor > 0 {
+		err = r.pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM sportapp.trainer_follows WHERE user_id=$1 AND trainer_id=$2)`, actor, id).Scan(&out.Following)
+	}
+	return out, err
 }
 func (r *Repository) UpdateProfile(ctx context.Context, id int, p Patch) (Profile, error) {
 	var result Profile
@@ -205,7 +214,7 @@ func (r *Repository) ListTrainers(ctx context.Context, actor int, f Filter) (Pag
 	if err := RequireRole(ctx, r.pool, actor, "admin"); err != nil {
 		return page, err
 	}
-	rows, err := r.pool.Query(ctx, `SELECT `+profileJSON+` FROM sportapp.trainer_profiles t WHERE t.user_id>COALESCE(NULLIF($1,'')::integer,0) ORDER BY t.user_id LIMIT $2`, f.After, f.Limit+1)
+	rows, err := r.pool.Query(ctx, `SELECT `+ProfileJSON+` FROM sportapp.trainer_profiles t WHERE t.user_id>COALESCE(NULLIF($1,'')::integer,0) ORDER BY t.user_id LIMIT $2`, f.After, f.Limit+1)
 	if err != nil {
 		return page, err
 	}

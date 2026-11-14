@@ -3,6 +3,7 @@ package trainers_postgres_repository
 import "time"
 
 type Profile struct {
+	Following         bool     `json:"following"`
 	ID                int      `json:"id"`
 	DisplayName       string   `json:"display_name"`
 	PhotoURL          *string  `json:"photo_url"`

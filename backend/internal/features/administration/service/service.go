@@ -2,6 +2,7 @@ package administration_service
 
 import (
 	"context"
+	"encoding/json"
 	"slices"
 	"sport_app/internal/core/transport/http/v2request"
 	administration_postgres_repository "sport_app/internal/features/administration/repository/postgres"
@@ -10,6 +11,8 @@ import (
 )
 
 type Repository interface {
+	References(context.Context, int, string, bool, v2request.PageFilter, string) (administration_postgres_repository.ReferencePage, error)
+	SaveReference(context.Context, int, string, string, administration_postgres_repository.ReferenceInput, string) (json.RawMessage, error)
 	Session(context.Context, int) (administration_postgres_repository.User, error)
 	List(context.Context, int, v2request.PageFilter, string) (administration_postgres_repository.Page, error)
 	Update(context.Context, int, int, administration_postgres_repository.Change, string) (administration_postgres_repository.User, error)

@@ -74,3 +74,9 @@ exercises-dataset-main/
 /ml-database-guide.html
 
 /TEAM_IMPLEMENTATION_NOTES.md
+
+/frontend/test-results-v2/
+/frontend/playwright-report/
+/frontend/.vitest/
+
+/.validation/
