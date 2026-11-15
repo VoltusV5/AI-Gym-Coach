@@ -59,8 +59,16 @@ func sanitizeURL(u *url.URL) string {
 	if u == nil {
 		return ""
 	}
+	path := u.Path
+	if before, after, found := strings.Cut(path, "/shares/"); found {
+		_, suffix, more := strings.Cut(after, "/")
+		path = before + "/shares/[REDACTED]"
+		if more {
+			path += "/" + suffix
+		}
+	}
 	if u.RawQuery == "" {
-		return u.Path
+		return path
 	}
 	q := u.Query()
 	for _, key := range []string{"token", "secret", "password", "key", "auth"} {
@@ -68,7 +76,7 @@ func sanitizeURL(u *url.URL) string {
 			q.Set(key, "[REDACTED]")
 		}
 	}
-	return u.Path + "?" + q.Encode()
+	return path + "?" + q.Encode()
 }
 
 type contextKey string

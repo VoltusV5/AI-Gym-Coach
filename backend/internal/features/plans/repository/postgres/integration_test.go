@@ -83,6 +83,7 @@ func TestPlansIntegration(t *testing.T) {
 		INSERT INTO sportapp.user_programs (user_id,is_active,plan_template,plan_exercises)
 		VALUES (101,TRUE,'{"legacy":true}','{"plan":[]}');`)
 	require.NoError(t, err)
+	apply("000019_exercise_seed_identity.up.sql")
 	require.NoError(t, users_postgres_repository.NewUsersRepository(pool).EnsureExercisesSeeded(ctx))
 	apply("000009_personal_plans.up.sql")
 	repo := plans_postgres_repository.NewRepository(pool)

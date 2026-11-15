@@ -45,6 +45,11 @@ export async function mockApi(page, handle, { guest = false } = {}) {
     if (url.pathname === '/api/v1/auth/guest') return route.fulfill({ json: { token: token(guest) } })
     if (url.pathname === '/api/v1/auth/login') return route.fulfill({ json: { token: token(false) } })
     if (url.pathname === '/api/v1/profile') return route.fulfill({ json: { ...profile, fitness_level: 'Новичок' } })
+    if (url.pathname === '/api/v2/me/session') {
+      const encoded = request.headers().authorization?.split('.')[1]
+      const claims = encoded ? JSON.parse(Buffer.from(encoded, 'base64url').toString()) : { sub: guest ? '1' : '2', is_anonymous: guest }
+      return route.fulfill({ json: { id: Number(claims.sub), is_anonymous: claims.is_anonymous, roles: ['user', 'trainer', 'admin'] } })
+    }
     if (url.pathname === '/api/v2/equipment') return route.fulfill({ json: pageOf(equipment) })
     if (url.pathname === '/api/v2/exercises') return route.fulfill({ json: pageOf([exercise]) })
     return route.fulfill({ status: 501, json: failure('UNMATCHED_FIXTURE') })

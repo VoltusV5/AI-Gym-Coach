@@ -35,13 +35,13 @@ function activate() {
 function archive() {
   return run(async () => {
     await v2('DELETE', path.value)
-    await router.replace('/plans')
+    await router.replace('/v2/plans')
   })
 }
 </script>
 
 <template>
-  <FeaturePage eyebrow="Мои планы" :title="plan?.title ?? 'План тренировки'" back="/plans">
+  <FeaturePage eyebrow="Мои планы" :title="plan?.title ?? 'План тренировки'" back="/v2/plans">
     <RequestState :loading="loading" :error="error" :status="status" :retry="load" />
     <div v-if="plan" class="feature-stack">
       <section class="feature-card">

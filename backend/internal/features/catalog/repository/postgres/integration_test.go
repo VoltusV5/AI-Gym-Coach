@@ -69,6 +69,7 @@ func TestCatalogIntegration(t *testing.T) {
 		INSERT INTO sportapp.notes (user_id, title, body) VALUES (101, 'fixture', 'preserve me');`)
 	require.NoError(t, err)
 	users := users_postgres_repository.NewUsersRepository(pool)
+	apply("000019_exercise_seed_identity.up.sql")
 	require.NoError(t, users.EnsureExercisesSeeded(ctx))
 	var exerciseCount int
 	require.NoError(t, pool.QueryRow(ctx, `SELECT COUNT(*) FROM sportapp.exercises`).Scan(&exerciseCount))
@@ -307,6 +308,8 @@ func TestCatalogIntegration(t *testing.T) {
 		assert.Equal(t, []string{"Пн", "Ср", "Пт"}, profile.TrainingDaysMap)
 	})
 	t.Run("rollback preserves v1 then reapply", func(t *testing.T) {
+		apply("000015_social.down.sql")
+		apply("000014_favorites.down.sql")
 		apply("000007_catalog.down.sql")
 		var body string
 		require.NoError(t, pool.QueryRow(ctx, `SELECT body FROM sportapp.notes WHERE user_id = 101`).Scan(&body))
@@ -317,6 +320,8 @@ func TestCatalogIntegration(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, 80, *profile.WeightKg)
 		apply("000007_catalog.up.sql")
+		apply("000014_favorites.up.sql")
+		apply("000015_social.up.sql")
 		require.NoError(t, repo.EnsureReferenceData(ctx))
 		require.NoError(t, repo.SeedCatalog(ctx, 101, "Тестовый автор"))
 		items, err := svc.ListPrograms(ctx, catalog_postgres_repository.Filter{}, "")

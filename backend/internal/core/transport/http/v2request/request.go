@@ -64,7 +64,7 @@ func Object(data []byte, required ...string) (map[string]json.RawMessage, error)
 		}
 	}
 	for k, v := range m {
-		if k != "weight_kg" && k != "photo_ref" && bytes.Equal(bytes.TrimSpace(v), []byte("null")) {
+		if k != "weight_kg" && k != "photo_ref" && k != "expires_at" && k != "image_url" && k != "video_url" && k != "muscle_subgroup" && bytes.Equal(bytes.TrimSpace(v), []byte("null")) {
 			return nil, Invalid()
 		}
 	}

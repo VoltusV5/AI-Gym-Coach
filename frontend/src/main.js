@@ -17,7 +17,7 @@ import '@ionic/vue/css/display.css'
 
 import '@/theme/sportik.css'
 import '@/theme/features.css'
-import api from '@/api/api'
+import { onSessionExpired, setAuthHeader } from '@/api/api'
 import { useAuthStore } from '@/stores/auth'
 
 async function bootstrap() {
@@ -30,24 +30,23 @@ async function bootstrap() {
   app.use(IonicVue)
   const pinia = createPinia()
   app.use(pinia)
-  const auth = useAuthStore(pinia)
-  api.interceptors.response.use(undefined, async (error) => {
-    const request = error.config
-    const authAction = request?.url?.startsWith('/api/v1/auth/')
-    if (error.response?.status === 401 && (!authAction || request.url === '/api/v1/auth/register')) {
-      await auth.expire(request?.headers?.get?.('Authorization') ?? request?.headers?.Authorization).catch(() => {})
-    }
-    throw error
-  })
-  const initialized = auth.initialize()
-  router.beforeEach(async (to) => {
-    await initialized
-    if (to.meta.session && !auth.token) {
-      return { name: 'Login', query: { return_to: to.fullPath } }
-    }
-  })
   app.use(router)
+
+  const auth = useAuthStore(pinia)
+  onSessionExpired((token) => auth.expire(token))
+  await auth.ensureInitialized()
+  window.addEventListener('storage', async (event) => {
+    if (event.key !== 'auth_token') return
+    auth.sessionAttempt += 1
+    auth.clearAccountData()
+    auth.token = event.newValue
+    setAuthHeader(event.newValue)
+    if (event.newValue) {
+      try { await auth.fetchIdentity(); await auth.fetchProfile() } catch { auth.error = 'Не удалось загрузить учётную запись' }
+    }
+  })
   await router.isReady()
+
   app.mount('#app')
 }
 

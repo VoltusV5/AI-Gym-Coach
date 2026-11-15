@@ -69,7 +69,7 @@ watch(data, (loaded) => {
   }
 })
 onBeforeRouteLeave((to) => {
-  if (to.name === 'Login' && !auth.token && dirty.value) {
+  if (['Login', 'PlatformLogin'].includes(to.name) && !auth.token && dirty.value) {
     stashDraft(auth.lastSubject, path.value, { draft: draft.value, baseline: baseline.value, version: program.value?.version })
     return true
   }

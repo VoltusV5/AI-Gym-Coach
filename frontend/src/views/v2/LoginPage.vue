@@ -9,7 +9,7 @@ const router = useRouter()
 
 /** Resume the requested screen after authentication without replaying its action. */
 function resume() {
-  return router.replace(safeReturnPath(route.query.return_to))
+  return router.replace(safeReturnPath(route.query.return_to ?? route.query.redirect))
 }
 </script>
 

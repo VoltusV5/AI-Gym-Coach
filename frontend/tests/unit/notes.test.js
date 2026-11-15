@@ -1,0 +1,37 @@
+import { beforeEach, afterEach, describe, it, expect } from 'vitest'
+import { createPinia, setActivePinia } from 'pinia'
+import MockAdapter from 'axios-mock-adapter'
+import api from '@/api/api'
+import { useAuthStore } from '@/stores/auth'
+import { useNotesStore } from '@/stores/notes'
+let mock
+beforeEach(() => { setActivePinia(createPinia()); localStorage.clear(); const auth = useAuthStore(); auth.token = 'fixture'; auth.identity = { id: 101 }; useNotesStore().hydrate(); mock = new MockAdapter(api) })
+afterEach(() => mock.restore())
+describe('notes persistence', () => {
+  it('preserves the draft and rejects a failed save instead of showing success', async () => {
+    const store = useNotesStore()
+    const draft = store.createEmptyDraft()
+    mock.onPost('/api/v1/notes').reply(503)
+    await expect(store.saveNoteWithApi(draft.id, 'Title', 'Body')).rejects.toBeDefined()
+    expect(store.noteById(draft.id)).toBeDefined()
+    expect(store.error).toBeTruthy()
+  })
+  it('follows v1 offsets, deduplicates and stops at the last page', async () => {
+    const store = useNotesStore()
+    mock.onGet('/api/v1/notes').reply((config) => config.params.offset
+      ? [200, { items: [{ id: 2, title: 'duplicate' }, { id: 3, title: 'third' }], total: 4 }]
+      : [200, { items: [{ id: 1, title: 'first' }, { id: 2, title: 'second' }], total: 4 }])
+    await store.fetchNotesFromApi(true)
+    await store.fetchNotesFromApi()
+    await store.fetchNotesFromApi()
+    expect(store.notes.map((note) => note.id)).toEqual(['1', '2', '3'])
+    expect(mock.history.get.map(({ params }) => params.offset)).toEqual([0, 2])
+  })
+  it('keeps a server note when deletion fails', async () => {
+    const store = useNotesStore()
+    store.upsertNote('42', 'Title', 'Body')
+    mock.onDelete('/api/v1/notes/42').reply(500)
+    await expect(store.deleteNoteWithApi('42')).rejects.toBeDefined()
+    expect(store.noteById('42')).toBeDefined()
+  })
+})

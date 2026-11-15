@@ -121,7 +121,7 @@ func Records(current Workout, previous []Workout) []Highlight {
 				continue
 			}
 			old := m.old
-			h := Highlight{ExerciseID: &id, Metric: m.name, Previous: &old, Current: m.value, Message: fmt.Sprintf("New exercise record: %s", m.name)}
+			h := Highlight{ExerciseID: &id, Metric: m.name, Previous: &old, Current: m.value, Message: fmt.Sprintf("Новый личный рекорд: %s — %g кг", map[string]string{"working_weight_kg": "рабочий вес", "volume_kg": "объём за занятие"}[m.name], m.value)}
 			if old > 0 {
 				delta := 100 * (m.value - old) / old
 				h.DeltaPercent = &delta

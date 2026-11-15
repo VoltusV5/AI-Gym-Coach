@@ -43,7 +43,7 @@ function generate() {
 </script>
 
 <template>
-  <FeaturePage eyebrow="Мои планы · AI" title="Персональный AI-план" subtitle="Спортик учтёт анкету, доступные упражнения и ваши тренировки." back="/plans">
+  <FeaturePage eyebrow="Мои планы · AI" title="Персональный AI-план" subtitle="Спортик учтёт анкету, доступные упражнения и ваши тренировки." back="/v2/plans">
     <div class="feature-stack">
       <RequestState :loading="loading" :error="error" :status="status" :retry="load" />
       <section v-if="result" class="feature-card">

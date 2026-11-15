@@ -221,3 +221,7 @@ func profileAssignments(patch Patch) ([]string, []any) {
 	}
 	return sets, args
 }
+
+func ReadSnapshot(ctx context.Context, reader profileReader, user int) (Profile, error) {
+	return readProfile(ctx, reader, user, false)
+}

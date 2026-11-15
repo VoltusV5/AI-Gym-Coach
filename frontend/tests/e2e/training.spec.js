@@ -246,7 +246,7 @@ test('legacy workout keeps input on API error and saves through the v1 contract'
     if (++writes === 1) return [503, failure('UNAVAILABLE')]
     return [200, { ok: true, saved_id: 'fixture-workout', new_achievements: [], session_highlights: [] }]
   })
-  await page.goto('/home')
+  await page.goto('/previous-plan')
   await expect(page.getByRole('button', { name: 'Начать тренировку' })).toBeDisabled()
   await page.evaluate((plan) => localStorage.setItem('sportik_workout_plan:2', JSON.stringify(plan)), workoutPlan)
   await page.reload()
@@ -273,7 +273,7 @@ test('plan creation reconciles a lost response without creating a duplicate', as
     saved = { ...plan, ...request.postDataJSON() }
     return [0]
   })
-  await page.goto('/plans/new')
+  await page.goto('/v2/plans/new')
   await page.getByLabel('Название плана').fill('Созданный план')
   await page.getByRole('button', { name: 'Создать план', exact: true }).click()
   await page.getByRole('button', { name: 'Проверить и повторить' }).click()
@@ -289,7 +289,7 @@ test('moderation clears stale conflicts and removes private documents when acces
     if (url.pathname === '/api/v2/admin/verifications') return [200, pageOf([first, second], 'next')]
     if (method === 'PATCH' && url.pathname.endsWith(ids.verification)) return [409, failure('CONFLICT')]
   })
-  await page.goto('/admin/verifications')
+  await page.goto('/v2/admin/verifications')
   const firstRow = page.locator('article').filter({ hasText: 'Первая заявка' })
   await firstRow.getByRole('button', { name: 'Рассмотреть' }).click()
   await firstRow.getByRole('combobox', { name: 'Статус' }).selectOption('rejected')
@@ -327,7 +327,7 @@ test('an in-flight nutrition refresh cannot merge data into the next account', a
       return [200, {}]
     }
   }, { guest: true })
-  await page.goto('/home')
+  await page.goto('/previous-plan')
   await expect(page.getByRole('link', { name: 'Открыть библиотеку планов' })).toBeVisible()
   const start = await page.evaluate(() => {
     // Vite serves these source paths in the browser test server.
@@ -409,4 +409,22 @@ test('a delayed sign-in cannot override a more recent account choice', async ({ 
     return { first: await globalThis.sportikFirstLogin, owner: useAuthStore().accountId }
   })
   expect(current).toEqual({ first: 'ERR_CANCELED', owner: '2' })
+})
+
+test('compatibility trainer and exercise routes use the canonical Go API', async ({ page }) => {
+  await mockApi(page, ({ url }) => {
+    if (url.pathname === '/api/v2/trainers/5') return [200, {
+      id: 5, display_name: 'Публичный тренер', bio: 'Проверенный профиль',
+      photo_ref: null, specializations: ['Сила'], qualifications: 'Тренер', experience_years: 3, verified: true,
+    }]
+    if (url.pathname === '/api/v2/progress/exercises/3') return [200, {
+      points: [{ session_id: ids.workout, finished_at: '2026-11-07T08:00:00Z', working_weight_kg: 12.5, reps: 8, volume_kg: 100 }], records: [],
+    }]
+  })
+  await page.goto('/v2/trainers/5')
+  await expect(page.getByText('Проверенный профиль', { exact: true })).toBeVisible()
+  await expect(page.getByRole('alert')).toHaveCount(0)
+  await page.goto('/v2/progress/exercises/3')
+  await expect(page.getByRole('table', { name: 'Рабочий вес по тренировкам' })).toBeVisible()
+  await expect(page.getByRole('alert')).toHaveCount(0)
 })

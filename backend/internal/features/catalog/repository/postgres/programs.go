@@ -12,17 +12,17 @@ import (
 	"github.com/google/uuid"
 )
 
-const cardJSON = `jsonb_build_object(
+const CardJSON = `jsonb_build_object(
 	'id', p.id, 'title', v.title,
 	'trainer', jsonb_build_object('id', t.user_id, 'display_name', t.display_name, 'verified', t.verified_at IS NOT NULL),
 	'goal', v.goal, 'level', v.level, 'duration_weeks', v.duration_weeks,
 	'sessions_per_week', v.sessions_per_week, 'price_minor', v.price_minor, 'currency', v.currency,
-	'rating', NULL, 'review_count', 0, 'published_version_id', v.id,
+	'rating', (SELECT AVG(overall)::double precision FROM sportapp.program_reviews r WHERE r.program_id=p.id AND r.status='published' AND r.deleted_at IS NULL), 'review_count', (SELECT COUNT(*) FROM sportapp.program_reviews r WHERE r.program_id=p.id AND r.status='published' AND r.deleted_at IS NULL), 'published_version_id', v.id,
 	'equipment', COALESCE((SELECT jsonb_agg(jsonb_build_object('id', e.id, 'code', e.code, 'name', e.name) ORDER BY e.id)
 		FROM sportapp.program_version_equipment ve JOIN sportapp.equipment e ON e.id = ve.equipment_id
 		WHERE ve.version_id = v.id), '[]'::jsonb))`
 
-const publishedFrom = ` FROM sportapp.programs p
+const PublishedFrom = ` FROM sportapp.programs p
 	JOIN sportapp.program_versions v ON v.id = p.published_version_id AND v.program_id = p.id
 	JOIN sportapp.trainer_profiles t ON t.user_id = p.trainer_id
 	WHERE p.status = 'active' AND v.status = 'published'`
@@ -43,13 +43,14 @@ func (r *Repository) ListPrograms(ctx context.Context, filter Filter) ([]Program
 		after = `(v.price_minor, p.id) < ($10::bigint, $1::uuid)`
 		sortValue = filter.AfterPrice
 	}
-	query := `SELECT ` + cardJSON + `, p.created_at` + publishedFrom + `
+	query := `SELECT ` + CardJSON + `, p.created_at` + PublishedFrom + `
 		AND ($1::uuid IS NULL OR (p.id <> $1::uuid AND ` + after + `))
 		AND ($2 = '' OR v.goal = $2) AND ($3 = '' OR v.level = $3)
 		AND ($4 = 0 OR v.duration_weeks = $4) AND ($5 = 0 OR p.trainer_id = $5)
 		AND ($6 = '' OR ($6 = 'free' AND v.price_minor = 0) OR ($6 = 'paid' AND v.price_minor > 0))
 		AND (NOT $7 OR NOT EXISTS (SELECT 1 FROM sportapp.program_version_equipment ve
 			WHERE ve.version_id = v.id AND NOT (ve.equipment_id = ANY($8::text[]))))
+		AND ($11::integer = 0 OR v.sessions_per_week = $11)
 		ORDER BY ` + order + ` LIMIT $9`
 	var cursor any
 	if filter.After != "" {
@@ -57,7 +58,7 @@ func (r *Repository) ListPrograms(ctx context.Context, filter Filter) ([]Program
 	}
 	rows, err := r.pool.Query(ctx, query, cursor, filter.Goal, filter.Level,
 		filter.DurationWeeks, filter.TrainerID, filter.PriceType, filter.EquipmentSet, filter.Equipment, filter.Limit+1,
-		sortValue)
+		sortValue, filter.SessionsPerWeek)
 	if err != nil {
 		return nil, fmt.Errorf("list programs: %w", err)
 	}
@@ -83,8 +84,9 @@ func (r *Repository) ListPrograms(ctx context.Context, filter Filter) ([]Program
 func (r *Repository) GetProgram(ctx context.Context, programID string, userID int) (ProgramDetail, error) {
 	ctx, cancel := context.WithTimeout(ctx, r.pool.OpTimeout())
 	defer cancel()
-	query := `SELECT ` + cardJSON + ` || jsonb_build_object(
+	query := `SELECT ` + CardJSON + ` || jsonb_build_object(
 		'description', v.description, 'allow_public_remix', v.allow_public_remix,
+        'is_favorite',EXISTS(SELECT 1 FROM sportapp.program_favorites f WHERE f.program_id=p.id AND f.user_id=$2),
 		'access', CASE WHEN a.allowed THEN CASE WHEN v.price_minor = 0 THEN 'free' ELSE 'paid' END ELSE 'preview' END,
 		'allowed_actions', CASE WHEN a.allowed THEN '[]'::jsonb
 			WHEN v.price_minor = 0 THEN '["access"]'::jsonb ELSE '[]'::jsonb END,

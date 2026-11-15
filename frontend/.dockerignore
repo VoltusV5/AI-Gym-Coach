@@ -3,3 +3,8 @@ dist/
 .env*
 android/
 ios/
+test-results/
+test-results-v2/
+playwright-report/
+.vitest/
+.eslintcache

@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import api from '@/api/api'
+import api, { errorMessage } from '@/api/api'
 import { apiStatus, errorText } from '@/api/v2'
 import { useAuthStore } from '@/stores/auth'
 import { appendPage } from '@/utils/pages'
@@ -116,7 +116,7 @@ export const useNotesStore = defineStore('notes', {
     async fetchNotesFromApi(reset = false) {
       const auth = useAuthStore()
       this.hydrate()
-      if (this.loading || !auth.token) return
+      if (this.loading || !auth.token || (!reset && this.offset >= this.total)) return
       const owner = this.owner
       this.loading = true
       this.error = ''
@@ -201,10 +201,14 @@ export const useNotesStore = defineStore('notes', {
     },
 
     async saveNoteWithApi(id, title, body) {
-      const exists = Boolean(this.noteById(id)) && isServerNoteId(id)
-      this.upsertNote(id, title, body)
-      if (exists) return this.updateNoteRemote(id, title, body)
-      return this.createNoteRemote(id, title, body)
+      this.error = null
+      try {
+        if (isServerNoteId(id)) return await this.updateNoteRemote(id, title, body)
+        return await this.createNoteRemote(id, title, body)
+      } catch (error) {
+        this.error = errorMessage(error)
+        throw error
+      }
     },
 
     deleteNote(id) {
@@ -214,13 +218,19 @@ export const useNotesStore = defineStore('notes', {
     },
 
     async deleteNoteWithApi(id) {
-      this.deleteNote(id)
-      if (!isServerNoteId(id)) return
+      this.error = null
       try {
-        await api.delete(`/api/v1/notes/${id}`)
-      } catch {
-        // Local cache is optional when browser storage is unavailable.
+        if (isServerNoteId(id)) await api.delete(`/api/v1/notes/${id}`)
+        this.deleteNote(id)
+      } catch (error) {
+        this.error = errorMessage(error)
+        throw error
       }
+    },
+
+    async syncWithApi() {
+      try { await this.fetchNotesFromApi() } catch { return false }
+      return true
     }
   }
 })

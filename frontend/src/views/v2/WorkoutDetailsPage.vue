@@ -31,14 +31,14 @@ watch([() => props.sessionId, () => auth.token], load, { immediate: true })
           <p class="feature-muted">Версия плана {{ data.workout.plan_version }}</p>
           <ProgressMetrics v-if="result" :metrics="result.metrics" />
           <p v-for="item in result?.highlights ?? []" :key="`${item.exercise_id}-${item.metric}`">{{ item.message }}</p>
-          <RouterLink class="feature-button" to="/progress">Смотреть прогресс</RouterLink>
+          <RouterLink class="feature-button" to="/v2/progress">Смотреть прогресс</RouterLink>
         </section>
         <section v-for="slot in data.workout.slots" :key="slot.position" class="feature-card">
           <h2>{{ names.get(slot.exercise_id) ?? `Упражнение №${slot.exercise_id}` }}</h2>
           <p v-for="(set, index) in slot.sets" :key="index">
             {{ index + 1 }}. {{ set.reps }} повт. × {{ numberLabel.format(set.weight_kg) }} кг{{ set.is_warmup ? ' · разминка' : '' }}
           </p>
-          <RouterLink class="feature-link" :to="`/progress/exercises/${slot.exercise_id}`">Динамика упражнения</RouterLink>
+          <RouterLink class="feature-link" :to="`/v2/progress/exercises/${slot.exercise_id}`">Динамика упражнения</RouterLink>
         </section>
       </template>
     </div>

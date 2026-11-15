@@ -2,25 +2,40 @@ import { defineConfig, globalIgnores } from 'eslint/config'
 import globals from 'globals'
 import js from '@eslint/js'
 import pluginVue from 'eslint-plugin-vue'
+import pluginOxlint from 'eslint-plugin-oxlint'
 import skipFormatting from 'eslint-config-prettier/flat'
 
 export default defineConfig([
-  globalIgnores(['dist/**', 'dist-ssr/**', 'coverage/**', 'playwright-report/**', 'test-results/**']),
-  js.configs.recommended,
-  ...pluginVue.configs['flat/essential'],
   {
-    files: ['src/**/*.{js,vue}'],
+    name: 'app/files-to-lint',
+    files: ['**/*.{vue,js,mjs,jsx}'],
+  },
+
+  globalIgnores(['**/dist/**', '**/dist-ssr/**', '**/coverage/**', '**/test-results/**', '**/playwright-report/**']),
+
+  {
     languageOptions: {
-      globals: { ...globals.browser, __SPORTIK_BUILD_ID__: 'readonly' },
+      globals: {
+        ...globals.browser,
+        __SPORTIK_BUILD_ID__: 'readonly',
+      },
     },
   },
+
+  js.configs.recommended,
+  ...pluginVue.configs['flat/essential'],
+
+  ...pluginOxlint.buildFromOxlintConfigFile('.oxlintrc.json'),
+
   {
-    files: ['*.config.js', 'scripts/**/*.mjs', 'tests/**/*.{js,mjs}'],
-    languageOptions: { globals: globals.node },
+    files: ['*.config.js', 'scripts/**/*.mjs', 'tests/**/*.js'],
+    languageOptions: { globals: globals.node }
   },
   {
-    files: ['src/**/*.vue'],
-    rules: { 'vue/no-deprecated-slot-attribute': ['error', { ignore: ['ion-buttons', 'ion-icon', 'ion-spinner'] }] },
+    rules: {
+      'no-empty': ['error', { allowEmptyCatch: true }],
+      'vue/no-deprecated-slot-attribute': ['error', { ignore: ['/^ion-/'], ignoreParents: ['/^ion-/'] }]
+    }
   },
   skipFormatting,
 ])

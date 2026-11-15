@@ -117,20 +117,20 @@ func (r *UsersRepository) insertExercises(ctx context.Context, tx core_postgres_
 		{"Пуловер", "Спина", strPtr("тяга сверху широким хватом"), intPtr(5), false},
 	}
 
-	query := `INSERT INTO sportapp.exercises (exercises_name, muscular_group, muscular_subgroup, working_weights, safe_for_injuries)
+	query := `INSERT INTO sportapp.exercises (exercises_name, muscular_group, muscular_subgroup, working_weights, safe_for_injuries,seed_key)
 		SELECT seed.* FROM (VALUES `
-	args := make([]any, 0, len(exercises)*5)
+	args := make([]any, 0, len(exercises)*6)
 	for i, ex := range exercises {
 		if i > 0 {
 			query += ","
 		}
-		query += fmt.Sprintf("($%d::text, $%d::text, $%d::text, $%d::integer, $%d::boolean)",
-			i*5+1, i*5+2, i*5+3, i*5+4, i*5+5)
-		args = append(args, ex.Name, ex.Group, ex.Subgroup, ex.Weights, ex.Injuries)
+		query += fmt.Sprintf("($%d::text, $%d::text, $%d::text, $%d::integer, $%d::boolean, $%d::text)",
+			i*6+1, i*6+2, i*6+3, i*6+4, i*6+5, i*6+6)
+		args = append(args, ex.Name, ex.Group, ex.Subgroup, ex.Weights, ex.Injuries, fmt.Sprintf("builtin:v1:%d", i+1))
 	}
 
-	query += `) AS seed(exercises_name, muscular_group, muscular_subgroup, working_weights, safe_for_injuries)
-		WHERE NOT EXISTS (SELECT 1 FROM sportapp.exercises e WHERE e.exercises_name = seed.exercises_name)`
+	query += `) AS seed(exercises_name, muscular_group, muscular_subgroup, working_weights, safe_for_injuries,seed_key)
+		WHERE NOT EXISTS (SELECT 1 FROM sportapp.exercises e WHERE e.seed_key = seed.seed_key)`
 	if _, err := tx.Exec(ctx, query, args...); err != nil {
 		return fmt.Errorf("seed exercises: %w", err)
 	}
@@ -182,8 +182,8 @@ func (r *UsersRepository) SyncExerciseMedia(ctx context.Context) error {
 		_, err = r.pool.Exec(ctx, `
 			UPDATE sportapp.exercises
 			SET image_url = $1, video_url = $2
-			WHERE id = $3
-		`, imagePath, imagePath, id)
+			WHERE seed_key = $3 AND NOT admin_modified
+		`, imagePath, imagePath, fmt.Sprintf("builtin:v1:%d", id))
 		if err != nil {
 			return fmt.Errorf("update exercise %d media: %w", id, err)
 		}

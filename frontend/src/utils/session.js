@@ -20,7 +20,7 @@ export function sessionClaims(token) {
 export function safeReturnPath(value) {
   if (typeof value !== 'string' || !value.startsWith('/') || value.startsWith('//') ||
       /[\\\s]/.test(value) || [...value].some((char) => char.charCodeAt(0) < 32) ||
-      /^\/auth(?:[/?#]|$)/i.test(value)) {
+      /^\/(?:auth|login)(?:[/?#]|$)/i.test(value)) {
     return '/settings'
   }
   return value

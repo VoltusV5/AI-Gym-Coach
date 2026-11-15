@@ -1,23 +1,17 @@
+import { sessionClaims } from '@/utils/session'
+import { clearDrafts } from '@/utils/reauthDrafts'
+import { clearWorkoutDrafts } from '@/utils/workoutDraft'
 import { defineStore } from 'pinia'
 import { CanceledError } from 'axios'
-import api, { setAuthHeader } from '@/api/api'
-import { useNutritionStore } from '@/stores/nutrition'
-import { clearDrafts } from '@/utils/reauthDrafts'
+import api, { setAuthHeader, errorMessage } from '@/api/api'
 import { useWorkoutPlanStore } from '@/stores/workoutPlan'
 import { useWorkoutSessionStore } from '@/stores/workoutSession'
 import { saveToken, getToken, removeToken } from '@/utils/auth'
+import { useNotesStore } from '@/stores/notes'
+import { useNutritionStore } from '@/stores/nutrition'
 import { isTrainingDaysComplete } from '@/utils/trainingDays'
-import { sessionClaims } from '@/utils/session'
-
 const initializations = new WeakMap()
-const authentications = new WeakMap()
 
-/** Only the newest explicit authentication request may change the account. */
-function requireLatestAuth(state, attempt) {
-  if (authentications.get(state) !== attempt) throw new CanceledError('Authentication superseded')
-}
-
-/** Recognize a v1 account whose profile is still being created. */
 function profileNotYetCreated(err) {
   const status = Number(err?.response?.status)
   const data = err?.response?.data
@@ -29,19 +23,23 @@ export const useAuthStore = defineStore('auth', {
   state: () => ({
     token: null,
     lastSubject: null,
-    accountEpoch: 0,
     pendingEquipment: false,
+    identity: null,
+    profileV2: null,
+    sessionAttempt: 0,
+    sessionEpoch: 0,
+    initialized: false,
     profile: null,
     isLoading: false,
     error: null
   }),
 
   getters: {
-    /** Account identity hint for scoping local data. */
-    accountId: (state) => sessionClaims(state.token)?.sub ?? null,
-    /** Guest credentials also support private training endpoints. */
-    isGuest: (state) => sessionClaims(state.token)?.is_anonymous === true,
-
+    accountId: (state) => state.identity ? String(state.identity.id) : sessionClaims(state.token)?.sub ?? null,
+    isGuest: (state) => state.identity?.is_anonymous ?? sessionClaims(state.token)?.is_anonymous === true,
+    accountEpoch: (state) => state.sessionEpoch,
+    isRegistered: (state) => Boolean(state.identity && !state.identity.is_anonymous),
+    roles: (state) => state.identity?.roles || [],
     nextOnboardingStep: (state) => {
       if (!state.profile) return 'Welcome'
       if (state.profile.height_cm == null || state.profile.weight_kg == null) return 'BodyMetrics'
@@ -65,174 +63,200 @@ export const useAuthStore = defineStore('auth', {
 
   actions: {
 
-    /** Initialize once per concurrent group of callers. Store a safe UI error on failure. */
-    initialize() {
-      const state = this.$state
-      const current = initializations.get(state)
-      if (current) return current
-      const run = this.restoreSession().finally(() => initializations.delete(state))
-      initializations.set(state, run)
-      return run
+    clearAccountData({ resetViews = true, preserveReauth = false } = {}) {
+      if (resetViews) this.sessionEpoch += 1
+      if (!preserveReauth) clearDrafts()
+      this.profile = null
+      this.profileV2 = null
+      clearWorkoutDrafts()
+      this.identity = null
+      useWorkoutPlanStore().$reset()
+      useWorkoutSessionStore().$reset()
+      useNotesStore().$reset()
+      useNutritionStore().$reset()
+      for (const key of ['sportik_notes', 'sportik_workout_plan', 'sportik_workout_session']) localStorage.removeItem(key)
     },
 
-    /** Restore the local session or start an anonymous session for onboarding. */
-    async restoreSession() {
-      this.isLoading = true
-      this.error = null
-      try {
-        const token = await getToken()
-        if (token) {
-          this.lastSubject = sessionClaims(token)?.sub ?? null
-          this.token = token
-          setAuthHeader(token)
-          this.restoreEquipmentStep()
-          await this.fetchProfile()
-        } else {
-          await this.guestLogin()
-        }
-      } catch (err) {
-        if (profileNotYetCreated(err)) {
-          this.profile = {}
-        } else if (err?.response?.status === 401) {
-          this.profile = null
-        } else {
-          this.error = 'Не удалось загрузить профиль. Проверьте соединение и повторите попытку.'
-        }
-      } finally {
-        this.isLoading = false
-      }
-    },
-
-    /**
-     * Persist a new session and clear cached training data when the account changes.
-     * @param {string} token
-     */
-    async acceptToken(token) {
-      if (!token) throw new Error('Сервер не вернул ключ сессии')
-      const previous = this.lastSubject
-      const next = sessionClaims(token)?.sub
-      if (previous !== (next ?? null)) {
-        this.accountEpoch++
-        clearDrafts()
-        useNutritionStore().$reset()
-        useWorkoutPlanStore().$reset()
-        useWorkoutSessionStore().$reset()
-        this.profile = null
-      }
-      this.error = null
-      this.lastSubject = next ?? null
-      this.token = token
-      setAuthHeader(token)
-      this.restoreEquipmentStep()
-      await saveToken(token)
-    },
-
-    /** Restore whether this account entered the new equipment step. */
     restoreEquipmentStep() {
-      const owner = this.accountId
       try {
-        this.pendingEquipment = Boolean(owner && localStorage.getItem(`sportik-equipment-pending:${owner}`))
-      } catch {
-        this.pendingEquipment = false
-      }
+        this.pendingEquipment = Boolean(this.accountId && localStorage.getItem(`sportik-equipment-pending:${this.accountId}`))
+      } catch { this.pendingEquipment = false }
     },
 
-    /** Remember onboarding progress for the current account. */
     setEquipmentStep(pending) {
-      const owner = this.accountId
       this.pendingEquipment = pending
-      if (!owner) return
+      if (!this.accountId) return
       try {
-        const key = `sportik-equipment-pending:${owner}`
+        const key = `sportik-equipment-pending:${this.accountId}`
         if (pending) localStorage.setItem(key, '1')
         else localStorage.removeItem(key)
-      } catch {
-        // The current tab can continue when local storage is blocked.
-      }
+      } catch {}
     },
 
-    /**
-     * Invalidate only the credential used by the failed request.
-     * @param {string} authorization
-     */
-    async expire(authorization) {
-      const expired = this.token
-      if (!expired || authorization !== `Bearer ${expired}`) return
+    async fetchIdentity() {
+      const { data } = await api.get('/api/v2/me/session')
+      const previous = localStorage.getItem('sportik_account_id')
+      if (previous && previous !== String(data.id)) this.clearAccountData()
+      localStorage.setItem('sportik_account_id', String(data.id))
+      this.identity = data
+      this.lastSubject = String(data.id)
+      this.restoreEquipmentStep()
+      return data
+    },
+
+    async expire(expected) {
+      expected = expected?.replace(/^Bearer /, '')
+      if (this.token !== expected) return
+      const stored = await getToken()
+      if (this.token !== expected) return
+      if (stored && stored !== expected) {
+        this.token = stored
+        setAuthHeader(stored)
+        this.clearAccountData()
+        await this.fetchIdentity()
+        return
+      }
+      this.sessionAttempt += 1
       this.token = null
-      this.profile = null
       setAuthHeader(null)
-      useNutritionStore().$reset()
-      await removeToken(expired)
+      this.clearAccountData({ resetViews: false })
+      this.error = 'Сессия истекла. Войдите снова.'
+      await removeToken(expected)
     },
 
-    /** Authenticate once and discard the result if another sign-in has since started. */
-    async authenticate(path, body) {
-      const state = this.$state
-      const attempt = {}
-      authentications.set(state, attempt)
-      const { data, headers } = await api.post(`/api/v1/auth/${path}`, body)
-      requireLatestAuth(state, attempt)
-      const token = data?.token ?? headers.authorization?.match(/^Bearer (.+)$/)?.[1]
-      await this.acceptToken(token)
-      requireLatestAuth(state, attempt)
-      await this.fetchProfile()
-      requireLatestAuth(state, attempt)
+    async logout() {
+      this.sessionAttempt += 1
+      this.token = null
+      setAuthHeader(null)
+      this.clearAccountData()
+      await removeToken()
+    },
+
+    async fetchProfileV2() {
+      const { data } = await api.get('/api/v2/me/profile')
+      this.profileV2 = data
       return data
     },
 
-    /** Create and persist an anonymous session, then load the v1 profile. */
+    async saveProfileV2(fields) {
+      const { data } = await api.patch('/api/v2/me/profile', { ...fields, version: this.profileV2?.version })
+      this.profileV2 = data
+      return data
+    },
+
+    async ensureInitialized() {
+      if (this.initialized) return
+      if (!initializations.has(this.$state)) {
+        initializations.set(this.$state, this.initialize().finally(() => initializations.delete(this.$state)))
+      }
+      await initializations.get(this.$state)
+    },
+
+    async initialize() {
+      this.isLoading = true
+      this.error = null
+
+      try {
+        const token = await getToken()
+
+        if (!token) {
+          await this.guestLogin()
+        } else {
+          this.token = token
+          setAuthHeader(token)
+
+          try {
+            await this.fetchIdentity()
+            await this.fetchProfile()
+          } catch (err) {
+            if (Number(err?.response?.status) === 401) {
+              await removeToken()
+              this.token = null
+              setAuthHeader(null)
+              await this.guestLogin()
+            } else if (profileNotYetCreated(err)) {
+              this.profile = this.profile ?? {}
+            } else {
+              throw err
+            }
+          }
+        }
+      } catch (err) {
+        const msg = errorMessage(err)
+        const noResponse = err?.code === 'ERR_NETWORK' || !err?.response
+        this.error = noResponse
+          ? 'Не удаётся подключиться к серверу. Проверьте соединение и повторите попытку.'
+          : msg || 'Connection error'
+      } finally {
+        this.isLoading = false
+        this.initialized = true
+      }
+    },
+
+
     async guestLogin() {
-      await this.authenticate('guest', {})
-      return this.token
+      const res = await api.post('/api/v1/auth/guest', {})
+      const token =
+        res.data?.token ||
+        (typeof res.headers?.authorization === 'string' &&
+        res.headers.authorization.startsWith('Bearer ')
+          ? res.headers.authorization.slice(7)
+          : null)
+      if (!token) throw new Error('No token in guest response')
+      this.token = token
+      await saveToken(token)
+      setAuthHeader(token)
+      await this.fetchIdentity()
+      try {
+        await this.fetchProfile()
+      } catch (err) {
+        if (profileNotYetCreated(err)) {
+          this.profile = this.profile ?? {}
+        } else {
+          throw err
+        }
+      }
+      return token
     },
 
-    /** Load the authenticated v1 profile. Rejects API errors except an absent new profile. */
+
     async fetchProfile() {
-      const token = this.token
-      try {
-        const { data } = await api.get('/api/v1/profile')
-        if (this.token === token) this.profile = data
-        return data
-      } catch (err) {
-        if (!profileNotYetCreated(err)) throw err
-        if (this.token === token) this.profile = {}
-        return {}
-      }
-    },
-
-    /** Save an onboarding step against the current version. Rejects conflicts and expiry. */
-    async updateProfile(fields) {
-      const token = this.token
-      try {
-        const { data } = await api.post('/api/v1/profile', {
-          ...fields,
-          version: this.profile?.version ?? 0,
-        })
-        if (this.token === token) this.profile = data
-        return data
-      } catch (err) {
-        if (err?.response?.status === 409) await this.fetchProfile().catch(() => {})
-        throw err
-      }
-    },
-
-    /** Request generation via the legacy onboarding contract. */
-    async generatePlan() {
-      const { data } = await api.post('/api/v1/plans/generate', {}, { timeout: 55000 })
+      const { data } = await api.get('/api/v1/profile')
+      this.profile = data
       return data
     },
 
-    /** Register the current guest or create an account, then reload its profile. */
-    register({ email, password }) {
-      return this.authenticate('register', { email, password })
+    async updateProfile(fields) {
+      const { data } = await api.post('/api/v1/profile', { ...fields, version: this.profile?.version ?? 0 })
+      this.profile = data
+      return data
     },
 
-    /** Sign in and load the authenticated account profile. */
-    login({ email, password }) {
-      return this.authenticate('login', { email, password })
+    async generatePlan() {
+      const { data } = await api.post('/api/v1/plans/generate', {})
+      return data
     },
 
-    /** Change the password using the authenticated v1 endpoint. */
+    async authenticate(kind, { email, password }) {
+      const attempt = ++this.sessionAttempt
+      const { data } = await api.post(`/api/v1/auth/${kind}`, { email, password })
+      if (attempt !== this.sessionAttempt) throw new CanceledError('Выбрана другая сессия')
+      if (!data?.token) throw new Error('Сервер не вернул токен')
+      const subject = sessionClaims(data.token)?.sub
+      this.clearAccountData({ preserveReauth: Boolean(subject && subject === this.lastSubject) })
+      this.token = data.token
+      setAuthHeader(data.token)
+      await saveToken(data.token)
+      if (attempt !== this.sessionAttempt) throw new CanceledError('Выбрана другая сессия')
+      await this.fetchIdentity()
+      await this.fetchProfile()
+      this.error = null
+      return data
+    },
+
+    register(credentials) { return this.authenticate('register', credentials) },
+    login(credentials) { return this.authenticate('login', credentials) },
+
     async changePassword({ currentPassword, newPassword }) {
       const payload = {
         current_password: currentPassword,
@@ -240,6 +264,18 @@ export const useAuthStore = defineStore('auth', {
       }
       const { data } = await api.post('/api/v1/auth/change-password', payload)
       return data
+    },
+
+
+    async restartSessionForTesting() {
+      useWorkoutPlanStore().$reset()
+      useWorkoutSessionStore().$reset()
+      await removeToken()
+      this.token = null
+      this.profile = null
+      this.error = null
+      setAuthHeader(null)
+      await this.guestLogin()
     }
   }
 })

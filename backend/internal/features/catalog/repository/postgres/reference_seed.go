@@ -10,11 +10,15 @@ const referenceEquipment = `[{"name":"Жим ногами лёжа","equipment_i
 func (r *Repository) EnsureReferenceData(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, r.pool.OpTimeout())
 	defer cancel()
-	_, err := r.pool.Exec(ctx, `INSERT INTO sportapp.exercise_equipment (exercise_id, equipment_id)
-        SELECT e.id, equipment_id FROM jsonb_to_recordset($1::jsonb) AS m(name text, equipment_ids text[])
-        JOIN sportapp.exercises e ON e.exercises_name = m.name
-        CROSS JOIN LATERAL unnest(m.equipment_ids) AS equipment_id
-        ON CONFLICT DO NOTHING`, referenceEquipment)
+	_, err := r.pool.Exec(ctx, `WITH eligible AS MATERIALIZED (
+ SELECT e.id,m.equipment_ids FROM jsonb_array_elements($1::jsonb) WITH ORDINALITY AS item(value,position)
+ CROSS JOIN LATERAL jsonb_to_record(item.value) AS m(name text,equipment_ids text[])
+ JOIN sportapp.exercises e ON e.seed_key='builtin:v1:' || item.position::text
+ WHERE NOT e.admin_modified ORDER BY e.id FOR SHARE OF e
+ )
+ INSERT INTO sportapp.exercise_equipment (exercise_id,equipment_id)
+ SELECT e.id,equipment_id FROM eligible e CROSS JOIN LATERAL unnest(e.equipment_ids) AS equipment_id
+ ON CONFLICT DO NOTHING`, referenceEquipment)
 	if err != nil {
 		return fmt.Errorf("seed exercise equipment: %w", err)
 	}

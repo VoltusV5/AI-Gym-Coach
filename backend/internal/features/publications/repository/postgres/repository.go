@@ -23,7 +23,7 @@ func NewRepository(pool core_postgres_pool.TransactionalPool) *Repository {
 }
 
 const programJSON = `jsonb_build_object('id',p.id,'version',p.version,'published_version_id',p.published_version_id,
- 'version_id',v.id,'status',CASE WHEN p.status='hidden' THEN 'hidden' ELSE v.status END,
+ 'moderation_reason',(SELECT a.reason FROM sportapp.publication_audit a WHERE a.target_id=v.id AND a.action='program_moderation' ORDER BY a.occurred_at DESC,a.id DESC LIMIT 1),'version_id',v.id,'status',CASE WHEN p.status='hidden' THEN 'hidden' ELSE v.status END,
  'draft',jsonb_build_object('version',p.version,'title',v.title,'description',v.description,'goal',v.goal,'level',v.level,
  'duration_weeks',v.duration_weeks,'sessions_per_week',v.sessions_per_week,'price_minor',v.price_minor,'currency',v.currency,
  'allow_public_remix',v.allow_public_remix,
@@ -295,6 +295,21 @@ func (r *Repository) Moderate(ctx context.Context, actor int, id string, m Moder
 		if _, err := tx.Exec(ctx, `UPDATE sportapp.programs SET version=version+1,published_version_id=CASE WHEN $2='published' THEN $3::uuid ELSE published_version_id END,
    status=CASE WHEN $2='published' THEN 'active' ELSE status END WHERE id=$1`, id, status, p.VersionID); err != nil {
 			return err
+		}
+		if status == "published" {
+			kind, title := "program_published", "Новая программа тренера"
+			if p.PublishedVersionID != nil {
+				kind, title = "program_updated", "Программа обновлена"
+			}
+			var trainer int
+			if err := tx.QueryRow(ctx, `SELECT trainer_id FROM sportapp.programs WHERE id=$1`, p.ID).Scan(&trainer); err != nil {
+				return err
+			}
+			if _, err := tx.Exec(ctx, `INSERT INTO sportapp.notifications(user_id,event_key,type,title,message,target_route)
+          SELECT u.id,$1,$2,$3,$4,$5 FROM sportapp.users u WHERE NOT u.is_anonymous AND NOT u.blocked AND u.id<>$6 AND
+          (EXISTS(SELECT 1 FROM sportapp.trainer_follows f WHERE f.user_id=u.id AND f.trainer_id=$6) OR EXISTS(SELECT 1 FROM sportapp.entitlements e WHERE e.user_id=u.id AND e.program_id=$7 AND e.status='active')) ON CONFLICT(user_id,event_key) DO NOTHING`, "program:"+p.VersionID, kind, title, p.Draft.Title, "/programs/"+p.ID, trainer, p.ID); err != nil {
+				return err
+			}
 		}
 		if err := trainers_postgres_repository.Audit(ctx, tx, actor, "program_moderation", p.VersionID, m.Reason, requestID); err != nil {
 			return err

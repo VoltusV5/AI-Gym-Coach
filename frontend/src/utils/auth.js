@@ -1,32 +1,44 @@
+import { Capacitor } from '@capacitor/core'
 import { SecureStorage } from '@aparajita/capacitor-secure-storage'
 
 const TOKEN_KEY = 'auth_token'
+let writes = Promise.resolve()
 
-/** Serialize credential writes across web tabs when the browser supports Web Locks. */
-function withTokenLock(operation) {
-  const locks = globalThis.navigator?.locks
-  return locks ? locks.request('sportik-auth-token', operation) : operation()
+function enqueue(write) {
+  const operation = () => globalThis.navigator?.locks
+    ? navigator.locks.request('sportik-auth-token', write) : write()
+  const result = writes.then(operation)
+  writes = result.catch(() => undefined)
+  return result
 }
 
-/** Store a credential using Capacitor Secure Storage. Rejects if the write fails. */
 export function saveToken(token) {
-  return withTokenLock(async () => {
-    await SecureStorage.set(TOKEN_KEY, token)
-    localStorage.removeItem(TOKEN_KEY)
+  return enqueue(async () => {
+    if (Capacitor.isNativePlatform()) {
+      await SecureStorage.set(TOKEN_KEY, token)
+      localStorage.removeItem(TOKEN_KEY)
+    } else {
+      localStorage.setItem(TOKEN_KEY, token)
+    }
   })
 }
 
-/** Read the current credential, with migration support for older web installs. */
-export async function getToken() {
-  const token = await SecureStorage.get(TOKEN_KEY).catch(() => null)
-  if (typeof token === 'string') return token
-  return localStorage.getItem(TOKEN_KEY)
+async function storedToken() {
+  if (!Capacitor.isNativePlatform() && localStorage.getItem(TOKEN_KEY)) return localStorage.getItem(TOKEN_KEY)
+  const value = await SecureStorage.get(TOKEN_KEY).catch(() => null)
+  return typeof value === 'string' ? value : null
 }
 
-/** Remove only the expired credential. Another tab may have already signed in. */
+export async function getToken() {
+  await writes
+  return storedToken()
+}
+
 export function removeToken(expected) {
-  return withTokenLock(async () => {
-    if (localStorage.getItem(TOKEN_KEY) === expected) localStorage.removeItem(TOKEN_KEY)
-    if (await SecureStorage.get(TOKEN_KEY) === expected) await SecureStorage.remove(TOKEN_KEY)
+  return enqueue(async () => {
+    const current = await storedToken()
+    if (expected !== undefined && current !== expected) return
+    localStorage.removeItem(TOKEN_KEY)
+    await SecureStorage.remove(TOKEN_KEY)
   })
 }

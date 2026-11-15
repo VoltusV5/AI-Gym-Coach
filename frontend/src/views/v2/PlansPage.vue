@@ -16,7 +16,7 @@ onIonViewWillEnter(reset)
   <FeaturePage eyebrow="Тренировки" title="Мои планы" subtitle="Создавайте тренировки с нуля или адаптируйте план от Спортика." tab="plans">
     <template #actions>
       <div class="feature-row">
-        <RouterLink class="feature-button secondary" to="/plans/new">Создать план</RouterLink>
+        <RouterLink class="feature-button secondary" to="/v2/plans/new">Создать план</RouterLink>
         <RouterLink class="feature-button secondary" to="/plans/generate">Создать AI-план</RouterLink>
       </div>
     </template>
@@ -29,7 +29,7 @@ onIonViewWillEnter(reset)
           </div>
           <h2>{{ plan.title }}</h2>
           <p class="feature-muted">Версия {{ plan.version }} · Дней в плане: {{ plan.days.length }}</p>
-          <RouterLink class="feature-button" :to="`/plans/${plan.id}`">Открыть план</RouterLink>
+          <RouterLink class="feature-button" :to="`/v2/plans/${plan.id}`">Открыть план</RouterLink>
         </article>
       </div>
       <RequestState :loading="loading" :error="error" :status="status" :retry="retry" :empty="items.length ? '' : 'Планов пока нет. Создайте свой первый план.'" />

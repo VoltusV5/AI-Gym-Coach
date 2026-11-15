@@ -60,7 +60,7 @@ function create() {
 </script>
 
 <template>
-  <FeaturePage eyebrow="Мои планы" title="Новый план" subtitle="Дайте плану имя. Дни и упражнения можно настроить на следующем экране." back="/plans">
+  <FeaturePage eyebrow="Мои планы" title="Новый план" subtitle="Дайте плану имя. Дни и упражнения можно настроить на следующем экране." back="/v2/plans">
     <form class="feature-card" @submit.prevent="create">
       <label>Название плана<input v-model.trim="title" maxlength="200" required :disabled="saving || !!attempt" /></label>
       <button class="feature-button" :disabled="saving || !title">{{ saving ? 'Создаём…' : attempt ? 'Проверить и повторить' : 'Создать план' }}</button>

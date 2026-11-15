@@ -93,7 +93,7 @@ function save() {
         <p v-if="saved" class="feature-success" role="status">Профиль тренера сохранён</p>
         <RequestState :error="saveError" :status="saveStatus" />
         <div v-if="data?.id" class="feature-row">
-          <RouterLink class="feature-link" :to="`/trainers/${data.id}`">Публичный профиль</RouterLink>
+          <RouterLink class="feature-link" :to="`/v2/trainers/${data.id}`">Публичный профиль</RouterLink>
           <RouterLink class="feature-link" to="/trainer/verification">Проверка квалификации</RouterLink>
           <RouterLink class="feature-link" to="/trainer/programs">Мои программы</RouterLink>
         </div>

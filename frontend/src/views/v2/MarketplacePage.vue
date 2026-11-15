@@ -93,7 +93,7 @@ watch(() => auth.token, equipment.load, { immediate: true })
           <h2>{{ program.title }}</h2>
           <p class="feature-muted">{{ program.trainer.display_name }} · {{ levelLabels[program.level] ?? program.level }}</p>
           <p class="feature-muted">{{ program.goal }} · {{ program.duration_weeks }} нед. · {{ program.sessions_per_week }} в неделю</p>
-          <RouterLink class="feature-button" :aria-label="'Открыть программу ' + program.title" :to="{ name: 'Program', params: { programId: program.id }, query: route.query }">
+          <RouterLink class="feature-button" :aria-label="'Открыть программу ' + program.title" :to="{ name: 'MarketplaceProgram', params: { programId: program.id }, query: route.query }">
             Открыть программу
           </RouterLink>
         </article>

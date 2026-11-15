@@ -31,22 +31,31 @@ type Schedule struct {
 }
 
 type Input struct {
-	Version  int64    `json:"version,omitempty"`
-	Title    string   `json:"title"`
-	Days     []Day    `json:"days"`
-	Schedule Schedule `json:"schedule"`
+	IdempotencyKey string   `json:"-"`
+	RequestHash    string   `json:"-"`
+	Version        int64    `json:"version,omitempty"`
+	Title          string   `json:"title"`
+	Days           []Day    `json:"days"`
+	Schedule       Schedule `json:"schedule"`
 }
 
+type SourceProgram struct {
+	ID          string `json:"id"`
+	Title       string `json:"title"`
+	TrainerID   int    `json:"trainer_id"`
+	TrainerName string `json:"trainer_name"`
+}
 type Plan struct {
-	ID                     string    `json:"id"`
-	Version                int64     `json:"version"`
-	Title                  string    `json:"title"`
-	SourceType             string    `json:"source_type"`
-	SourceProgramVersionID *string   `json:"source_program_version_id"`
-	Days                   []Day     `json:"days"`
-	Schedule               Schedule  `json:"schedule"`
-	IsActive               bool      `json:"is_active"`
-	CreatedAt              time.Time `json:"-"`
+	SourceProgram          *SourceProgram `json:"source_program"`
+	ID                     string         `json:"id"`
+	Version                int64          `json:"version"`
+	Title                  string         `json:"title"`
+	SourceType             string         `json:"source_type"`
+	SourceProgramVersionID *string        `json:"source_program_version_id"`
+	Days                   []Day          `json:"days"`
+	Schedule               Schedule       `json:"schedule"`
+	IsActive               bool           `json:"is_active"`
+	CreatedAt              time.Time      `json:"-"`
 }
 
 type Page struct {

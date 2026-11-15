@@ -25,7 +25,7 @@ func (h *Handler) Routes() []core_http_server.Route {
 	return []core_http_server.Route{
 		core_http_server.NewRoute("GET", "/trainer/profile", h.profile, protect),
 		core_http_server.NewRoute("PATCH", "/trainer/profile", h.update, protect),
-		core_http_server.NewRoute("GET", "/trainers/{trainer_id}", h.profile),
+		core_http_server.NewRoute("GET", "/trainers/{trainer_id}", h.profile, core_http_middleware.OptionalProtectV2(h.jwt)),
 		core_http_server.NewRoute("GET", "/trainer/verification", h.verification, protect),
 		core_http_server.NewRoute("POST", "/trainer/verification", h.submit, protect),
 		core_http_server.NewRoute("GET", "/admin/verifications", h.verifications, protect),

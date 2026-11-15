@@ -37,14 +37,14 @@ test('real Go: profile persists, plan saves, workout produces actual progress, f
   await page.reload()
   await expect(page.getByLabel('Вес, кг')).toHaveValue('72.25')
 
-  await page.goto('/progress')
+  await page.goto('/v2/progress')
   const totals = page.getByRole('region', { name: 'Итоги периода' })
   const volume = totals.getByText('Объём', { exact: true }).locator('..').locator('dd')
   await expect(totals).toBeVisible()
   await expect(totals.getByRole('status')).toHaveCount(0)
   const baseline = await volume.count() ? Number((await volume.textContent()).replace(/[^0-9,]/g, '').replace(',', '.')) : 0
 
-  await page.goto('/plans/new')
+  await page.goto('/v2/plans/new')
   const title = 'План браузерной проверки ' + Date.now()
   await page.getByLabel('Название плана').fill(title)
   await page.getByRole('button', { name: 'Создать план' }).click()

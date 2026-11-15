@@ -80,7 +80,7 @@ function restart() {
 
 <template>
   <FeaturePage eyebrow="Тренировка" :title="data?.day?.title ?? 'Фактические подходы'"
-    subtitle="Запишите выполненные повторения и рабочий вес. Для упражнений с собственным весом оставьте 0 кг." :back="`/plans/${planId}`">
+    subtitle="Запишите выполненные повторения и рабочий вес. Для упражнений с собственным весом оставьте 0 кг." :back="`/v2/plans/${planId}`">
     <div class="feature-stack">
       <RequestState :loading="loading" :error="error" :status="status" :retry="load"
         :empty="data && !draft ? 'В этом дне нет упражнений. Добавьте их в редакторе плана.' : ''" />

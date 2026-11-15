@@ -42,7 +42,7 @@ function grant() {
           <span class="feature-badge">{{ program.price_minor === 0 ? 'Бесплатно' : 'Предпросмотр' }}</span>
           <span v-if="program.trainer.verified" class="feature-badge">Тренер подтверждён</span>
         </div>
-        <p><RouterLink class="feature-link" :to="`/trainers/${program.trainer.id}`">{{ program.trainer.display_name }}</RouterLink></p>
+        <p><RouterLink class="feature-link" :to="`/v2/trainers/${program.trainer.id}`">{{ program.trainer.display_name }}</RouterLink></p>
         <p class="feature-text">{{ program.description }}</p>
         <p class="feature-muted">{{ program.goal }} · {{ levels[program.level] ?? program.level }} · {{ program.duration_weeks }} нед. · {{ program.sessions_per_week }} в неделю</p>
         <p class="feature-muted">Оборудование: {{ program.equipment?.map((item) => item.name).join(', ') || 'без оборудования' }}</p>

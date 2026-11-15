@@ -120,6 +120,7 @@ function fixture(c,request,schema){
  if(p==='/api/v2/programs/{program_id}/access'){fixtures.access=true;return {id:crypto.randomUUID(),program_id:R(c.ids.program_id),status:'active'};}
  if(p==='/api/v2/admin/settings/commission'){if(m==='PATCH')fixtures.commission={...b,version:b.version+1};return fixtures.commission;}
  if(p==='/api/v2/orders'){fixtures.order??={id:crypto.randomUUID(),status:'pending',amount_minor:100000,currency:'RUB',checkout_url:null};return fixtures.order;}
+ if(p==='/api/v2/payments/sandbox/{order_id}') { fixtures.order.status=b.action==='refund'?'refunded':b.action==='fail'?'failed':'paid'; return fixtures.order; }
  if(p==='/api/v2/orders/{order_id}')return fixtures.order;
  if(p==='/api/v2/me/orders'||p==='/api/v2/admin/orders')return page([fixtures.order]);
  if(p.includes('/payouts'))return page([]);
@@ -131,6 +132,7 @@ function fixture(c,request,schema){
  if(p==='/api/v2/shares/{token}/save')return {library_item_id:crypto.randomUUID()};
  if(p==='/api/v2/shares/{token}/fork'){const plan=clone(fixtures.share.plan);plan.id=crypto.randomUUID();fixtures.plans[plan.id]=plan;return {plan_id:plan.id,version:1};}
  if(p==='/api/v2/shares/{share_id}')return null;
+ if(p==='/api/v2/me/saved-shares/{item_id}'&&m==='DELETE')return null;
  if(p==='/api/v2/programs/{program_id}/review-eligibility'){const count=fixtures.workouts.filter(x=>x.plan_id===R('fork_id')).length;return {eligible:count>=3,completed_workouts:count,required_workouts:3};}
  if(p==='/api/v2/programs/{program_id}/reviews'){
   if(m==='POST'){fixtures.review={id:crypto.randomUUID(),program_id:R(c.ids.program_id),status:'published',...b};return fixtures.review;}
@@ -143,7 +145,7 @@ function fixture(c,request,schema){
  if(p==='/api/v2/admin/reports/{report_id}')return Object.assign(fixtures.report,b);
  if(p==='/api/v2/trainers/{trainer_id}/follow'){fixtures.follow=m==='PUT';return m==='DELETE'?null:{trainer_id:Number(R('trainer_id')),following:true};}
  if(p==='/api/v2/notifications')return page([]);
- if(p==='/api/v2/recommendations/programs')return {items:[],model_version:'fixture-v1',fallback:true,next_cursor:null};
+ if(p==='/api/v2/recommendations/programs')return {items:[],model_version:'fixture-v1',fallback:true,next_cursor:null,request_id:crypto.randomUUID()};
  if(p==='/api/v2/dashboard')return {state:'just_completed',blocks:[],generated_at:new Date().toISOString()};
  if(schema.$ref==='#/definitions/OK')return {ok:true};
  return d;

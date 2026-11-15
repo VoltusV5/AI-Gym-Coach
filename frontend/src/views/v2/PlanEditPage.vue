@@ -28,7 +28,7 @@ const { data, loading, error, status, load } = useRead(async (signal) => {
 const { saving, error: writeError, status: writeStatus, run } = useWrite()
 const dirty = computed(() => draft.value && JSON.stringify(draft.value) !== baseline.value)
 onBeforeRouteLeave((to) => {
-  if (to.name === 'Login' && !auth.token && dirty.value) {
+  if (['Login', 'PlatformLogin'].includes(to.name) && !auth.token && dirty.value) {
     stashDraft(auth.lastSubject, path.value, { draft: draft.value, baseline: baseline.value })
     return true
   }
@@ -89,7 +89,7 @@ function save() {
 </script>
 
 <template>
-  <FeaturePage eyebrow="Конструктор" title="Редактор плана" subtitle="Настройте порядок, нагрузку и расписание тренировок." :back="`/plans/${planId}`">
+  <FeaturePage eyebrow="Конструктор" title="Редактор плана" subtitle="Настройте порядок, нагрузку и расписание тренировок." :back="`/v2/plans/${planId}`">
     <div class="feature-stack">
       <RequestState :loading="loading" :error="error" :status="status" :retry="load" />
       <form v-if="draft && status !== 401" class="feature-stack" @submit.prevent="save">
@@ -130,7 +130,7 @@ function save() {
         <button v-if="!serverPlan" type="button" class="feature-button secondary" :disabled="loading" @click="load">Перечитать план</button>
         <div v-else class="feature-stack">
           <p>Ваши изменения будут перенесены на новую версию. Если вы и другой редактор меняли состав тренировок, сохранится ваш состав.</p>
-          <RouterLink class="feature-link" :to="`/plans/${planId}`" target="_blank" rel="noopener">Открыть версию {{ serverPlan.version }} в новой вкладке</RouterLink>
+          <RouterLink class="feature-link" :to="`/v2/plans/${planId}`" target="_blank" rel="noopener">Открыть версию {{ serverPlan.version }} в новой вкладке</RouterLink>
           <button type="button" class="feature-button secondary" @click="acceptLatest">Применить мой ввод к версии {{ serverPlan.version }}</button>
         </div>
       </section>
