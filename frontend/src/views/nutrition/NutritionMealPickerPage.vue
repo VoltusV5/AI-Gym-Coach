@@ -169,6 +169,7 @@ const currentItems = computed(() => {
 })
 
 
+
 function openSearch() {
   router.push('/nutrition/add-meal/search')
 }

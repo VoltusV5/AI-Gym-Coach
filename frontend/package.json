@@ -10,14 +10,15 @@
     "cap:sync": "npm run build && npx cap sync",
     "docker:rebuild": "docker compose -f ../docker-compose.yml build frontend --no-cache && docker compose -f ../docker-compose.yml up -d frontend",
     "lint": "run-s lint:*",
-    "lint:oxlint": "oxlint . --fix",
-    "lint:eslint": "eslint . --fix --cache",
+    "lint:oxlint": "oxlint .",
+    "lint:eslint": "eslint .",
     "format": "prettier --write --experimental-cli src/",
-    "test": "vitest run",
+    "test": "vitest run && node --test tests/unit/contracts.node.test.js",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "check": "npm run lint:check && npm test && npm run build",
-    "lint:check": "oxlint . && eslint ."
+    "lint:check": "oxlint . && eslint .",
+    "verify": "node scripts/verify.mjs"
   },
   "dependencies": {
     "@aparajita/capacitor-secure-storage": "^8.0.0",

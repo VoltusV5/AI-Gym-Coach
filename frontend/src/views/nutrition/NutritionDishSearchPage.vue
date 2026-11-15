@@ -54,8 +54,7 @@ watch(query, (newVal) => {
   timeout = setTimeout(async () => {
     try {
       items.value = await store.searchDishes(newVal, 40)
-    } catch (err) {
-      console.error('Search error:', err)
+    } catch {
       items.value = []
     }
   }, 300)

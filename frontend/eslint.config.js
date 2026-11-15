@@ -28,7 +28,7 @@ export default defineConfig([
   ...pluginOxlint.buildFromOxlintConfigFile('.oxlintrc.json'),
 
   {
-    files: ['*.config.js', 'tests/**/*.js'],
+    files: ['*.config.js', 'scripts/**/*.mjs', 'tests/**/*.js'],
     languageOptions: { globals: globals.node }
   },
   {

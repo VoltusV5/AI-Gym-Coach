@@ -98,12 +98,17 @@ import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { IonPage, IonContent, IonIcon, IonButton } from '@ionic/vue'
 import { checkmarkCircleOutline, arrowForwardOutline } from 'ionicons/icons'
+import { readTab } from '@/utils/workoutV2'
+import { useAuthStore } from '@/stores/auth'
 
 const route = useRoute()
 const router = useRouter()
 const buildId = __SPORTIK_BUILD_ID__
+const auth = useAuthStore()
 
 const resultData = computed(() => {
+  const saved = auth.accountId && readTab(`sportik-result-v1:${auth.accountId}`)
+  if (saved) return saved
   try {
     return JSON.parse(route.query.result || '{}')
   } catch {

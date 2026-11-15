@@ -111,8 +111,7 @@ async function fetchHistory() {
       }
     }
     scrollToBottom()
-  } catch (err) {
-    console.error('Failed to fetch chat history', err)
+  } catch {
     error.value = 'Не удалось загрузить историю сообщений'
   }
 }
@@ -158,8 +157,7 @@ async function sendMessage() {
 
     shouldAnimateLastResponse = true
     await fetchHistory()
-  } catch (err) {
-    console.error('AI chat processing failed', err)
+  } catch {
     error.value = 'Ошибка при получении ответа от AI тренера'
   } finally {
     isLoading.value = false

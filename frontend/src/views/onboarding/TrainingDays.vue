@@ -5,6 +5,7 @@
     :disabled="!hasSelectedDays"
     :loading="isSubmitting"
     :error="submitError"
+    :status="submitStatus"
     next-label="Завершить"
     @next="submit"
   >
@@ -25,9 +26,9 @@
 </template>
 
 <script setup>
-import { errorMessage } from '@/api/api'
 import { ref, computed } from 'vue'
 import OnboardingLayout from '@/components/layout/OnboardingLayout.vue'
+import { apiStatus, errorText } from '@/api/v2'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
 import { trainingDaysToSelection, selectionToTrainingDaysArray } from '@/utils/trainingDays'
@@ -42,35 +43,39 @@ const days = [
   { id: 'thu', label: 'ЧТ' },
   { id: 'fri', label: 'ПТ' },
   { id: 'sat', label: 'СБ' },
-  { id: 'sun', label: 'ВС' },
+  { id: 'sun', label: 'ВС' }
 ]
 
 const selectedDays = ref(trainingDaysToSelection(authStore.profile?.training_days_map))
 
 const isSubmitting = ref(false)
 const submitError = ref('')
+const submitStatus = ref(0)
 
 const hasSelectedDays = computed(() => Object.values(selectedDays.value).some(Boolean))
 
 const toggleDay = (id) => {
   selectedDays.value = {
     ...selectedDays.value,
-    [id]: !selectedDays.value[id],
+    [id]: !selectedDays.value[id]
   }
 }
 
+/** Save this questionnaire step once and leave the input intact on errors. */
 const submit = async () => {
-  if (!hasSelectedDays.value) return
+  if (isSubmitting.value || !hasSelectedDays.value) return
 
-  if (isSubmitting.value) return
-  submitError.value = ''
   isSubmitting.value = true
+  submitError.value = ''
+  submitStatus.value = 0
   try {
     const arr = selectionToTrainingDaysArray(selectedDays.value)
     await authStore.updateProfile({ training_days_map: arr })
-    router.replace('/plan-generating')
+    authStore.setEquipmentStep(true)
+    router.replace('/equipment')
   } catch (error) {
-    submitError.value = errorMessage(error)
+    submitStatus.value = apiStatus(error)
+    submitError.value = errorText(error)
   } finally {
     isSubmitting.value = false
   }
@@ -94,9 +99,11 @@ const submit = async () => {
   margin: 0 auto;
 }
 
+
 .days-grid .day-square:nth-child(7) {
   grid-column: 2;
 }
+
 
 .day-square {
   aspect-ratio: 1;

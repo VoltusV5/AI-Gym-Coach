@@ -5,7 +5,7 @@ import { SecureStorage } from '@aparajita/capacitor-secure-storage'
 import { Capacitor } from '@capacitor/core'
 import { saveToken, getToken, removeToken } from '@/utils/auth'
 
-beforeEach(() => { localStorage.clear(); vi.clearAllMocks(); Capacitor.isNativePlatform.mockReturnValue(true) })
+beforeEach(() => { localStorage.clear(); vi.resetAllMocks(); SecureStorage.get.mockResolvedValue(null); SecureStorage.remove.mockResolvedValue(undefined); Capacitor.isNativePlatform.mockReturnValue(true) })
 describe('token storage', () => {
   it('uses the installed native API signature', async () => {
     SecureStorage.get.mockResolvedValue('credential')

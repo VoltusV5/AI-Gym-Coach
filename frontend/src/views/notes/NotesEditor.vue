@@ -4,6 +4,7 @@
       <div class="note-frame ion-padding">
         <ion-input
           v-model="title"
+          :disabled="saving"
           class="note-title-input"
           :placeholder="t.titlePlaceholder"
           maxlength="120"
@@ -12,6 +13,7 @@
         <div class="note-body-wrap">
           <ion-textarea
             v-model="body"
+            :disabled="saving"
             class="note-body-input"
             :placeholder="t.bodyPlaceholder"
             :auto-grow="false"
@@ -25,7 +27,7 @@
     <ion-footer class="ion-no-border note-page-footer">
       <div class="note-bottom-sheet ion-padding">
         <p class="note-date">{{ t.created }}: {{ createdAtLabel }}</p>
-        <p v-if="notesStore.error" role="alert">{{ notesStore.error }}</p>
+        <RequestState :error="error" :status="status" />
         <ion-button class="sportik-footer-btn" expand="block" :disabled="saving" @click="saveNote">
           {{ t.save }}
         </ion-button>
@@ -43,6 +45,8 @@ defineOptions({ name: 'NotesEditorPage' })
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { IonPage, IonContent, IonFooter, IonButton, IonInput, IonTextarea, toastController } from '@ionic/vue'
+import RequestState from '@/components/ui/RequestState.vue'
+import { useWrite } from '@/composables/useRequest'
 import AppTabBar from '@/components/navigation/AppTabBar.vue'
 import { useNotesStore } from '@/stores/notes'
 
@@ -59,6 +63,7 @@ const route = useRoute()
 const router = useRouter()
 const notesStore = useNotesStore()
 
+const { saving, error, status, run } = useWrite()
 const title = ref('')
 const body = ref('')
 const createdAt = ref('')
@@ -91,21 +96,14 @@ const createdAtLabel = computed(() => {
   })
 })
 
-const saving = ref(false)
-
-async function saveNote() {
-  if (saving.value) return
-  saving.value = true
-  try {
-  await notesStore.saveNoteWithApi(noteId.value, title.value, body.value)
-  await router.push('/notes')
-  const toast = await toastController.create({
-    message: t.saved,
-    duration: 1300,
-    color: 'success'
+/** Persist the edit once and stay on the form if the server does not confirm. */
+function saveNote() {
+  return run(async () => {
+    await notesStore.saveNoteWithApi(noteId.value, title.value, body.value)
+    await router.push('/notes')
+    const toast = await toastController.create({ message: t.saved, duration: 1300, color: 'success' })
+    await toast.present()
   })
-  await toast.present()
-  } catch { return } finally { saving.value = false }
 }
 </script>
 

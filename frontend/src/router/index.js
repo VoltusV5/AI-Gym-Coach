@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from '@ionic/vue-router'
 import { useAuthStore } from '@/stores/auth'
+import v2Routes from './v2'
 import Welcome from '@/views/Welcome.vue'
 import BodyMetrics from '@/views/onboarding/BodyMetrics.vue'
 import Gender from '@/views/onboarding/Gender.vue'
@@ -189,7 +190,7 @@ const routes = [
     meta: { roles: ['admin'] },
     component: () => import('@/views/platform/OrdersPage.vue'),
   },
-  { path: '/login', name: 'Login', component: () => import('@/views/platform/LoginPage.vue') },
+  { path: '/login', name: 'PlatformLogin', component: () => import('@/views/platform/LoginPage.vue') },
   {
     path: '/access-denied',
     name: 'AccessDenied',
@@ -344,11 +345,7 @@ const routes = [
     name: 'Settings',
     component: () => import('@/views/settings/SettingsPage.vue'),
   },
-  {
-    path: '/settings/profile',
-    name: 'SettingsProfile',
-    component: () => import('@/views/settings/SettingsProfilePage.vue'),
-  },
+
   {
     path: '/nutrition',
     name: 'Nutrition',
@@ -393,7 +390,7 @@ const routes = [
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
-  routes,
+  routes: [...routes, ...v2Routes],
 })
 
 router.beforeEach(async (to) => {

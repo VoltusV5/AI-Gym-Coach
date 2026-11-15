@@ -5,6 +5,7 @@
     :disabled="!gender"
     :loading="isSubmitting"
     :error="submitError"
+    :status="submitStatus"
     @next="submit"
   >
     <div class="gender-tiles">
@@ -31,10 +32,10 @@
 </template>
 
 <script setup>
-defineOptions({ name: 'GenderPage' })
-import { errorMessage } from '@/api/api'
+defineOptions({ name: 'OnboardingGender' })
 import { ref } from 'vue'
 import OnboardingLayout from '@/components/layout/OnboardingLayout.vue'
+import { apiStatus, errorText } from '@/api/v2'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
 
@@ -51,18 +52,21 @@ const router = useRouter()
 const gender = ref(normalizeGenderFromProfile(authStore.profile?.gender))
 const isSubmitting = ref(false)
 const submitError = ref('')
+const submitStatus = ref(0)
 
+/** Save this questionnaire step once and leave the input intact on errors. */
 const submit = async () => {
-  if (!gender.value) return
+  if (isSubmitting.value || !gender.value) return
 
-  if (isSubmitting.value) return
-  submitError.value = ''
   isSubmitting.value = true
+  submitError.value = ''
+  submitStatus.value = 0
   try {
     await authStore.updateProfile({ gender: gender.value })
     router.push('/age')
   } catch (error) {
-    submitError.value = errorMessage(error)
+    submitStatus.value = apiStatus(error)
+    submitError.value = errorText(error)
   } finally {
     isSubmitting.value = false
   }

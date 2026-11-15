@@ -22,18 +22,21 @@ api.interceptors.request.use((config) => {
   return config
 }, undefined, { synchronous: true })
 
-function current(config) {
-  return config?.sessionRevision === revision
+export function currentRequest(config) {
+  if (config?.sessionRevision !== undefined) return config.sessionRevision === revision
+  const credential = config?.headers?.get?.('Authorization') ?? config?.headers?.Authorization
+  return !credential || credential === api.defaults.headers.common.Authorization
 }
 
 api.interceptors.response.use(
   (response) => {
-    if (!current(response.config)) throw new axios.CanceledError('Сессия изменилась')
+    if (!currentRequest(response.config)) throw new axios.CanceledError('Сессия изменилась')
     return response
   },
   (error) => {
-    if (error.config && !current(error.config)) return Promise.reject(new axios.CanceledError('Сессия изменилась'))
-    if (error.response?.status === 401 && error.config?.sessionToken) {
+    if (error.config && !currentRequest(error.config)) return Promise.reject(new axios.CanceledError('Сессия изменилась'))
+    if (error.response?.status === 401 && error.config?.sessionToken &&
+        (!error.config.url?.startsWith('/api/v1/auth/') || error.config.url === '/api/v1/auth/register')) {
       void expired(error.config.sessionToken)
     }
     return Promise.reject(error)

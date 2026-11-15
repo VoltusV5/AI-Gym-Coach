@@ -5,6 +5,7 @@
     :disabled="age == null || age < 10 || age > 100"
     :loading="isSubmitting"
     :error="submitError"
+    :status="submitStatus"
     @next="submit"
   >
     <div class="age-block">
@@ -27,10 +28,10 @@
 <script setup>
 defineOptions({ name: 'OnboardingAgePage' })
 
-import { errorMessage } from '@/api/api'
 import { ref } from 'vue'
 import { IonItem, IonInput } from '@ionic/vue'
 import OnboardingLayout from '@/components/layout/OnboardingLayout.vue'
+import { apiStatus, errorText } from '@/api/v2'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
 
@@ -41,18 +42,21 @@ const existing = authStore.profile?.age
 const age = ref(existing != null && existing > 0 ? existing : null)
 const isSubmitting = ref(false)
 const submitError = ref('')
+const submitStatus = ref(0)
 
+/** Save this questionnaire step once and leave the input intact on errors. */
 const submit = async () => {
-  if (age.value == null || age.value < 10 || age.value > 100) return
+  if (isSubmitting.value || age.value == null || age.value < 10 || age.value > 100) return
 
-  if (isSubmitting.value) return
-  submitError.value = ''
   isSubmitting.value = true
+  submitError.value = ''
+  submitStatus.value = 0
   try {
     await authStore.updateProfile({ age: Math.round(Number(age.value)) })
     router.push('/activity-type')
   } catch (error) {
-    submitError.value = errorMessage(error)
+    submitStatus.value = apiStatus(error)
+    submitError.value = errorText(error)
   } finally {
     isSubmitting.value = false
   }

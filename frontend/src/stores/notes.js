@@ -1,7 +1,16 @@
 import { defineStore } from 'pinia'
 import api, { errorMessage } from '@/api/api'
+import { apiStatus, errorText } from '@/api/v2'
+import { useAuthStore } from '@/stores/auth'
+import { appendPage } from '@/utils/pages'
 
 const STORAGE_KEY = 'sportik_notes'
+const PAGE_SIZE = 20
+
+/** Return the current owner's cache key. Anonymous identities still have a user ID. */
+function notesKey(owner) {
+  return `${STORAGE_KEY}:${owner}`
+}
 
 function nowIso() {
   return new Date().toISOString()
@@ -39,9 +48,13 @@ function isServerNoteId(id) {
 export const useNotesStore = defineStore('notes', {
   state: () => ({
     notes: [],
-    nextCursor: null,
+    owner: null,
+    offset: 0,
+    total: 0,
     loading: false,
-    error: null
+    error: '',
+    status: 0,
+    refreshFailed: false,
   }),
 
   getters: {
@@ -55,9 +68,15 @@ export const useNotesStore = defineStore('notes', {
   },
 
   actions: {
+    /** Load only the cache belonging to the current account. */
     hydrate() {
+      const owner = useAuthStore().accountId
+      if (this.owner === owner) return
+      this.$reset()
+      this.owner = owner
+      if (!owner) return
       try {
-        const raw = localStorage.getItem(STORAGE_KEY)
+        const raw = localStorage.getItem(notesKey(owner))
         if (!raw) return
         const parsed = JSON.parse(raw)
         if (!Array.isArray(parsed)) return
@@ -67,11 +86,13 @@ export const useNotesStore = defineStore('notes', {
       }
     },
 
+    /** Persist the current account's notes, including local drafts. */
     persist() {
+      if (!this.owner || this.owner !== useAuthStore().accountId) return
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(this.notes))
+        localStorage.setItem(notesKey(this.owner), JSON.stringify(this.notes))
       } catch {
-
+        // Local cache is optional when browser storage is unavailable.
       }
     },
 
@@ -91,24 +112,39 @@ export const useNotesStore = defineStore('notes', {
       return note
     },
 
-    async fetchNotesFromApi(append = false) {
-      if (this.loading || (append && !this.nextCursor)) return this.notes
+    /** Fetch the next v1 offset page or refresh it from the beginning. */
+    async fetchNotesFromApi(reset = false) {
+      const auth = useAuthStore()
+      this.hydrate()
+      if (this.loading || !auth.token || (!reset && this.offset >= this.total)) return
+      const owner = this.owner
       this.loading = true
-      this.error = null
+      this.error = ''
+      this.status = 0
+      this.refreshFailed = reset
       try {
-        const { data } = await api.get('/api/v1/notes', { params: { limit: 20, cursor: append ? this.nextCursor : undefined } })
-        const incoming = (data?.items || []).map(toLocalNote)
-        const drafts = this.notes.filter((note) => !isServerNoteId(note.id))
-        this.notes = append ? [...this.notes, ...incoming.filter((note) => !this.noteById(note.id))] : [...drafts, ...incoming]
-        this.nextCursor = data?.next_cursor ?? null
+        const offset = reset ? 0 : this.offset
+        const { data } = await api.get('/api/v1/notes', { params: { offset, limit: PAGE_SIZE } })
+        if (this.owner !== owner || auth.accountId !== owner) return
+        const items = (data.items ?? []).map(toLocalNote)
+        const previous = reset ? this.notes.filter((note) => !isServerNoteId(note.id)) : this.notes
+        this.notes = appendPage(previous, items)
+        this.total = data.total
+        this.offset = items.length ? offset + items.length : data.total
         this.persist()
-        return this.notes
-      } catch (error) {
-        this.error = errorMessage(error)
-        throw error
+      } catch (err) {
+        if (this.owner === owner) {
+          this.status = apiStatus(err)
+          this.error = errorText(err)
+        }
       } finally {
-        this.loading = false
+        if (this.owner === owner) this.loading = false
       }
+    },
+
+    /** Retry the failed page, including a first-page refresh over an existing cache. */
+    retryNotes() {
+      return this.fetchNotesFromApi(this.refreshFailed)
     },
 
     saveNote(id, title, body) {
@@ -139,9 +175,11 @@ export const useNotesStore = defineStore('notes', {
     },
 
     async createNoteRemote(id, title, body) {
+      const owner = this.owner
       const payload = toApiPayload(title, body)
       const { data } = await api.post('/api/v1/notes', payload)
       const saved = toLocalNote(data || {})
+      if (useAuthStore().accountId !== owner) return saved
       const idx = this.notes.findIndex((n) => n.id === id)
       if (idx >= 0) this.notes[idx] = saved
       else this.notes.push(saved)
@@ -150,9 +188,11 @@ export const useNotesStore = defineStore('notes', {
     },
 
     async updateNoteRemote(id, title, body) {
+      const owner = this.owner
       const payload = toApiPayload(title, body)
       const { data } = await api.patch(`/api/v1/notes/${id}`, payload)
       const saved = toLocalNote(data || {})
+      if (useAuthStore().accountId !== owner) return saved
       const idx = this.notes.findIndex((n) => n.id === id)
       if (idx >= 0) this.notes[idx] = saved
       else this.notes.push(saved)

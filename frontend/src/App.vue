@@ -9,12 +9,12 @@
     </div>
 
     <template v-else>
-      <div v-if="authStore.error" class="session-message" role="alert">
+      <div v-if="authStore.error && !route.meta.publicPage" class="session-message" role="alert">
         <p>{{ authStore.error }}</p>
         <router-link to="/login">Войти</router-link>
         <button type="button" @click="authStore.initialize()">Повторить подключение</button>
       </div>
-      <ion-router-outlet :key="authStore.sessionEpoch" />
+      <ion-router-outlet :key="['Login', 'PlatformLogin'].includes(route.name) ? 'login' : authStore.sessionEpoch" />
     </template>
   </ion-app>
 </template>

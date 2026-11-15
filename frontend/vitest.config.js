@@ -5,5 +5,5 @@ import { fileURLToPath, URL } from 'node:url'
 export default defineConfig({
   plugins: [vue()],
   resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
-  test: { environment: 'jsdom', include: ['tests/unit/**/*.test.js'], restoreMocks: true, setupFiles: ['./tests/setup.js'], environmentOptions: { jsdom: { url: 'http://localhost' } } }
+  test: { environment: 'jsdom', include: ['tests/unit/**/*.test.js'], exclude: ['**/*.node.test.js'], restoreMocks: true, setupFiles: ['./tests/setup.js'], environmentOptions: { jsdom: { url: 'http://localhost' } } }
 })

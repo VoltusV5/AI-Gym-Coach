@@ -1,5 +1,8 @@
+import { sessionClaims } from '@/utils/session'
+import { clearDrafts } from '@/utils/reauthDrafts'
 import { clearWorkoutDrafts } from '@/utils/workoutDraft'
 import { defineStore } from 'pinia'
+import { CanceledError } from 'axios'
 import api, { setAuthHeader, errorMessage } from '@/api/api'
 import { useWorkoutPlanStore } from '@/stores/workoutPlan'
 import { useWorkoutSessionStore } from '@/stores/workoutSession'
@@ -7,7 +10,7 @@ import { saveToken, getToken, removeToken } from '@/utils/auth'
 import { useNotesStore } from '@/stores/notes'
 import { useNutritionStore } from '@/stores/nutrition'
 import { isTrainingDaysComplete } from '@/utils/trainingDays'
-let initialization = null
+const initializations = new WeakMap()
 
 function profileNotYetCreated(err) {
   const status = Number(err?.response?.status)
@@ -19,6 +22,8 @@ function profileNotYetCreated(err) {
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     token: null,
+    lastSubject: null,
+    pendingEquipment: false,
     identity: null,
     profileV2: null,
     sessionAttempt: 0,
@@ -30,6 +35,9 @@ export const useAuthStore = defineStore('auth', {
   }),
 
   getters: {
+    accountId: (state) => state.identity ? String(state.identity.id) : sessionClaims(state.token)?.sub ?? null,
+    isGuest: (state) => state.identity?.is_anonymous ?? sessionClaims(state.token)?.is_anonymous === true,
+    accountEpoch: (state) => state.sessionEpoch,
     isRegistered: (state) => Boolean(state.identity && !state.identity.is_anonymous),
     roles: (state) => state.identity?.roles || [],
     nextOnboardingStep: (state) => {
@@ -49,23 +57,40 @@ export const useAuthStore = defineStore('auth', {
       }
       if (!isTrainingDaysComplete(state.profile.training_days_map)) return 'TrainingDays'
 
-      return 'Home'
+      return state.pendingEquipment ? 'Equipment' : 'Home'
     }
   },
 
   actions: {
 
-    clearAccountData() {
-      this.sessionEpoch += 1
+    clearAccountData({ resetViews = true, preserveReauth = false } = {}) {
+      if (resetViews) this.sessionEpoch += 1
+      if (!preserveReauth) clearDrafts()
       this.profile = null
       this.profileV2 = null
       clearWorkoutDrafts()
       this.identity = null
-      useWorkoutPlanStore().clearPlan()
-      useWorkoutSessionStore().clear()
+      useWorkoutPlanStore().$reset()
+      useWorkoutSessionStore().$reset()
       useNotesStore().$reset()
       useNutritionStore().$reset()
       for (const key of ['sportik_notes', 'sportik_workout_plan', 'sportik_workout_session']) localStorage.removeItem(key)
+    },
+
+    restoreEquipmentStep() {
+      try {
+        this.pendingEquipment = Boolean(this.accountId && localStorage.getItem(`sportik-equipment-pending:${this.accountId}`))
+      } catch { this.pendingEquipment = false }
+    },
+
+    setEquipmentStep(pending) {
+      this.pendingEquipment = pending
+      if (!this.accountId) return
+      try {
+        const key = `sportik-equipment-pending:${this.accountId}`
+        if (pending) localStorage.setItem(key, '1')
+        else localStorage.removeItem(key)
+      } catch {}
     },
 
     async fetchIdentity() {
@@ -74,10 +99,13 @@ export const useAuthStore = defineStore('auth', {
       if (previous && previous !== String(data.id)) this.clearAccountData()
       localStorage.setItem('sportik_account_id', String(data.id))
       this.identity = data
+      this.lastSubject = String(data.id)
+      this.restoreEquipmentStep()
       return data
     },
 
     async expire(expected) {
+      expected = expected?.replace(/^Bearer /, '')
       if (this.token !== expected) return
       const stored = await getToken()
       if (this.token !== expected) return
@@ -91,9 +119,9 @@ export const useAuthStore = defineStore('auth', {
       this.sessionAttempt += 1
       this.token = null
       setAuthHeader(null)
-      this.clearAccountData()
+      this.clearAccountData({ resetViews: false })
       this.error = 'Сессия истекла. Войдите снова.'
-      await removeToken()
+      await removeToken(expected)
     },
 
     async logout() {
@@ -118,8 +146,10 @@ export const useAuthStore = defineStore('auth', {
 
     async ensureInitialized() {
       if (this.initialized) return
-      if (!initialization) initialization = this.initialize().finally(() => { initialization = null })
-      await initialization
+      if (!initializations.has(this.$state)) {
+        initializations.set(this.$state, this.initialize().finally(() => initializations.delete(this.$state)))
+      }
+      await initializations.get(this.$state)
     },
 
     async initialize() {
@@ -152,7 +182,6 @@ export const useAuthStore = defineStore('auth', {
           }
         }
       } catch (err) {
-        console.error('Auth initialization failed:', err)
         const msg = errorMessage(err)
         const noResponse = err?.code === 'ERR_NETWORK' || !err?.response
         this.error = noResponse
@@ -166,33 +195,28 @@ export const useAuthStore = defineStore('auth', {
 
 
     async guestLogin() {
+      const res = await api.post('/api/v1/auth/guest', {})
+      const token =
+        res.data?.token ||
+        (typeof res.headers?.authorization === 'string' &&
+        res.headers.authorization.startsWith('Bearer ')
+          ? res.headers.authorization.slice(7)
+          : null)
+      if (!token) throw new Error('No token in guest response')
+      this.token = token
+      await saveToken(token)
+      setAuthHeader(token)
+      await this.fetchIdentity()
       try {
-        const res = await api.post('/api/v1/auth/guest', {})
-        const token =
-          res.data?.token ||
-          (typeof res.headers?.authorization === 'string' &&
-          res.headers.authorization.startsWith('Bearer ')
-            ? res.headers.authorization.slice(7)
-            : null)
-        if (!token) throw new Error('No token in guest response')
-        this.token = token
-        await saveToken(token)
-        setAuthHeader(token)
-        await this.fetchIdentity()
-        try {
-          await this.fetchProfile()
-        } catch (err) {
-          if (profileNotYetCreated(err)) {
-            this.profile = this.profile ?? {}
-          } else {
-            throw err
-          }
-        }
-        return token
+        await this.fetchProfile()
       } catch (err) {
-        console.error('Guest login error:', err)
-        throw err
+        if (profileNotYetCreated(err)) {
+          this.profile = this.profile ?? {}
+        } else {
+          throw err
+        }
       }
+      return token
     },
 
 
@@ -209,25 +233,21 @@ export const useAuthStore = defineStore('auth', {
     },
 
     async generatePlan() {
-      try {
-        const { data } = await api.post('/api/v1/plans/generate', {})
-        return data
-      } catch (err) {
-        console.error('Plan generation error:', err)
-        throw err
-      }
+      const { data } = await api.post('/api/v1/plans/generate', {})
+      return data
     },
 
     async authenticate(kind, { email, password }) {
       const attempt = ++this.sessionAttempt
       const { data } = await api.post(`/api/v1/auth/${kind}`, { email, password })
-      if (attempt !== this.sessionAttempt) throw new Error('Выбрана другая сессия')
+      if (attempt !== this.sessionAttempt) throw new CanceledError('Выбрана другая сессия')
       if (!data?.token) throw new Error('Сервер не вернул токен')
-      this.clearAccountData()
+      const subject = sessionClaims(data.token)?.sub
+      this.clearAccountData({ preserveReauth: Boolean(subject && subject === this.lastSubject) })
       this.token = data.token
       setAuthHeader(data.token)
       await saveToken(data.token)
-      if (attempt !== this.sessionAttempt) throw new Error('Выбрана другая сессия')
+      if (attempt !== this.sessionAttempt) throw new CanceledError('Выбрана другая сессия')
       await this.fetchIdentity()
       await this.fetchProfile()
       this.error = null
@@ -248,8 +268,8 @@ export const useAuthStore = defineStore('auth', {
 
 
     async restartSessionForTesting() {
-      useWorkoutPlanStore().clearPlan()
-      useWorkoutSessionStore().clear()
+      useWorkoutPlanStore().$reset()
+      useWorkoutSessionStore().$reset()
       await removeToken()
       this.token = null
       this.profile = null

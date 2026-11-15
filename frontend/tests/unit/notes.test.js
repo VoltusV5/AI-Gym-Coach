@@ -2,9 +2,10 @@ import { beforeEach, afterEach, describe, it, expect } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import MockAdapter from 'axios-mock-adapter'
 import api from '@/api/api'
+import { useAuthStore } from '@/stores/auth'
 import { useNotesStore } from '@/stores/notes'
 let mock
-beforeEach(() => { setActivePinia(createPinia()); localStorage.clear(); mock = new MockAdapter(api) })
+beforeEach(() => { setActivePinia(createPinia()); localStorage.clear(); const auth = useAuthStore(); auth.token = 'fixture'; auth.identity = { id: 101 }; useNotesStore().hydrate(); mock = new MockAdapter(api) })
 afterEach(() => mock.restore())
 describe('notes persistence', () => {
   it('preserves the draft and rejects a failed save instead of showing success', async () => {
@@ -15,16 +16,16 @@ describe('notes persistence', () => {
     expect(store.noteById(draft.id)).toBeDefined()
     expect(store.error).toBeTruthy()
   })
-  it('follows the server cursor and stops at the last page', async () => {
+  it('follows v1 offsets, deduplicates and stops at the last page', async () => {
     const store = useNotesStore()
-    mock.onGet('/api/v1/notes').reply((config) => config.params.cursor
-      ? [200, { items: [{ id: 2, title: 'second' }], next_cursor: null }]
-      : [200, { items: [{ id: 1, title: 'first' }], next_cursor: 'opaque-cursor' }])
+    mock.onGet('/api/v1/notes').reply((config) => config.params.offset
+      ? [200, { items: [{ id: 2, title: 'duplicate' }, { id: 3, title: 'third' }], total: 4 }]
+      : [200, { items: [{ id: 1, title: 'first' }, { id: 2, title: 'second' }], total: 4 }])
+    await store.fetchNotesFromApi(true)
     await store.fetchNotesFromApi()
-    await store.fetchNotesFromApi(true)
-    await store.fetchNotesFromApi(true)
-    expect(store.notes.map((note) => note.id)).toEqual(['1', '2'])
-    expect(mock.history.get).toHaveLength(2)
+    await store.fetchNotesFromApi()
+    expect(store.notes.map((note) => note.id)).toEqual(['1', '2', '3'])
+    expect(mock.history.get.map(({ params }) => params.offset)).toEqual([0, 2])
   })
   it('keeps a server note when deletion fails', async () => {
     const store = useNotesStore()

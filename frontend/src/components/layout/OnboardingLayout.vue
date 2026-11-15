@@ -19,7 +19,7 @@
           <p v-if="stepHint" class="sportik-step-hint">{{ stepHint }}</p>
           <h1 v-if="question" class="sportik-question">{{ question }}</h1>
           <slot></slot>
-          <p v-if="error" role="alert" class="sportik-form-error">{{ error }}</p>
+          <RequestState :error="error" :status="status" />
 
           <!-- Декор сразу под контентом шага, крупнее и плотнее -->
           <div
@@ -58,6 +58,7 @@
 </template>
 
 <script setup>
+import RequestState from '@/components/ui/RequestState.vue'
 import {
   IonPage,
   IonHeader,
@@ -81,6 +82,7 @@ const emit = defineEmits(['next'])
 
 const props = defineProps({
   error: { type: String, default: '' },
+  status: { type: Number, default: 0 },
   question: {
     type: String,
     default: ''

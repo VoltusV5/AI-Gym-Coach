@@ -15,11 +15,8 @@
                 {{ t.create }}
               </ion-button>
 
-              <p v-if="notesStore.error" role="alert">{{ notesStore.error }}</p>
-              <p v-if="notesStore.loading" role="status">Загружаем заметки…</p>
-              <p v-if="!items.length && !notesStore.loading && !notesStore.error" class="notes-empty">
-                {{ t.empty }}
-              </p>
+              <RequestState :loading="notesStore.loading" :error="notesStore.error" :status="notesStore.status"
+                :empty="items.length ? '' : t.empty" :retry="() => notesStore.retryNotes()" />
 
               <div class="notes-list">
                 <button
@@ -34,7 +31,10 @@
                   <p class="note-card-date">{{ formatDate(note.createdAt) }}</p>
                 </button>
               </div>
-              <ion-button v-if="notesStore.nextCursor" :disabled="notesStore.loading" @click="loadMore">Ещё заметки</ion-button>
+              <button v-if="notesStore.offset < notesStore.total && !notesStore.error" type="button"
+                class="feature-button secondary" :disabled="notesStore.loading" @click="notesStore.fetchNotesFromApi()">
+                Показать ещё
+              </button>
             </div>
           </div>
         </div>
@@ -52,10 +52,11 @@
 <script setup>
 defineOptions({ name: 'NotesListPage' })
 
-import { computed, onMounted } from 'vue'
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { IonPage, IonContent, IonFooter, IonButton } from '@ionic/vue'
+import { IonPage, IonContent, IonFooter, IonButton, onIonViewWillEnter } from '@ionic/vue'
 import { useNotesStore } from '@/stores/notes'
+import RequestState from '@/components/ui/RequestState.vue'
 import AppTabBar from '@/components/navigation/AppTabBar.vue'
 import { getApolloHeaderImageUrl } from '@/utils/localImages'
 
@@ -72,14 +73,9 @@ const t = {
 const router = useRouter()
 const notesStore = useNotesStore()
 
-onMounted(() => {
-  notesStore.hydrate()
-  notesStore.syncWithApi()
-})
+onIonViewWillEnter(() => notesStore.fetchNotesFromApi(true))
 
 const items = computed(() => notesStore.sortedNotes)
-
-async function loadMore() { try { await notesStore.fetchNotesFromApi(true) } catch { return } }
 
 function formatDate(value) {
   const d = new Date(value)

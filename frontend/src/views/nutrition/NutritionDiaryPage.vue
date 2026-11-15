@@ -101,6 +101,7 @@ function toNum(v) {
 function formatMacros(x) {
   return `${toNum(x.protein_g).toFixed(1)}/${toNum(x.fat_g).toFixed(1)}/${toNum(x.carbs_g).toFixed(1)} г`
 }
+
 async function showToast(message, color = 'success') {
   const toast = await toastController.create({ message, duration: 1500, color })
   await toast.present()

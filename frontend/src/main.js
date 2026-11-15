@@ -16,6 +16,7 @@ import '@ionic/vue/css/flex-utils.css'
 import '@ionic/vue/css/display.css'
 
 import '@/theme/sportik.css'
+import '@/theme/features.css'
 import { onSessionExpired, setAuthHeader } from '@/api/api'
 import { useAuthStore } from '@/stores/auth'
 
@@ -49,6 +50,6 @@ async function bootstrap() {
   app.mount('#app')
 }
 
-bootstrap().catch((e) => {
-  console.error('Bootstrap failed:', e)
+bootstrap().catch(() => {
+  console.error('Не удалось запустить Спортик')
 })

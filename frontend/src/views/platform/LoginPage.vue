@@ -34,6 +34,7 @@
 </template>
 <script setup>
 import { ref } from 'vue'
+import { safeReturnPath } from '@/utils/session'
 import { useRoute, useRouter } from 'vue-router'
 import PlatformLayout from '@/components/platform/PlatformLayout.vue'
 import { useAuthStore } from '@/stores/auth'
@@ -56,8 +57,8 @@ async function submit() {
       password: password.value,
     })
     password.value = ''
-    const target = String(route.query.redirect || '/home')
-    await router.replace(target.startsWith('/') && !target.startsWith('//') ? target : '/home')
+    const target = route.query.redirect ?? route.query.return_to
+    await router.replace(target ? safeReturnPath(target) : '/home')
   } catch (cause) {
     error.value = errorMessage(cause)
   } finally {
