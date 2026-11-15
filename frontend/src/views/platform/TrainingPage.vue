@@ -8,10 +8,11 @@
         ><section class="platform-panel">
           <h2>Тренировка сохранена</h2>
           <p>
-            Рабочий объём: {{ result.metrics.volume_kg.toLocaleString('ru-RU') }} кг · подходов:
+            Рабочий объём: {{ metricNumber(result.metrics.volume_kg) }} кг · подходов:
             {{ result.metrics.working_sets }} ·
             {{ Math.round(result.metrics.duration_sec / 60) }} мин.
           </p>
+          <volume-help />
           <p v-for="(item, index) in result.highlights" :key="index">{{ item.message }}</p>
           <router-link to="/progress">Открыть прогресс</router-link>
           <div class="platform-actions">
@@ -103,6 +104,8 @@
   </platform-layout>
 </template>
 <script setup>
+import VolumeHelp from '@/components/ui/VolumeHelp.vue'
+import { metricNumber } from '@/utils/metrics'
 import { ref, computed, watch } from 'vue'
 import { useRoute, onBeforeRouteLeave } from 'vue-router'
 import api from '@/api/api'

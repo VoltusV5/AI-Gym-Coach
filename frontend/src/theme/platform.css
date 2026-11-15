@@ -1,0 +1,664 @@
+.platform-page {
+  --platform-accent: #2867d6;
+  --platform-action: #2867d6;
+  --platform-accent-soft: color-mix(in srgb, var(--platform-accent) 9%, var(--sportik-surface));
+  color: var(--sportik-text);
+  color-scheme: light;
+}
+html.dark-theme .platform-page {
+  --platform-accent: var(--sportik-brand);
+  color-scheme: dark;
+}
+.platform-page ion-toolbar {
+  --background: var(--sportik-surface);
+  --border-width: 0;
+  border-bottom: 1px solid var(--sportik-border);
+}
+.platform-page ion-content {
+  --background: var(--sportik-bg);
+}
+.platform-shell {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 28px 28px 48px;
+  display: grid;
+  grid-template-columns: 202px minmax(0, 1fr);
+  gap: 36px;
+}
+.platform-top {
+  max-width: 1280px;
+  margin: auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 13px 28px;
+}
+.platform-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--sportik-text);
+  text-decoration: none;
+  font-size: 1.35rem;
+  font-weight: 750;
+  letter-spacing: -0.045em;
+}
+.platform-brand-mark {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  background: var(--platform-accent-soft);
+  color: var(--platform-accent);
+  border-radius: 11px;
+}
+.platform-brand-mark ion-icon {
+  font-size: 22px;
+}
+.platform-top .platform-logout {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+}
+.platform-logout ion-icon {
+  font-size: 18px;
+}
+.platform-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  align-self: start;
+  min-width: 0;
+}
+.platform-nav a {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-height: 44px;
+  padding: 10px 12px;
+  border-radius: 11px;
+  text-decoration: none;
+  color: var(--sportik-text-soft);
+  font-size: 0.89rem;
+  line-height: 1.35;
+}
+.platform-nav ion-icon {
+  flex: 0 0 19px;
+  font-size: 19px;
+}
+.platform-nav a:hover {
+  background: var(--sportik-surface);
+  color: var(--sportik-text);
+}
+.platform-nav a.platform-nav-active {
+  background: var(--platform-accent-soft);
+  color: var(--platform-accent);
+  font-weight: 650;
+}
+.platform-extra-links {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.platform-extra-links--desktop {
+  padding-top: 16px;
+  margin-top: 14px;
+  border-top: 1px solid var(--sportik-border);
+}
+.platform-extra-menu {
+  display: none;
+}
+.platform-main {
+  min-width: 0;
+  line-height: 1.55;
+}
+.platform-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 28px;
+}
+.platform-heading > div:first-child {
+  flex: 1 1 280px;
+  min-width: 0;
+}
+.platform-heading h1 {
+  margin: 0 0 9px;
+  font-size: clamp(1.65rem, 3.5vw, 2.25rem);
+  line-height: 1.15;
+  letter-spacing: -0.045em;
+  font-weight: 750;
+  overflow-wrap: anywhere;
+}
+.platform-heading p {
+  margin: 0;
+  line-height: 1.6;
+  color: var(--sportik-text-muted);
+  max-width: 64ch;
+  font-size: 0.96rem;
+}
+.platform-heading-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  flex: 0 0 auto;
+  max-width: 100%;
+}
+.platform-main button,
+.platform-top button,
+.platform-button,
+.platform-heading-actions a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  max-width: 100%;
+  padding: 10px 16px;
+  border: 1px solid var(--sportik-border);
+  border-radius: 11px;
+  background: var(--sportik-surface);
+  color: var(--sportik-text);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 550;
+  line-height: 1.4;
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-decoration: none;
+}
+.platform-main button:hover:not(:disabled),
+.platform-button:hover,
+.platform-heading-actions a:hover {
+  border-color: var(--platform-accent);
+  background: var(--platform-accent-soft);
+}
+.platform-main button.primary,
+.platform-main a.platform-button.primary {
+  background: var(--platform-action);
+  color: white;
+  border-color: transparent;
+}
+.platform-main button.primary:hover:not(:disabled),
+.platform-main a.platform-button.primary:hover {
+  background: color-mix(in srgb, var(--platform-action) 86%, #000);
+}
+.platform-main button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.platform-main a {
+  color: var(--platform-accent);
+  text-underline-offset: 0.2em;
+}
+.platform-main .platform-button,
+.platform-heading-actions a {
+  text-decoration: none;
+}
+.platform-main label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+  font-size: 0.89rem;
+  line-height: 1.4;
+  font-weight: 550;
+  color: var(--sportik-text-soft);
+}
+.platform-main input,
+.platform-main select,
+.platform-main textarea {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  border: 1px solid var(--sportik-border);
+  border-radius: 10px;
+  background: var(--sportik-surface);
+  color: var(--sportik-text);
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.35;
+}
+.platform-main input[type='checkbox'],
+.platform-main input[type='radio'] {
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  min-height: 18px;
+  padding: 0;
+  margin: 0;
+  accent-color: var(--platform-accent);
+}
+.platform-main .check-label {
+  flex-direction: row;
+  align-items: center;
+  gap: 9px;
+  font-weight: 400;
+  min-height: 32px;
+}
+.platform-main textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+.platform-main fieldset {
+  min-inline-size: 0;
+}
+.platform-main p {
+  overflow-wrap: anywhere;
+}
+.platform-main h2,
+.platform-main h3 {
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.platform-main .editor-fields,
+.platform-main .workout-fields,
+.platform-main .review-fields {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.platform-panel {
+  padding: 24px;
+  background: var(--sportik-surface);
+  border: 1px solid var(--sportik-border);
+  border-radius: 18px;
+  margin-bottom: 20px;
+}
+.platform-panel h2 {
+  margin: 0 0 16px;
+  font-size: 1.13rem;
+  letter-spacing: -0.02em;
+}
+.platform-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr));
+  align-items: end;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.platform-fields > button,
+.platform-fields > .check-label {
+  align-self: end;
+  min-height: 44px;
+}
+.platform-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 18px;
+}
+form.platform-actions {
+  align-items: flex-end;
+}
+.platform-actions > * {
+  max-width: 100%;
+}
+.platform-actions > a:not(.platform-button) {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  line-height: 1.45;
+}
+.platform-error {
+  color: var(--sportik-danger);
+}
+.platform-success {
+  color: var(--sportik-success);
+}
+.platform-muted {
+  color: var(--sportik-text-muted);
+  line-height: 1.6;
+}
+.platform-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 235px), 1fr));
+  gap: 18px;
+  margin-top: 20px;
+}
+.platform-card {
+  min-width: 0;
+  border: 1px solid var(--sportik-border);
+  border-radius: 16px;
+  padding: 22px;
+  background: var(--sportik-surface);
+}
+.platform-card h2,
+.platform-card h3 {
+  margin: 0 0 10px;
+  font-size: 1.13rem;
+  letter-spacing: -0.02em;
+}
+.platform-card h2 a,
+.platform-card h3 a {
+  text-decoration: none;
+  color: var(--sportik-text);
+}
+.platform-card h2 a:hover,
+.platform-card h3 a:hover {
+  color: var(--platform-accent);
+  text-decoration: underline;
+}
+.platform-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 9px;
+  border-radius: 7px;
+  background: var(--platform-accent-soft);
+  color: var(--platform-accent);
+  font-size: 0.76rem;
+  font-weight: 550;
+  line-height: 1.4;
+}
+.platform-main :focus-visible,
+.platform-nav :focus-visible,
+.platform-top :focus-visible {
+  outline: 3px solid var(--platform-accent);
+  outline-offset: 3px;
+}
+.dashboard-feed {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+.dashboard-block {
+  margin: 0;
+  min-width: 0;
+  grid-column: 1 / -1;
+}
+.dashboard-block--recent_progress,
+.dashboard-block--ai_message {
+  grid-column: auto;
+}
+.dashboard-block--today_workout {
+  border-left: 4px solid var(--platform-accent);
+}
+.dashboard-block-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.dashboard-block-heading h2 {
+  margin: 0;
+}
+.dashboard-plan-title {
+  margin: 0 0 8px;
+  font-size: clamp(1.45rem, 3vw, 1.9rem);
+  letter-spacing: -0.035em;
+}
+.dashboard-message {
+  margin: 0;
+  max-width: 64ch;
+  line-height: 1.7;
+}
+.dashboard-period {
+  font-size: 0.83rem;
+  color: var(--sportik-text-muted);
+  margin: 0 0 16px;
+}
+.dashboard-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px 32px;
+  margin: 0;
+}
+.dashboard-stats dt {
+  font-size: 0.82rem;
+  color: var(--sportik-text-muted);
+}
+.dashboard-stats dd {
+  margin: 5px 0 0;
+  font-size: clamp(1.5rem, 3vw, 1.9rem);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+.dashboard-stats small {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+.dashboard-action {
+  font-size: 0.9rem;
+  font-weight: 550;
+}
+.dashboard-publication {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  justify-content: space-between;
+  padding: 12px 0;
+  margin: 0;
+  border-bottom: 1px solid var(--sportik-border);
+}
+.dashboard-publication span {
+  color: var(--sportik-text-muted);
+  font-size: 0.86rem;
+}
+.progress-overview {
+  margin-bottom: 24px;
+  padding: 24px;
+  border: 1px solid var(--sportik-border);
+  border-radius: 18px;
+  background: var(--sportik-surface);
+}
+.progress-period {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-bottom: 22px;
+}
+.progress-period h2 {
+  margin: 0;
+  font-size: 1.12rem;
+  letter-spacing: -0.02em;
+}
+.progress-period p {
+  margin: 0;
+  color: var(--sportik-text-muted);
+  font-size: 0.86rem;
+}
+.progress-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 145px), 1fr));
+  gap: 22px;
+}
+.progress-metric {
+  min-width: 0;
+}
+.progress-metric > p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--sportik-text-soft);
+}
+.progress-metric h2 {
+  margin: 8px 0 5px;
+  font-size: clamp(1.65rem, 3vw, 2.05rem);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+.progress-metric small {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+.progress-metric > span {
+  display: block;
+  color: var(--sportik-text-muted);
+  font-size: 0.77rem;
+  line-height: 1.5;
+}
+.progress-filters .platform-fields {
+  margin-bottom: 14px;
+}
+@media (max-width: 960px) {
+  .platform-shell {
+    gap: 24px;
+    grid-template-columns: 176px minmax(0, 1fr);
+    padding: 24px 20px 40px;
+  }
+  .platform-top {
+    padding-inline: 20px;
+  }
+  .dashboard-feed {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .dashboard-block {
+    grid-column: 1;
+  }
+}
+@media (max-width: 740px) {
+  .platform-shell {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 14px 16px 32px;
+    gap: 22px;
+  }
+  .platform-top {
+    padding: 10px 16px;
+  }
+  .platform-brand {
+    font-size: 1.25rem;
+  }
+  .platform-brand-mark {
+    width: 32px;
+    height: 32px;
+  }
+  .platform-nav {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 5px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--sportik-border);
+  }
+  .platform-nav > a {
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 6px;
+    text-align: center;
+    min-height: 64px;
+    padding: 8px 2px;
+    font-size: 0.69rem;
+    border-radius: 10px;
+  }
+  .platform-nav > a ion-icon {
+    flex-basis: auto;
+    font-size: 21px;
+  }
+  .platform-extra-links--desktop {
+    display: none;
+  }
+  .platform-extra-menu {
+    display: block;
+    grid-column: 1 / -1;
+    margin-top: 4px;
+  }
+  .platform-extra-menu summary {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-height: 44px;
+    padding: 8px 10px;
+    cursor: pointer;
+    list-style: none;
+    color: var(--sportik-text-soft);
+    font-size: 0.85rem;
+  }
+  .platform-extra-menu summary::-webkit-details-marker {
+    display: none;
+  }
+  .platform-extra-menu summary ion-icon:last-child {
+    margin-left: auto;
+  }
+  .platform-extra-menu[open] summary {
+    color: var(--platform-accent);
+  }
+  .platform-extra-menu .platform-extra-links {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 8px 0;
+    gap: 4px;
+  }
+  .platform-extra-menu a {
+    padding: 9px;
+    font-size: 0.8rem;
+  }
+  .platform-heading {
+    gap: 16px;
+    margin-bottom: 22px;
+  }
+  .platform-heading > div:first-child {
+    flex-basis: 100%;
+  }
+  .platform-heading-actions {
+    width: 100%;
+  }
+  .platform-heading-actions .platform-button {
+    flex: 0 1 auto;
+  }
+  .platform-panel,
+  .progress-overview {
+    padding: 18px;
+    border-radius: 15px;
+  }
+  .platform-grid {
+    gap: 14px;
+  }
+  .platform-card {
+    padding: 18px;
+  }
+  .progress-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px 16px;
+  }
+  .progress-metric--weight {
+    grid-column: 1 / -1;
+    padding-top: 18px;
+    border-top: 1px solid var(--sportik-border);
+  }
+  .progress-metric h2 {
+    font-size: 1.65rem;
+  }
+}
+@media (max-width: 360px) {
+  .platform-shell {
+    padding-inline: 12px;
+  }
+  .platform-extra-menu .platform-extra-links {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .platform-actions > button,
+  .platform-actions > .platform-button {
+    flex: 1 1 100%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .platform-shell *,
+  .platform-shell *::before {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@media (min-width: 381px) and (max-width: 740px) {
+  .progress-filters .platform-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .progress-filters .platform-fields label:last-child {
+    grid-column: 1 / -1;
+  }
+}

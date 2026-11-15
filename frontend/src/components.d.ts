@@ -21,6 +21,7 @@ declare module 'vue' {
     PlatformLayout: typeof import('./components/platform/PlatformLayout.vue')['default']
     ProfileAuthPanel: typeof import('./components/settings/ProfileAuthPanel.vue')['default']
     ProgramCard: typeof import('./components/platform/ProgramCard.vue')['default']
+    ProgressHighlights: typeof import('./components/ui/ProgressHighlights.vue')['default']
     ProgressMetrics: typeof import('./components/ui/ProgressMetrics.vue')['default']
     RecommendationList: typeof import('./components/platform/RecommendationList.vue')['default']
     ReportForm: typeof import('./components/platform/ReportForm.vue')['default']
@@ -30,6 +31,7 @@ declare module 'vue' {
     ScheduleEditor: typeof import('./components/platform/ScheduleEditor.vue')['default']
     ShareControls: typeof import('./components/platform/ShareControls.vue')['default']
     TrainingDaysEditor: typeof import('./components/platform/TrainingDaysEditor.vue')['default']
+    VolumeHelp: typeof import('./components/ui/VolumeHelp.vue')['default']
     WorkoutChrome: typeof import('./components/workout/WorkoutChrome.vue')['default']
   }
 }

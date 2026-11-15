@@ -322,3 +322,90 @@ test('questionnaire displays failed saves and permits a retry', async ({ page })
   await page.getByRole('button', { name: 'Далее', exact: true }).click()
   await expect(page).toHaveURL(/\/fitness-level$/)
 })
+
+test('progress explains period volume and a decrease in body weight', async ({ page }) => {
+  await setup(page)
+  let weightWrites = 0
+  await page.route('**/api/v2/progress**', (route) => {
+    if (route.request().method() === 'POST') {
+      weightWrites++
+      return route.fulfill({ json: {} })
+    }
+    if (new URL(route.request().url()).pathname.endsWith('/summaries'))
+      return route.fulfill({ json: { items: [], next_cursor: null } })
+    return route.fulfill({
+      json: {
+        period: 'month',
+        start: '2026-11-01T00:00:00+03:00',
+        end: '2026-12-01T00:00:00+03:00',
+        time_zone: 'Europe/Moscow',
+        workout_count: 6,
+        volume_kg: 8775,
+        adherence: null,
+        streak_weeks: 0,
+        weight_change_kg: -1.2000000000000028,
+        highlights: [],
+      },
+    })
+  })
+  await page.route('**/api/v2/workouts**', (route) =>
+    route.fulfill({ json: { items: [], next_cursor: null } }),
+  )
+  await page.goto('/progress')
+  await expect(page.getByText('Вес снизился', { exact: false })).toBeVisible()
+  await expect(page.getByRole('heading', { name: '1,2 кг', exact: true })).toBeVisible()
+  await expect(page.getByText('Объём за период', { exact: true })).toBeVisible()
+  await expect(
+    page.getByText('В этом периоде нет запланированных занятий', { exact: true }),
+  ).toBeVisible()
+  await page.getByText('Как считается объём', { exact: true }).click()
+  await expect(page.getByText(/20 кг × 10 повторений × 3 подхода = 600 кг/)).toBeVisible()
+  await page.getByLabel('Вес, кг', { exact: true }).fill('-10')
+  await page.getByRole('button', { name: 'Записать вес', exact: true }).click()
+  expect(weightWrites).toBe(0)
+  expect(
+    await page.getByLabel('Вес, кг', { exact: true }).evaluate((input) => input.validity.valid),
+  ).toBe(false)
+})
+
+test('small screens keep actions and all navigation inside the viewport', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 760 })
+  await setup(page, { roles: ['user', 'admin'] })
+  await page.goto('/plans/new')
+  await page.getByRole('button', { name: 'Добавить тренировочный день', exact: true }).click()
+  await expect(page.getByLabel('Название дня')).toBeVisible()
+  const overflow = await page.locator('.ion-page:visible .platform-main').evaluate((main) => {
+    const viewport = document.documentElement.clientWidth
+    return [...main.querySelectorAll('button, input, select, .platform-panel')]
+      .filter((node) => {
+        const box = node.getBoundingClientRect()
+        return box.width && (box.left < -1 || box.right > viewport + 1)
+      })
+      .map((node) => node.textContent?.trim() || node.tagName)
+  })
+  expect(overflow).toEqual([])
+  await page.getByText('Все разделы', { exact: true }).click()
+  await expect(page.getByRole('link', { name: 'Управление', exact: true })).toBeVisible()
+  page.once('dialog', (dialog) => dialog.accept())
+  await page.getByRole('link', { name: 'Управление', exact: true }).click()
+  await expect(page.getByRole('heading', { name: 'Управление платформой' })).toBeVisible()
+  await expect(page.locator('ion-router-outlet > .ion-page:visible')).toHaveCount(1)
+  await expect(page.getByRole('link', { name: 'Мои планы', exact: true })).toBeVisible()
+  await expect(
+    page.locator('ion-router-outlet > .ion-page:visible .platform-extra-menu'),
+  ).not.toHaveAttribute('open', '')
+})
+
+test('search buttons align with their fields on desktop', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 })
+  await setup(page, { roles: ['user', 'admin'] })
+  await page.route('**/api/v2/admin/users**', (route) =>
+    route.fulfill({ json: { items: [], next_cursor: null } }),
+  )
+  await page.goto('/admin/users')
+  await expect(page.getByLabel('Поиск по почте')).toBeVisible()
+  const input = await page.getByLabel('Поиск по почте').boundingBox()
+  const button = await page.getByRole('button', { name: 'Найти', exact: true }).boundingBox()
+  expect(Math.abs(input.y + input.height - button.y - button.height)).toBeLessThan(2)
+  expect(Math.abs(input.height - button.height)).toBeLessThan(2)
+})
