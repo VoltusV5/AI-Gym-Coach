@@ -409,3 +409,183 @@ test('search buttons align with their fields on desktop', async ({ page }) => {
   expect(Math.abs(input.y + input.height - button.y - button.height)).toBeLessThan(2)
   expect(Math.abs(input.height - button.height)).toBeLessThan(2)
 })
+
+test('exercise search filters choices while preserving the selected exercise', async ({ page }) => {
+  await setup(page)
+  const exercises = [
+    { id: 1, name: 'Приседания' },
+    { id: 2, name: 'Жим лёжа' },
+  ]
+  await page.route('**/api/v2/exercises**', (route) => {
+    const query = new URL(route.request().url()).searchParams.get('query') || ''
+    return route.fulfill({
+      json: {
+        items: exercises.filter((item) => item.name.toLowerCase().includes(query)),
+        next_cursor: null,
+      },
+    })
+  })
+  await page.goto('/plans/new')
+  await page.getByRole('button', { name: 'Добавить тренировочный день', exact: true }).click()
+  const choices = page.getByRole('combobox', { name: /^Добавить или заменить упражнение/ })
+  await expect(choices.locator('option')).toHaveCount(3)
+  await page.getByLabel('Поиск упражнения', { exact: true }).fill('жим')
+  await expect(choices.locator('option')).toHaveCount(2)
+  await expect(choices.locator('option')).not.toContainText(['Приседания'])
+  await choices.selectOption('2')
+  await page.getByLabel('Поиск упражнения', { exact: true }).fill('нет совпадений')
+  await expect(
+    page.getByText('Упражнения не найдены. Измените запрос.', { exact: true }),
+  ).toBeVisible()
+  await expect(choices).toHaveValue('2')
+  await page.getByRole('button', { name: 'Добавить упражнение', exact: true }).click()
+  await expect(page.getByRole('heading', { name: 'Жим лёжа', exact: true })).toBeVisible()
+})
+
+test('removing an exercise clears a replacement position that no longer exists', async ({
+  page,
+}) => {
+  await setup(page)
+  await page.route(`**/api/v2/me/plans/${planId}`, (route) =>
+    route.fulfill({
+      json: {
+        ...plan,
+        days: [
+          {
+            ...plan.days[0],
+            exercises: [0, 1, 2].map((position) => ({
+              exercise_id: 1,
+              position,
+              sets: 1,
+              reps_min: 8,
+              reps_max: 10,
+              weight_kg: 10,
+              rest_sec: 60,
+            })),
+          },
+        ],
+      },
+    }),
+  )
+  await page.goto(`/plans/${planId}`)
+  await page.getByRole('combobox', { name: /^Добавить или заменить упражнение/ }).selectOption('1')
+  await page.getByRole('combobox', { name: /^Заменить позицию/ }).selectOption('2')
+  await expect(page.getByRole('button', { name: 'Заменить', exact: true })).toBeEnabled()
+  await page.getByRole('button', { name: 'Убрать упражнение', exact: true }).first().click()
+  await expect(page.getByRole('button', { name: 'Заменить', exact: true })).toBeDisabled()
+  await expect(
+    page.getByRole('combobox', { name: /^Заменить позицию/ }).locator('option:checked'),
+  ).toHaveText('Выберите позицию')
+  await page.getByRole('combobox', { name: /^Заменить позицию/ }).selectOption('1')
+  await page.getByRole('button', { name: 'Заменить', exact: true }).click()
+  await expect(page.getByRole('heading', { name: 'Приседания', exact: true })).toHaveCount(2)
+})
+
+test('fractional weights remain valid in the plan, workout and body measurements', async ({
+  page,
+}) => {
+  await setup(page)
+  let saved = {
+    ...plan,
+    is_active: true,
+    days: [
+      {
+        ...plan.days[0],
+        exercises: [
+          {
+            exercise_id: 1,
+            position: 0,
+            sets: 1,
+            reps_min: 8,
+            reps_max: 10,
+            weight_kg: 12.25,
+            rest_sec: 60,
+          },
+        ],
+      },
+    ],
+  }
+  let completed
+  await page.route(`**/api/v2/me/plans/${planId}`, async (route) => {
+    if (route.request().method() === 'PATCH')
+      saved = { ...saved, ...route.request().postDataJSON(), version: 2 }
+    return route.fulfill({ json: saved })
+  })
+  await page.route('**/api/v2/workouts/complete', (route) => {
+    completed = route.request().postDataJSON()
+    return route.fulfill({
+      json: { metrics: { volume_kg: 150, working_sets: 1, duration_sec: 60 }, highlights: [] },
+    })
+  })
+  await page.goto(`/plans/${planId}`)
+  const weight = page.getByLabel('Рабочий вес, кг', { exact: true })
+  await expect(weight).toHaveValue('12.25')
+  expect(await weight.evaluate((input) => input.validity.valid)).toBe(true)
+  await weight.fill('18.75')
+  await page.getByRole('button', { name: 'Сохранить план', exact: true }).click()
+  await expect(page.getByRole('status')).toContainText('Сохранено')
+  expect(saved.days[0].exercises[0].weight_kg).toBe(18.75)
+  await page.getByRole('link', { name: 'Начать тренировку', exact: true }).click()
+  await page.getByRole('button', { name: 'Первый день', exact: true }).click()
+  expect(
+    await page.getByLabel('Вес, кг', { exact: true }).evaluate((input) => input.validity.valid),
+  ).toBe(true)
+  await page.getByRole('button', { name: 'Завершить и сохранить тренировку', exact: true }).click()
+  await expect(
+    page.getByRole('heading', { name: 'Тренировка сохранена', exact: true }),
+  ).toBeVisible()
+  expect(completed.slots[0].sets[0].weight_kg).toBe(18.75)
+  await page.goto('/profile')
+  await page.getByLabel('Вес, кг', { exact: true }).fill('75.25')
+  expect(
+    await page.getByLabel('Вес, кг', { exact: true }).evaluate((input) => input.validity.valid),
+  ).toBe(true)
+  await page.goto('/progress')
+  await page.getByLabel('Вес, кг', { exact: true }).fill('74.75')
+  expect(
+    await page.getByLabel('Вес, кг', { exact: true }).evaluate((input) => input.validity.valid),
+  ).toBe(true)
+})
+
+test('exercise picker actions align with their field and leave space before the schedule', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 900 })
+  await setup(page)
+  await page.route(`**/api/v2/me/plans/${planId}`, (route) =>
+    route.fulfill({
+      json: {
+        ...plan,
+        days: [
+          {
+            ...plan.days[0],
+            exercises: [
+              {
+                exercise_id: 1,
+                position: 0,
+                sets: 1,
+                reps_min: 8,
+                reps_max: 10,
+                weight_kg: 10,
+                rest_sec: 60,
+              },
+            ],
+          },
+        ],
+      },
+    }),
+  )
+  await page.goto(`/plans/${planId}`)
+  const field = await page.getByRole('combobox', { name: /^Заменить позицию/ }).boundingBox()
+  for (const name of ['Добавить упражнение', 'Заменить']) {
+    const button = await page.getByRole('button', { name, exact: true }).boundingBox()
+    expect(Math.abs(button.y + button.height - field.y - field.height)).toBeLessThan(2)
+  }
+  const addDay = await page
+    .getByRole('button', { name: 'Добавить тренировочный день', exact: true })
+    .boundingBox()
+  const scheduleTop = await page
+    .getByRole('heading', { name: 'Расписание', exact: true })
+    .evaluate((heading) => heading.closest('.platform-panel').getBoundingClientRect().top)
+  expect(scheduleTop - addDay.y - addDay.height).toBeGreaterThanOrEqual(16)
+})

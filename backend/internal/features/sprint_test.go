@@ -249,6 +249,14 @@ func TestSprintIntegration(t *testing.T) {
 		}
 		return w
 	}
+	t.Run("exercise search folds Cyrillic case independently of database locale", func(t *testing.T) {
+		for _, query := range []string{"жим ногами", "ЖИМ НОГАМИ", "Жим ногами", "ЖИМ НОГАМИ ЛЁЖА"} {
+			page, err := catalogRepo.ListExercises(ctx, catalog_postgres_repository.Filter{Query: query, Limit: 100})
+			require.NoError(t, err)
+			require.NotEmpty(t, page, query)
+			require.Equal(t, 1, page[0].ID, query)
+		}
+	})
 	t.Run("account roles blocks and audit", func(t *testing.T) {
 		created, err := users_postgres_repository.NewUsersRepository(pool).CreateUser(ctx, "registration-fixture@example.com", "synthetic-hash")
 		require.NoError(t, err)

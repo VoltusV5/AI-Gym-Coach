@@ -81,7 +81,7 @@
             type="number"
             min="1"
             max="500"
-            step="0.1"
+            step="any"
             required
         /></label>
       </div>

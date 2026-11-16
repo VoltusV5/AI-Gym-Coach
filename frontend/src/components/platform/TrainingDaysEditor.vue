@@ -1,5 +1,25 @@
 <template>
-  <section>
+  <section class="training-days-editor">
+    <div class="platform-panel exercise-search" :aria-busy="catalog.loading.value">
+      <h2>Подбор упражнений</h2>
+      <label>Поиск упражнения<input v-model="query" type="search" @input="search" /></label>
+      <p class="platform-muted">Найдите упражнение, затем выберите его в тренировочном дне.</p>
+      <p v-if="catalog.loading.value" role="status" class="platform-muted">Ищем упражнения…</p>
+      <p v-else-if="catalog.error.value" role="alert" class="platform-error">
+        {{ catalog.error.value }}
+      </p>
+      <p v-else-if="!catalog.items.value.length" role="status" class="platform-muted">
+        Упражнения не найдены. Измените запрос.
+      </p>
+      <button
+        v-if="catalog.nextCursor.value"
+        type="button"
+        :disabled="catalog.loading.value"
+        @click="moreExercises"
+      >
+        Ещё упражнения
+      </button>
+    </div>
     <article v-for="(day, index) in modelValue" :key="day.id" class="platform-panel">
       <div class="platform-fields">
         <label
@@ -59,7 +79,7 @@
               :value="exercise.weight_kg"
               type="number"
               min="0"
-              step="0.5"
+              step="any"
               placeholder="Не задан"
               @input="
                 changeExercise(
@@ -92,12 +112,17 @@
         </div>
       </div>
       <label
-        >Добавить или заменить упражнение<select v-model="selected[day.id]">
+        >Добавить или заменить упражнение<select
+          v-model="selected[day.id]"
+          :disabled="catalog.loading.value"
+        >
           <option :value="null">Выберите упражнение</option>
-          <option v-for="ex in exercises" :key="ex.id" :value="ex.id">{{ ex.name }}</option>
+          <option v-for="ex in exerciseOptions(day.id)" :key="ex.id" :value="ex.id">
+            {{ ex.name }}
+          </option>
         </select></label
       >
-      <div class="platform-actions">
+      <div class="platform-actions exercise-picker-actions">
         <button type="button" :disabled="!selected[day.id]" @click="addExercise(index)">
           Добавить упражнение</button
         ><label v-if="day.exercises.length"
@@ -108,7 +133,7 @@
         ><button
           v-if="day.exercises.length"
           type="button"
-          :disabled="!selected[day.id] || replacement[day.id] == null"
+          :disabled="!selected[day.id] || !day.exercises[replacement[day.id]]"
           @click="replaceExercise(index)"
         >
           Заменить
@@ -117,20 +142,6 @@
     </article>
     <div class="platform-actions">
       <button type="button" @click="addDay">Добавить тренировочный день</button>
-    </div>
-    <div class="platform-panel exercise-search">
-      <label>Поиск упражнения<input v-model="query" type="search" @input="search" /></label>
-      <p v-if="catalog.error.value" role="alert" class="platform-error">
-        {{ catalog.error.value }}
-      </p>
-      <button
-        v-if="catalog.nextCursor.value"
-        type="button"
-        :disabled="catalog.loading.value"
-        @click="moreExercises"
-      >
-        Ещё упражнения
-      </button>
     </div>
   </section>
 </template>
@@ -218,7 +229,14 @@ function moveExercise(i, e, delta) {
   })
 }
 function removeExercise(i, e) {
+  replacement.value[props.modelValue[i].id] = null
   update((days) => days[i].exercises.splice(e, 1))
+}
+function exerciseOptions(dayId) {
+  const chosen = exercises.value.find((exercise) => exercise.id === selected.value[dayId])
+  return chosen && !catalog.items.value.some((exercise) => exercise.id === chosen.id)
+    ? [chosen, ...catalog.items.value]
+    : catalog.items.value
 }
 function addExercise(i) {
   update((days) =>
@@ -234,6 +252,7 @@ function addExercise(i) {
   )
 }
 function replaceExercise(i) {
+  if (!props.modelValue[i].exercises[replacement.value[props.modelValue[i].id]]) return
   changeExercise(
     i,
     replacement.value[props.modelValue[i].id],
@@ -257,6 +276,12 @@ async function moreExercises() {
 onMounted(search)
 </script>
 <style scoped>
+.training-days-editor {
+  margin-bottom: 20px;
+}
+.exercise-picker-actions {
+  align-items: flex-end;
+}
 .prescription {
   padding: 18px 0;
   border-top: 1px solid var(--sportik-border);
@@ -276,6 +301,6 @@ onMounted(search)
   padding: 8px 10px;
 }
 .exercise-search {
-  margin-top: 20px;
+  margin-bottom: 20px;
 }
 </style>

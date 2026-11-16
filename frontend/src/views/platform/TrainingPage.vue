@@ -61,7 +61,7 @@
                     type="number"
                     min="0"
                     max="10000"
-                    step="0.1"
+                    step="any"
                     required /></label
                 ><label class="check-label"
                   ><input v-model="set.is_warmup" type="checkbox" />Разминка</label
