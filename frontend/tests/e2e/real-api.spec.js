@@ -39,8 +39,15 @@ test('personal plan, workout and progress persist through the Go API', async ({ 
   await page.goto('/plans/new')
   await page.getByLabel('Название плана').fill(title)
   await page.getByRole('button', { name: 'Добавить тренировочный день' }).click()
+  await page.getByLabel('Поиск упражнения', { exact: true }).fill('жим ногами')
+  await expect(
+    page
+      .getByRole('combobox', { name: /^Добавить или заменить упражнение/ })
+      .locator('option[value="1"]'),
+  ).toHaveText('Жим ногами лёжа')
   await page.getByRole('combobox', { name: /^Добавить или заменить упражнение/ }).selectOption('1')
   await page.getByRole('button', { name: 'Добавить упражнение', exact: true }).click()
+  await page.getByLabel('Рабочий вес, кг', { exact: true }).fill('12.25')
   await page.getByRole('button', { name: 'Сохранить план' }).click()
   await expect(page).toHaveURL(/\/plans\/[0-9a-f-]{36}/)
   await page.getByRole('button', { name: 'Сделать активным' }).click()
@@ -49,6 +56,7 @@ test('personal plan, workout and progress persist through the Go API', async ({ 
   await expect(page.getByRole('button', { name: 'День 1', exact: true })).toBeVisible()
   await settled(page)
   await page.getByRole('button', { name: 'День 1', exact: true }).click()
+  await expect(page.getByLabel('Вес, кг', { exact: true }).first()).toHaveValue('12.25')
   await page.getByLabel('Подход 1 · повторения').fill('10')
   await page.getByRole('button', { name: 'Завершить и сохранить тренировку' }).click()
   await expect(page.getByRole('heading', { name: 'Тренировка сохранена' })).toBeVisible()

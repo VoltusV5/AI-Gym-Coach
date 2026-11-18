@@ -1,5 +1,5 @@
 <template>
-  <article ref="card" class="platform-card">
+  <article ref="card" class="platform-card program-card">
     <span class="platform-badge">{{ levelNames[program.level] || program.level }}</span>
     <h2 class="program-title">
       <router-link :to="`/programs/${program.id}`">{{ program.title }}</router-link>
@@ -13,7 +13,7 @@
     <p class="platform-muted">
       {{ program.duration_weeks }} нед. · {{ program.sessions_per_week }} занятий в неделю
     </p>
-    <p>
+    <p class="program-price">
       {{ program.price_minor === 0 ? 'Бесплатно' : money(program.price_minor, program.currency) }}
     </p>
     <p v-if="program.rating != null" class="platform-muted">
@@ -48,6 +48,23 @@ onMounted(() => {
 onScopeDispose(() => observer?.disconnect())
 </script>
 <style scoped>
+.program-card {
+  display: flex;
+  flex-direction: column;
+}
+.program-card > p {
+  margin: 6px 0;
+  font-size: 0.9rem;
+}
+.program-card > .program-price {
+  margin-top: 14px;
+  font-size: 1.05rem;
+  font-weight: 650;
+  color: var(--sportik-text);
+}
+.program-card .platform-badge {
+  align-self: flex-start;
+}
 .program-title {
   margin-top: 15px;
   font-size: 1.15rem;

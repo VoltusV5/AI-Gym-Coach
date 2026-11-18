@@ -23,7 +23,7 @@
                   type="number"
                   min="1"
                   max="500"
-                  step="0.1"
+                  step="any"
               /></label>
               <label
                 >Пол<select v-model="form.gender">

@@ -41,9 +41,9 @@
                       new Date(point.finished_at).toLocaleDateString('ru-RU')
                     }}</router-link>
                   </td>
-                  <td>{{ point.working_weight_kg }}</td>
+                  <td>{{ metricNumber(point.working_weight_kg) }}</td>
                   <td>{{ point.reps }}</td>
-                  <td>{{ point.volume_kg }}</td>
+                  <td>{{ metricNumber(point.volume_kg) }}</td>
                 </tr>
               </tbody>
             </table>
@@ -58,6 +58,7 @@
   >
 </template>
 <script setup>
+import { metricNumber } from '@/utils/metrics'
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import api from '@/api/api'

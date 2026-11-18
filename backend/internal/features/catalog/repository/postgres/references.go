@@ -38,7 +38,8 @@ func (r *Repository) ListExercises(ctx context.Context, filter Filter) ([]Exerci
 		ARRAY(SELECT equipment_id FROM sportapp.exercise_equipment WHERE exercise_id = e.id ORDER BY equipment_id),
 		COALESCE(e.safe_for_injuries, FALSE), e.image_url, e.video_url, e.is_active
 		FROM sportapp.exercises e WHERE e.is_active AND e.id > $1
-		AND ($2 = '' OR strpos(lower(e.exercises_name), lower($2)) > 0)
+		AND ($2 = '' OR strpos(lower(e.exercises_name COLLATE pg_catalog.pg_unicode_fast),
+			lower($2 COLLATE pg_catalog.pg_unicode_fast)) > 0)
 		AND ($3 = '' OR e.muscular_group = $3)
 		AND (NOT $4 OR NOT EXISTS (SELECT 1 FROM sportapp.exercise_equipment ee
 			WHERE ee.exercise_id = e.id AND NOT (ee.equipment_id = ANY($5::text[]))))

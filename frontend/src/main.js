@@ -17,6 +17,7 @@ import '@ionic/vue/css/display.css'
 
 import '@/theme/sportik.css'
 import '@/theme/features.css'
+import '@/theme/platform.css'
 import { onSessionExpired, setAuthHeader } from '@/api/api'
 import { useAuthStore } from '@/stores/auth'
 

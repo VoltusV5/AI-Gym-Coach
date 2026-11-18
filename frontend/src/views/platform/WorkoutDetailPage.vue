@@ -9,9 +9,8 @@
         <section v-for="slot in session.slots" :key="slot.position" class="platform-panel">
           <h2>{{ names.name(slot.exercise_id) }}</h2>
           <p v-for="(set, index) in slot.sets" :key="index">
-            Подход {{ index + 1 }}: {{ set.reps }} повторений × {{ set.weight_kg }} кг{{
-              set.is_warmup ? ' · разминка' : ''
-            }}
+            Подход {{ index + 1 }}: {{ set.reps }} повторений ×
+            {{ metricNumber(set.weight_kg) }} кг{{ set.is_warmup ? ' · разминка' : '' }}
           </p>
           <router-link :to="`/progress/exercises/${slot.exercise_id}`"
             >История упражнения и рекорды</router-link
@@ -22,6 +21,7 @@
   >
 </template>
 <script setup>
+import { metricNumber } from '@/utils/metrics'
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import api from '@/api/api'
