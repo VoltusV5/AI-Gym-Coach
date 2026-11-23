@@ -1,0 +1,94 @@
+{
+  "seed": 42,
+  "dataset_splits": {
+    "train": 1445,
+    "val": 255,
+    "test": 300
+  },
+  "baseline_catboost": {
+    "model": "CatBoost Baseline v0",
+    "sample_size": 300,
+    "macro_f1": 0.6617,
+    "balanced_accuracy": 0.7217,
+    "accuracy": 0.67,
+    "valid_json_rate": 1.0,
+    "days_match_rate": 0.1733,
+    "avg_latency_ms": 0.03
+  },
+  "transformer_prototype": {
+    "model": "Transformer Prototype (Qwen/Qwen2.5-0.5B-Instruct)",
+    "sample_size": 20,
+    "macro_f1": 0.1429,
+    "balanced_accuracy": 0.25,
+    "valid_json_rate": 0.0,
+    "days_match_rate": 0.0,
+    "p50_latency_ms": 11924.89,
+    "p95_latency_ms": 12464.73
+  },
+  "sample_generations": [
+    {
+      "input": {
+        "возраст": 62,
+        "рост": 179,
+        "вес": 101,
+        "пол": "м",
+        "тип_активности": "Сидячий и малоподвижный",
+        "травмы_или_болезни": "нет",
+        "цель": "Сжечь жир",
+        "уровень_подготовки": "новичок",
+        "дни_тренировок": [
+          "Пн",
+          "Вт",
+          "Вс"
+        ]
+      },
+      "generated": {
+        "raw_error": "```json\n{\n    \"type_of_splait\": \"Сидячий и малоподвижный\",\n    \"weekly_plan\": {\n        \"days\": [\n            {\n                \"day\": \"Пн.\",\n                \"exercise\": \"Весной: 5 минут, Летом: 10 ми"
+      },
+      "latency_ms": 12751.3
+    },
+    {
+      "input": {
+        "возраст": 46,
+        "рост": 172,
+        "вес": 88,
+        "пол": "м",
+        "тип_активности": "Сидячий и малоподвижный",
+        "травмы_или_болезни": "нет",
+        "цель": "Скинуть вес",
+        "уровень_подготовки": "новичок",
+        "дни_тренировок": [
+          "Вт",
+          "Вс"
+        ]
+      },
+      "generated": {
+        "raw_error": "```json\n{\n    \"type_of_splait\": \"sedentary\",\n    \"weekly_plan\": {\n        \"days\": [\n            {\n                \"day\": \"Monday\",\n                \"exercise\": \"Walking\",\n                \"duration\": \"3"
+      },
+      "latency_ms": 12375.9
+    },
+    {
+      "input": {
+        "возраст": 59,
+        "рост": 168,
+        "вес": 89,
+        "пол": "м",
+        "тип_активности": "Высокая активность",
+        "травмы_или_болезни": "нет",
+        "цель": "Скинуть вес",
+        "уровень_подготовки": "любитель",
+        "дни_тренировок": [
+          "Пн",
+          "Вт",
+          "Ср",
+          "Пт",
+          "Вс"
+        ]
+      },
+      "generated": {
+        "raw_error": "```json\n{\n    \"type_of_split\": \"Вес\",\n    \"weekly_plan\": {\n        \"days\": [\n            { \"day\": \"Пн.\", \"weight_loss_goal\": 20 },\n            { \"day\": \"Вт.\", \"weight_loss_goal\": 15 },\n            { \""
+      },
+      "latency_ms": 9748.1
+    }
+  ]
+}
