@@ -1,29 +1,130 @@
+import json
 import logging
 import os
+import random
 import uuid
-from typing import Any, List, Optional
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
 import pandas as pd
-from fastapi import FastAPI, HTTPException
+from catboost import CatBoostClassifier
+from fastapi import Body, FastAPI, HTTPException
 from pydantic import BaseModel, Field
+
+from plan_service import create_router
 
 logger = logging.getLogger("ai_gym_coach_ml")
 logging.basicConfig(level=logging.INFO)
 
+BASE_DIR = Path(__file__).resolve().parent
+
+programs: List[Dict[str, Any]] = []
+_dataset_path = BASE_DIR / "dataset/dataset.jsonlines"
+if _dataset_path.exists():
+    with _dataset_path.open("r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if line:
+                programs.append(json.loads(line)["output"])
+
 app = FastAPI(title="AI-Gym-Coach ML Service", version="v2")
 
-CATBOOST_MODEL_PATH = "workout_model.cbm"
-_catboost_model = None
+reverse_map = {
+    0: "Фулбади",
+    1: "ВерхНиз",
+    2: "Тяни-толкай",
+    3: "Пуш-пул-ноги",
+    4: "Сплит",
+}
 
-if os.path.exists(CATBOOST_MODEL_PATH):
+_model_candidates = [
+    BASE_DIR / "models/model/workout_model.cbm",
+    BASE_DIR / "workout_model.cbm",
+]
+CATBOOST_MODEL_PATH: Optional[Path] = next((p for p in _model_candidates if p.exists()), None)
+_catboost_model: Optional[CatBoostClassifier] = None
+
+if CATBOOST_MODEL_PATH is not None:
     try:
-        from catboost import CatBoostClassifier
-
         _m = CatBoostClassifier()
-        _m.load_model(CATBOOST_MODEL_PATH)
+        _m.load_model(str(CATBOOST_MODEL_PATH))
         _catboost_model = _m
         logger.info("Загружена модель CatBoost из %s", CATBOOST_MODEL_PATH)
     except Exception as exc:
-        logger.warning("Не удалось загрузить %s (%s); используем rule-based логику.", CATBOOST_MODEL_PATH, exc)
+        logger.warning(
+            "Не удалось загрузить %s (%s); используем резервную логику.",
+            CATBOOST_MODEL_PATH,
+            exc,
+        )
+
+model = _catboost_model
+
+
+def get_random_program(programs: List[Dict[str, Any]], split_name: str, days: List[Any]) -> Optional[Dict[str, Any]]:
+    """Возвращает случайную программу тренировок из датасета по предсказанному сплиту и числу дней."""
+    filtered = [
+        p
+        for p in programs
+        if p.get("тип_сплита") == split_name and len(p.get("еженедельный_план", [])) == len(days)
+    ]
+    if not filtered:
+        return None
+    return random.choice(filtered)
+
+
+def predict(data: Dict[str, Any]):
+    """Legacy-предсказание сплита и списка дней по профилю пользователя."""
+    mapped = {
+        "возраст": data.get("age", data.get("возраст", 30)),
+        "рост": data.get("height_cm", data.get("рост", 175)),
+        "вес": data.get("weight_kg", data.get("вес", 75)),
+    }
+
+    gender = str(data.get("gender", data.get("пол", "м"))).lower()
+    mapped["пол"] = "ж" if any(x in gender for x in ["жен", "female", "ж"]) else "м"
+
+    activity = data.get("activity_level", data.get("тип_активности", "Средняя активность"))
+    if isinstance(activity, str) and "(" in activity:
+        activity = activity.split("(")[0].strip()
+    mapped["тип_активности"] = activity
+
+    injuries = data.get("injuries_notes", data.get("травмы_или_болезни", False))
+    if isinstance(injuries, bool):
+        mapped["травмы_или_болезни"] = "да" if injuries else "нет"
+    else:
+        mapped["травмы_или_болезни"] = "да" if str(injuries).lower() in ["true", "да", "1", "yes"] else "нет"
+
+    goal = data.get("goal", data.get("цель", "Набрать мышцы"))
+    if goal == "Сбросить вес":
+        goal = "Скинуть вес"
+    mapped["цель"] = goal
+
+    fitness = str(data.get("fitness_level", data.get("уровень_подготовки", "любитель"))).lower()
+    if any(x in fitness for x in ["новичок", "beginner"]):
+        mapped["уровень_подготовки"] = "новичок"
+    elif any(x in fitness for x in ["продвинутый", "advanced"]):
+        mapped["уровень_подготовки"] = "продвинутый"
+    else:
+        mapped["уровень_подготовки"] = "любитель"
+
+    days = data.get("training_days_map", data.get("дни_тренировок", ["Пн", "Ср", "Пт"]))
+
+    df = pd.DataFrame([mapped])
+    df["пол_num"] = df["пол"].map({"м": 0, "ж": 1})
+    df["травмы_num"] = df["травмы_или_болезни"].map({"нет": 0, "да": 1})
+    df["уровень_num"] = df["уровень_подготовки"].map({"новичок": 0, "любитель": 1, "продвинутый": 2})
+
+    features = df[
+        ["возраст", "рост", "вес", "пол_num", "тип_активности", "травмы_num", "цель", "уровень_num"]
+    ]
+
+    if _catboost_model is not None:
+        pred = _catboost_model.predict(features)[0][0]
+        pred_idx = int(pred)
+        return reverse_map.get(pred_idx, "Фулбади"), days
+
+    fallback_split = "Фулбади" if len(days) <= 3 else ("ВерхНиз" if len(days) == 4 else "Пуш-пул-ноги")
+    return fallback_split, days
 
 
 class Profile(BaseModel):
@@ -250,15 +351,22 @@ def generate_candidate_days(payload: GeneratePlanRequest, weekdays: List[int]) -
 
 @app.get("/health")
 def health_check():
-    return {
-        "status": "ok",
-        "service": "AI-Gym-Coach ML Service",
-        "version": "v2",
-    }
+    return {"ok": True}
 
 
-@app.post("/v2/plans/generate", response_model=GeneratePlanResponse)
-def generate_plan(payload: GeneratePlanRequest):
+@app.post("/plan/user")
+async def plan_user(user: Dict[str, Any] = Body(default_factory=dict)) -> Dict[str, Any]:
+    if user:
+        logger.info("POST /plan/user keys: %s", list(user.keys())[:12])
+    split_name, days = predict(user)
+    program = get_random_program(programs=programs, split_name=split_name, days=days)
+    if program is None:
+        raise HTTPException(status_code=404, detail="Suitable workout program not found")
+    return program
+
+
+@app.post("/v2/plans/generate-local", response_model=GeneratePlanResponse)
+def generate_plan_local(payload: GeneratePlanRequest):
     raw_days = payload.profile.training_days
     if not raw_days:
         raise HTTPException(status_code=400, detail="Training days cannot be empty")
@@ -291,3 +399,6 @@ def generate_plan(payload: GeneratePlanRequest):
     except Exception as exc:
         logger.exception("Ошибка при генерации плана (%s); отдаём безопасный fallback.", exc)
         return build_fallback_plan(payload, clean_weekdays, ["MODEL_GENERATION_EXCEPTION"])
+
+
+app.include_router(create_router(predict, programs))
